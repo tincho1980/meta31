@@ -22,9 +22,9 @@ Reglas sobre los documentos:
 ## Estado actual
 
 - Requisitos, modelo y plan: **validados** (2/10/2026).
-- Repo: vacío, rama `develop`, remoto `github.com/tincho1980/meta31`.
+- Repo: remoto `github.com/tincho1980/meta31`. E0 en la rama `feat/e0-esqueleto`.
 - Infra creada por Martín: proyecto Supabase con login de Google configurado, credencial OAuth de Google, cuenta de Cloudflare.
-- **Siguiente: E0 (esqueleto)**. Ver `docs/plan-de-entregas.md`. Meta inmediata: cerrar E1 y E2; después E3 (MCP); E4 (simulador, IPC, rentabilidad) al final.
+- **E0: código completo, falta el despliegue** (pasos de `docs/setup.md`, los corre Martín). Después E1. Meta inmediata: cerrar E1 y E2; después E3 (MCP); E4 (simulador, IPC, rentabilidad) al final.
 
 ## Stack (cerrado, no cambiar sin hablarlo)
 
@@ -158,14 +158,19 @@ Cuentas bancarias, saldos, transferencias, efectivo · gastos chicos del día a 
 
 Detalle en `docs/plan-de-entregas.md`.
 
-- [ ] Monorepo pnpm con `apps/web`, `apps/worker`, `packages/domain`, `packages/db`; TypeScript estricto; `.gitignore` (incluye `.dev.vars`, `.env*`, `node_modules`).
-- [ ] Schema Drizzle completo (las 21 tablas de `docs/modelo-de-datos.md`) y primera migración.
-- [ ] Worker con Hono, `nodejs_compat`, binding de Hyperdrive, middleware de auth, ruta `GET /api/me`.
-- [ ] PWA mínima: login con Google (Supabase Auth) y pantalla que muestra el nombre leído vía `GET /api/me`.
-- [ ] Seed de `person`: Martín y Rosalía (usuarios), Amaia (no usuaria).
-- [ ] Vitest configurado; tests del middleware de auth (token válido, vencido, mail fuera de lista).
-- [ ] Script de backup semanal (`pg_dump`) para el Programador de tareas de Windows, que guarda en una carpeta sincronizada con OneDrive (RNF-12).
-- [ ] Guía `docs/setup.md` con los pasos y comandos que corre Martín (Hyperdrive, secretos, migración, deploy).
+- [x] Monorepo pnpm con `apps/web`, `apps/worker`, `packages/domain`, `packages/db`; TypeScript estricto; `.gitignore` (incluye `.dev.vars`, `.env*`, `node_modules`).
+- [x] Schema Drizzle completo (las 21 tablas de `docs/modelo-de-datos.md`) y primera migración.
+- [x] Worker con Hono, `nodejs_compat`, binding de Hyperdrive, middleware de auth, ruta `GET /api/me`.
+- [x] PWA mínima: login con Google (Supabase Auth) y pantalla que muestra el nombre leído vía `GET /api/me`.
+- [x] Seed de `person`: Martín y Rosalía (usuarios), Amaia (no usuaria). Los mails salen de `packages/db/.env`, no del repo.
+- [x] Vitest configurado; tests del middleware de auth (token válido, vencido, mail fuera de lista).
+- [x] Script de backup semanal (`pg_dump`) para el Programador de tareas de Windows, que guarda en una carpeta sincronizada con OneDrive (RNF-12).
+- [x] Guía `docs/setup.md` con los pasos y comandos que corre Martín (Hyperdrive, secretos, migración, deploy).
 - [ ] Cierre: login desde el celular → "Hola, Martín". Un mail no autorizado recibe 403.
+
+Notas de implementación de E0:
+- Textos de pantalla que no son tablas ni enums: sección `ui:` de `docs/glosario-es.yml`, vía `t()` de `apps/web/src/glossary.ts`.
+- La app del Worker se arma con `createApp({ db, verifier })`: en producción Hyperdrive + JWKS de Supabase; en tests PGlite + claves locales.
+- Hyperdrive con caché desactivada (`--caching-disabled`): si no, las lecturas pueden venir viejas hasta 60 s después de una escritura.
 
 A verificar al armar Hyperdrive: la conexión directa de Supabase en plan free puede ser solo IPv6. Si falla, usar el *Session pooler* (puerto 5432), no el *Transaction pooler* (6543).
