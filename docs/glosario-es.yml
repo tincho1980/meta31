@@ -1,0 +1,368 @@
+# Glosario es-AR del modelo de datos
+# Identificadores en inglés (base y código) → nombres en castellano.
+# Sirve como referencia y como fuente de etiquetas de la PWA.
+# Mantener sincronizado con docs/modelo-de-datos.md.
+
+common_columns:
+  id: ID
+  created_at: Creado el
+  updated_at: Modificado el
+  created_by: Cargado por
+  updated_by: Modificado por
+  entry_mode: Origen de la carga
+  source_document_id: Comprobante
+
+tables:
+  person:
+    label: Persona
+    plural: Personas
+    columns:
+      name: Nombre
+      email: Email
+      is_user: Es usuario
+
+  category:
+    label: Categoría
+    plural: Categorías
+    columns:
+      name: Nombre
+      kind: Tipo
+      active: Activa
+
+  property:
+    label: Propiedad
+    plural: Propiedades
+    columns:
+      name: Nombre
+      country: País
+      currency: Moneda
+      active: Activa
+
+  exchange_rate:
+    label: Cotización
+    plural: Cotizaciones
+    columns:
+      pair: Par
+      valid_from: Vigente desde
+      rate: Valor
+
+  economic_index:
+    label: Índice
+    plural: Índices
+    columns:
+      kind: Índice
+      date: Fecha
+      value: Valor
+
+  month:
+    label: Mes
+    plural: Meses
+    columns:
+      period: Período
+      status: Estado
+      opened_at: Abierto el
+      opened_by: Abierto por
+      closed_at: Cerrado el
+      closed_by: Cerrado por
+
+  income_source:
+    label: Fuente de ingreso
+    plural: Fuentes de ingreso
+    columns:
+      name: Nombre
+      category_id: Categoría
+      holder_id: Titular
+      property_id: Propiedad
+      currency: Moneda
+      every_months: Cada (meses)
+      anchor_month: Mes ancla
+      expected_day: Día de cobro
+      valid_from: Vigente desde
+      valid_to: Vigente hasta
+
+  income_source_amount:
+    label: Monto de fuente de ingreso
+    plural: Historial de montos
+    columns:
+      income_source_id: Fuente de ingreso
+      from_period: Desde el mes
+      amount: Monto
+
+  income:
+    label: Ingreso
+    plural: Ingresos
+    columns:
+      income_source_id: Fuente de ingreso
+      source_key: Clave de origen
+      description: Descripción
+      category_id: Categoría
+      period: Período
+      expected_date: Fecha esperada
+      currency: Moneda
+      estimated_amount: Monto estimado
+      actual_amount: Monto real
+      received_date: Fecha de cobro
+      applied_rate: Cotización aplicada
+      status: Estado
+
+  credit_card:
+    label: Tarjeta
+    plural: Tarjetas
+    columns:
+      name: Nombre
+      bank: Banco
+      country: País
+      holder_id: Titular
+      local_currency: Moneda local
+      closing_day: Día de cierre
+      due_day: Día de vencimiento
+      estimated_spend_local: Consumo estimado (moneda local)
+      estimated_spend_usd: Consumo estimado (USD)
+      active: Activa
+
+  card_statement:
+    label: Resumen de tarjeta
+    plural: Resúmenes de tarjeta
+    columns:
+      credit_card_id: Tarjeta
+      period: Período
+      closing_date: Fecha de cierre
+      due_date: Vencimiento
+      previous_balance_local: Saldo anterior (moneda local)
+      previous_balance_usd: Saldo anterior (USD)
+      total_local: Total (moneda local)
+      total_usd: Total (USD)
+      minimum_payment_local: Pago mínimo
+
+  installment_purchase:
+    label: Compra en cuotas
+    plural: Compras en cuotas
+    columns:
+      credit_card_id: Tarjeta
+      description: Descripción
+      category_id: Categoría
+      purchase_date: Fecha de compra
+      currency: Moneda
+      installment_amount: Monto de la cuota
+      installments_total: Cantidad de cuotas
+      first_period: Mes de la primera cuota
+
+  subscription:
+    label: Suscripción
+    plural: Suscripciones y débitos automáticos
+    columns:
+      credit_card_id: Tarjeta
+      description: Descripción
+      category_id: Categoría
+      currency: Moneda
+      amount: Monto
+      valid_from: Vigente desde
+      valid_to: Baja
+
+  card_transaction:
+    label: Movimiento de tarjeta
+    plural: Movimientos de tarjeta
+    columns:
+      card_statement_id: Resumen
+      kind: Tipo
+      date: Fecha
+      description: Descripción
+      category_id: Categoría
+      currency: Moneda
+      amount: Monto
+      installment_purchase_id: Compra en cuotas
+      installment_number: Número de cuota
+      subscription_id: Suscripción
+
+  recurring_expense:
+    label: Gasto recurrente
+    plural: Gastos recurrentes
+    columns:
+      name: Concepto
+      class: Clase
+      provider: Proveedor
+      category_id: Categoría
+      property_id: Propiedad
+      beneficiary_id: Destinatario
+      currency: Moneda
+      every_months: Cada (meses)
+      anchor_month: Mes ancla
+      due_day: Día de vencimiento
+      valid_from: Vigente desde
+      valid_to: Vigente hasta
+
+  recurring_expense_amount:
+    label: Monto de gasto recurrente
+    plural: Historial de montos
+    columns:
+      recurring_expense_id: Gasto recurrente
+      from_period: Desde el mes
+      amount: Monto
+
+  one_off_expense:
+    label: Gasto puntual
+    plural: Gastos puntuales
+    columns:
+      description: Descripción
+      category_id: Categoría
+      property_id: Propiedad
+      currency: Moneda
+      total_amount: Monto total
+      installments: Cuotas
+      first_period: Mes del primer pago
+      planned_date: Fecha prevista
+
+  loan:
+    label: Préstamo
+    plural: Préstamos
+    columns:
+      lender: Entidad
+      holder_id: Titular
+      category_id: Categoría
+      currency: Moneda
+      kind: Tipo
+      amortization_system: Sistema de amortización
+      principal: Capital
+      principal_uva: Capital en UVAs
+      nominal_annual_rate: TNA (%)
+      effective_annual_rate: TEA (%)
+      total_financial_cost: CFT (%)
+      interest_vat_rate: IVA sobre intereses (%)
+      monthly_insurance: Seguro mensual
+      granted_date: Fecha de otorgamiento
+      installments_total: Cantidad de cuotas
+      first_period: Mes de la primera cuota
+      due_day: Día de vencimiento
+      quoted_installment: Cuota informada por el banco
+
+  commitment:
+    label: Compromiso
+    plural: Compromisos
+    columns:
+      source_key: Clave de origen
+      credit_card_id: Tarjeta
+      recurring_expense_id: Gasto recurrente
+      one_off_expense_id: Gasto puntual
+      loan_id: Préstamo
+      installment_number: Número de cuota
+      parent_commitment_id: Compromiso original
+      description: Descripción
+      category_id: Categoría
+      origin_period: Mes de origen
+      period: Mes
+      due_date: Vencimiento
+      currency: Moneda
+      estimated_amount: Monto estimado
+      actual_amount: Monto real
+      surcharge: Recargo
+      status: Estado
+      cancellation_reason: Motivo de anulación
+
+  commitment_payment:
+    label: Pago
+    plural: Pagos
+    columns:
+      commitment_id: Compromiso
+      date: Fecha
+      payment_currency: Moneda de pago
+      amount_paid: Monto pagado
+      applied_rate: Cotización aplicada
+      allocated_amount: Monto imputado
+      payment_method: Medio de pago
+
+  source_document:
+    label: Comprobante
+    plural: Comprobantes
+    columns:
+      file_name: Archivo
+      file_hash: Huella del archivo
+      kind: Tipo
+      operation: Operación propuesta
+      payload: Datos extraídos
+      status: Estado
+      reason: Motivo
+      uploaded_by: Subido por
+      reviewed_by: Revisado por
+      reviewed_at: Revisado el
+
+enums:
+  currency:
+    ARS: Pesos argentinos
+    USD: Dólares
+    UYU: Pesos uruguayos
+  country:
+    AR: Argentina
+    UY: Uruguay
+  currency_pair:
+    USD_ARS: Dólar oficial (USD/ARS)
+    UYU_USD: Peso uruguayo (UYU/USD)
+  index_kind:
+    cpi: IPC
+    uva: UVA
+  entry_mode:
+    manual: Manual
+    claude: Claude
+  category_kind:
+    income: Ingreso
+    expense: Gasto
+  month_status:
+    open: Abierto
+    closed: Cerrado
+  income_status:
+    expected: Esperado
+    received: Cobrado
+    cancelled: Anulado
+  commitment_status:
+    pending: Pendiente
+    partially_paid: Pagado parcial
+    paid: Pagado
+    cancelled: Anulado
+  expense_class:
+    utility: Servicio
+    tax: Impuesto
+    condo_fee: Expensas
+    recurring: Recurrente
+    budget: Rubro estimado
+  card_transaction_kind:
+    purchase: Consumo
+    installment: Cuota
+    subscription: Suscripción o débito automático
+    interest: Interés
+    admin_fee: Gasto administrativo
+    tax: Impuesto
+    payment: Pago
+    adjustment: Ajuste
+  loan_kind:
+    fixed_rate: Tasa fija
+    uva: UVA
+  amortization_system:
+    french: Francés
+    german: Alemán
+    american: Americano
+  payment_method:
+    transfer: Transferencia
+    debit: Débito
+    cash: Efectivo
+    mercado_pago: Mercado Pago
+    other: Otro
+  document_kind:
+    card_statement: Resumen de tarjeta
+    utility_bill: Factura de servicio
+    loan_notice: Aviso de cuota de préstamo
+    tax: Impuesto
+    condo_fee: Expensas
+    payment_receipt: Comprobante de pago
+    other: Otro
+  document_status:
+    pending_review: A revisar
+    unrecognized: No reconocido
+    confirmed: Confirmado
+    discarded: Descartado
+
+# Derivados (no son columnas ni enums, pero aparecen en pantalla)
+derived:
+  postponed: Postergado
+  theoretical_installment: Cuota teórica
+  installment_deviation: Desvío de la cuota
+  remaining_principal: Deuda remanente
+  monthly_result: Resultado del mes
