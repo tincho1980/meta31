@@ -1,0 +1,3 @@
+# Copiar a apps/worker/.dev.vars (no se sube al repo). Solo para `wrangler dev`.
+# Solo si el proyecto Supabase firma los JWT con el secreto HS256 legado:
+SUPABASE_JWT_SECRET=

@@ -1,0 +1,23 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "meta31-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      // Lo devuelve `wrangler hyperdrive create` (ver docs/setup.md). No es secreto.
+      "id": "REEMPLAZAR_CON_ID_DE_HYPERDRIVE"
+    }
+  ],
+  "vars": {
+    // URL del proyecto Supabase (no es secreta): JWKS e issuer del JWT.
+    "SUPABASE_URL": "https://REEMPLAZAR.supabase.co",
+    // Orígenes de la PWA habilitados para CORS, separados por coma.
+    "ALLOWED_ORIGINS": "http://localhost:5173,https://meta31.pages.dev"
+  }
+  // Secreto opcional, solo si el proyecto firma con HS256 legado:
+  // wrangler secret put SUPABASE_JWT_SECRET
+}

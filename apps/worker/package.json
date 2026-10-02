@@ -1,0 +1,23 @@
+{
+  "name": "@meta31/worker",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "build": "wrangler deploy --dry-run --outdir dist",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@meta31/db": "workspace:*",
+    "@meta31/domain": "workspace:*",
+    "hono": "^4.13.12",
+    "jose": "^6.2.12",
+    "pg": "^8.23.1"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.23.1",
+    "wrangler": "^4.146.0"
+  }
+}
