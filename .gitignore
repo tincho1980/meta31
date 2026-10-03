@@ -17,3 +17,6 @@ coverage/
 backups/
 *.dump
 *.sql.gz
+
+# Tests with real personal data: local only
+*.local.test.ts

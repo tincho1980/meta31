@@ -335,16 +335,24 @@ Al dar de alta el préstamo se cargan sus condiciones y el sistema calcula el cu
 | granted_date | date | fecha de otorgamiento; define el primer período de interés |
 | installments_total | smallint | |
 | first_period | date | mes de la cuota 1 |
-| due_day | smallint | |
+| due_day | smallint | día de vencimiento; si el mes tiene menos días (p. ej. 31), vence el último día del mes |
 | quoted_installment | numeric(14,2), null | cuota que informó el banco al otorgar |
 
 **Cálculo y control**
 
-- **Cuota teórica n**: sale de principal, TNA/12, sistema, cuotas totales, IVA y seguro. En UVA se calcula en UVAs y se pasa a pesos con el valor UVA del vencimiento (o el último cargado, para cuotas futuras: RF-24).
+- **Cuota teórica n** (convención validada al centavo contra 8 cuotas reales de un préstamo bancario, 3/10):
+  - **Capital** según el sistema: francés = cuadro de libro con tasa mensual TNA/12 (cuota pura constante); alemán = capital / n; americano = todo el capital en la última cuota.
+  - **Interés** por los días reales del período sobre el saldo de capital: tasa del período = TNA × días / 365, redondeada a 8 decimales; interés = saldo × tasa del período, truncado a centavos. El primer período va de `granted_date` al primer vencimiento; los siguientes, entre vencimientos. Por eso la cuota varía con los días del mes y la primera es mayor si el otorgamiento es más de un mes antes.
+  - Vencimientos: `first_period` + `due_day` (31 = último día de cada mes).
+  - IVA = interés × `interest_vat_rate`; más `monthly_insurance`. Capital redondeado a centavos; la última cuota toma el saldo que quede, así el préstamo cierra en cero.
+  - En UVA se calcula en UVAs y se pasa a pesos con el valor UVA del vencimiento (o el último cargado, para cuotas futuras: RF-24).
+- **Cuotas por fecha, no por número.** Los avisos del banco se emparejan con la cuota del cuadro por la fecha de vencimiento: los bancos numeran distinto (algunos cuentan el desembolso como cuota 1).
 - **Cuota estimada** de los compromisos futuros = cuota teórica. No se carga a mano.
 - **Desvío por cuota** = monto real − cuota teórica, en importe y en %. Detecta que algo no cierra; para saber qué, hay que mirar el aviso del banco.
 - **Deuda remanente (RF-25)** = saldo de capital del cuadro teórico después de la última cuota pagada.
-- Las fórmulas viven en el dominio del Worker y son de los primeros tests (RNF-11): francés, alemán, americano y UVA, contra cuadros reales de los dos préstamos.
+- **Desvío típico:** el banco cobra aparte "intereses exceso" (compensatorio + punitorio, 1,5 × TNA, por los días de atraso) cuando la cuota se debita después del vencimiento. Aparece como desvío positivo.
+- Las fórmulas viven en `packages/domain/src/loan.ts` (RNF-11): francés con un préstamo inventado que sigue la misma convención; la validación contra las cuotas reales vive en un test local fuera de git (`*.local.test.ts`), porque el repo es público. Alemán, americano y UVA contra ejemplos calculados a mano. El préstamo de Rosalía se valida cuando estén sus datos.
+- **Pendiente (otros bancos):** si un préstamo de otro banco calcula distinto, agregar la opción de dividir el monto total en n cuotas iguales, sin cuadro. Se decide al cargar ese préstamo.
 
 ### 4.6 Compromisos
 

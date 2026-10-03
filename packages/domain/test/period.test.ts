@@ -3,6 +3,9 @@ import {
   addMonths,
   comparePeriods,
   currentPeriod,
+  dateInPeriod,
+  daysBetween,
+  daysInMonth,
   isPeriod,
   monthOfYear,
   monthsBetween,
@@ -80,6 +83,34 @@ describe('month arithmetic', () => {
     expect(periodRange(p('2026-10-01'), 12)).toHaveLength(12);
     expect(periodRange(p('2026-10-01'), 12).at(-1)).toBe('2027-09-01');
     expect(periodRange(p('2026-10-01'), 0)).toEqual([]);
+  });
+});
+
+describe('days and due dates', () => {
+  it('knows the length of each month, leap years included', () => {
+    expect(daysInMonth(p('2026-02-01'))).toBe(28);
+    expect(daysInMonth(p('2028-02-01'))).toBe(29);
+    expect(daysInMonth(p('2100-02-01'))).toBe(28);
+    expect(daysInMonth(p('2000-02-01'))).toBe(29);
+    expect(daysInMonth(p('2026-04-01'))).toBe(30);
+    expect(daysInMonth(p('2026-12-01'))).toBe(31);
+  });
+
+  it('a due day beyond the month length falls on its last day', () => {
+    expect(dateInPeriod(p('2026-02-01'), 31)).toBe('2026-02-28');
+    expect(dateInPeriod(p('2028-02-01'), 30)).toBe('2028-02-29');
+    expect(dateInPeriod(p('2026-04-01'), 31)).toBe('2026-04-30');
+    expect(dateInPeriod(p('2026-04-01'), 10)).toBe('2026-04-10');
+    expect(() => dateInPeriod(p('2026-04-01'), 0)).toThrow(RangeError);
+    expect(() => dateInPeriod(p('2026-04-01'), 32)).toThrow(RangeError);
+  });
+
+  it('counts calendar days between dates, across months and years', () => {
+    expect(daysBetween('2026-03-10', '2026-04-30')).toBe(51);
+    expect(daysBetween('2026-02-28', '2026-03-31')).toBe(31);
+    expect(daysBetween('2026-12-31', '2027-01-31')).toBe(31);
+    expect(daysBetween('2026-03-31', '2026-02-28')).toBe(-31);
+    expect(() => daysBetween('2026-02-30x', '2026-03-01')).toThrow(RangeError);
   });
 });
 
