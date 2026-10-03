@@ -85,7 +85,7 @@ Pide el valor por consola; no queda en ningún archivo.
 ## 5. Deploy del Worker
 
 ```powershell
-pnpm --filter @meta31/worker deploy
+pnpm --filter @meta31/worker run deploy
 ```
 
 Publica en `https://meta31-api.<subdominio>.workers.dev`. Anotar esa URL para la PWA.
