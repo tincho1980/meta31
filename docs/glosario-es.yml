@@ -294,8 +294,8 @@ enums:
     AR: Argentina
     UY: Uruguay
   currency_pair:
-    USD_ARS: Dólar oficial (USD/ARS)
-    UYU_USD: Peso uruguayo (UYU/USD)
+    USD_ARS: Dólar oficial (pesos argentinos por USD)
+    UYU_USD: Dólar en Uruguay (pesos uruguayos por USD)
   index_kind:
     cpi: IPC
     uva: UVA
