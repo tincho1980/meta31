@@ -146,6 +146,7 @@ Las 12 reglas de negocio (`docs/requisitos-funcionales.md`) son invariantes. Las
 ## Flujo de trabajo
 
 - `main` = producción (lo que está desplegado). `develop` = integración. Trabajo en ramas `feat/…`, `fix/…` que salen de `develop`.
+- `main` y `develop` están protegidas por un ruleset de GitHub: solo se entra por PR, y el PR no se puede mergear si no pasa el job `verify` del CI (`.github/workflows/ci.yml`: tipos, tests, migraciones al día con el schema, build del Worker y de la PWA). No se aceptan push directos ni force push.
 - Commits chicos, en castellano, con prefijo: `feat:`, `fix:`, `test:`, `refactor:`, `docs:`, `chore:`.
 - No hacer push, merge a `main` ni deploy sin que Martín lo pida.
 - Comandos que requieren credenciales (`wrangler login`, `wrangler secret put`, `wrangler hyperdrive create`, migraciones contra Supabase, deploy) los corre Martín. Prepará el comando exacto y explicá qué hace.
