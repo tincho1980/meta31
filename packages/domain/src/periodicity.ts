@@ -1,29 +1,29 @@
 import { addMonths, comparePeriods, monthOfYear, monthsBetween, type Period, periodOf } from './period.js';
 
-/** Valores admitidos para `every_months` (check de la base). Todos dividen 12. */
+/** Allowed values for `every_months` (database check). All of them divide 12. */
 export const EVERY_MONTHS = [1, 2, 3, 6, 12] as const;
 export type EveryMonths = (typeof EVERY_MONTHS)[number];
 
-/** Periodicidad de una regla (D7): cada `everyMonths` meses, alineada al `anchorMonth`. */
+/** Periodicity of a rule (D7): every `everyMonths` months, aligned to `anchorMonth`. */
 export type Periodicity = { everyMonths: number; anchorMonth: number };
 
-/** Vigencia de una regla. Fechas 'YYYY-MM-DD' (o períodos); `validTo` null = indefinida. */
+/** Validity of a rule. 'YYYY-MM-DD' dates (or periods); `validTo` null = open-ended. */
 export type Validity = { validFrom: string; validTo: string | null };
 
 function assertPeriodicity({ everyMonths, anchorMonth }: Periodicity): void {
   if (!(EVERY_MONTHS as readonly number[]).includes(everyMonths)) {
-    throw new RangeError(`every_months inválido: ${everyMonths} (admitidos: ${EVERY_MONTHS.join(', ')})`);
+    throw new RangeError(`Invalid every_months: ${everyMonths} (allowed: ${EVERY_MONTHS.join(', ')})`);
   }
   if (!Number.isInteger(anchorMonth) || anchorMonth < 1 || anchorMonth > 12) {
-    throw new RangeError(`anchor_month inválido: ${anchorMonth} (1–12)`);
+    throw new RangeError(`Invalid anchor_month: ${anchorMonth} (1–12)`);
   }
 }
 
 /**
- * ¿Toca la regla en este mes? (D7, regla 8)
- * Mensual = 1/cualquier ancla; bimestral desde febrero = 2/2 (feb, abr, jun…);
- * anual en marzo = 12/3 (un solo compromiso por año, en marzo).
- * Como every_months divide 12, alcanza con el mes del año: el patrón se repite igual todos los años.
+ * Does the rule fall in this month? (D7, rule 8)
+ * Monthly = 1/any anchor; bimonthly from February = 2/2 (Feb, Apr, Jun…);
+ * yearly in March = 12/3 (a single commitment per year, in March).
+ * Since every_months divides 12, the month of the year is enough: the pattern repeats every year.
  */
 export function occursIn(rule: Periodicity, period: Period): boolean {
   assertPeriodicity(rule);
@@ -32,9 +32,9 @@ export function occursIn(rule: Periodicity, period: Period): boolean {
 }
 
 /**
- * ¿Está vigente la regla en este mes? (regla 11)
- * Se compara por mes, con los dos extremos inclusive: una regla con
- * validFrom = 2026-03-15 rige desde marzo; con validTo = 2026-12-10 rige hasta diciembre.
+ * Is the rule in force this month? (rule 11)
+ * Compared by month, both ends inclusive: a rule with validFrom = 2026-03-15 applies
+ * from March; with validTo = 2026-12-10 its last charge is in December.
  */
 export function isActiveIn({ validFrom, validTo }: Validity, period: Period): boolean {
   if (comparePeriods(period, periodOf(validFrom)) < 0) return false;
@@ -42,29 +42,29 @@ export function isActiveIn({ validFrom, validTo }: Validity, period: Period): bo
   return true;
 }
 
-/** ¿Genera algo la regla en este mes? Vigente y le toca según su periodicidad. */
+/** Does the rule generate something this month? In force and due by its periodicity. */
 export function generatesIn(rule: Periodicity & Validity, period: Period): boolean {
   return isActiveIn(rule, period) && occursIn(rule, period);
 }
 
-/** Período en que cae la cuota `n` (1 = primera) de algo que arranca en `firstPeriod`. */
+/** Period in which installment `n` (1 = first) falls, for something starting at `firstPeriod`. */
 export function periodOfInstallment(firstPeriod: Period, n: number): Period {
-  if (!Number.isInteger(n) || n < 1) throw new RangeError(`Número de cuota inválido: ${n}`);
+  if (!Number.isInteger(n) || n < 1) throw new RangeError(`Invalid installment number: ${n}`);
   return addMonths(firstPeriod, n - 1);
 }
 
 /**
- * Número de cuota (1…total) que cae en `period`, o null si el mes está antes de la
- * primera o después de la última (regla 11: las cuotas dejan de proyectarse solas).
- * Sirve para compras en cuotas, préstamos y gastos puntuales en cuotas.
+ * Installment number (1…total) falling in `period`, or null if the month is before the
+ * first or after the last one (rule 11: installments stop being projected on their own).
+ * Used for card installment purchases, loans and one-off expenses paid in installments.
  */
 export function installmentNumberIn(firstPeriod: Period, total: number, period: Period): number | null {
-  if (!Number.isInteger(total) || total < 1) throw new RangeError(`Total de cuotas inválido: ${total}`);
+  if (!Number.isInteger(total) || total < 1) throw new RangeError(`Invalid installment total: ${total}`);
   const n = monthsBetween(firstPeriod, period) + 1;
   return n >= 1 && n <= total ? n : null;
 }
 
-/** Período de la última cuota. */
+/** Period of the last installment. */
 export function lastInstallmentPeriod(firstPeriod: Period, total: number): Period {
   return periodOfInstallment(firstPeriod, total);
 }
