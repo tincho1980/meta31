@@ -24,7 +24,8 @@ Reglas sobre los documentos:
 - Requisitos, modelo y plan: **validados** (2/10/2026).
 - Repo: remoto `github.com/tincho1980/meta31`. E0 en la rama `feat/e0-esqueleto`.
 - Infra creada por Martín: proyecto Supabase con login de Google configurado, credencial OAuth de Google, cuenta de Cloudflare.
-- **E0: código completo, falta el despliegue** (pasos de `docs/setup.md`, los corre Martín). Después E1. Meta inmediata: cerrar E1 y E2; después E3 (MCP); E4 (simulador, IPC, rentabilidad) al final.
+- **E0: código completo, despliegue en curso** (pasos de `docs/setup.md`, los corre Martín). El Worker (`https://meta31-api.miramallo.workers.dev`) y la PWA se publicaron a mano desde `feat/e0-esqueleto`, así que `main` todavía no refleja producción.
+- **Pendiente al cerrar E0:** mergear a `develop` y `main`, y conectar Pages y el Worker (Workers Builds) al repo para que se publiquen solos con cada push a `main`. Desde ahí, nada de deploys a mano. Después E1. Meta inmediata: cerrar E1 y E2; después E3 (MCP); E4 (simulador, IPC, rentabilidad) al final.
 
 ## Stack (cerrado, no cambiar sin hablarlo)
 
