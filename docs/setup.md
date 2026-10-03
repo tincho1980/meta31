@@ -159,7 +159,7 @@ Deja `meta31-AAAA-MM-DD_HHMM.dump` en `%OneDrive%\Backups\meta31` (conserva los 
 Programarlo:
 
 ```powershell
-$action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument '-NoProfile -ExecutionPolicy Bypass -File "C:\desarrolloWeb\proyectos\meta31\scripts\backup.ps1"'
+$action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument '-NoProfile -ExecutionPolicy Bypass -File "C:\desarrolloWeb\proyectos\meta31\scripts\backup.ps1" -PgDump "C:\Program Files\PostgreSQL\17\bin\pg_dump.exe"'
 $trigger = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Monday, Thursday -At 21:00
 $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -RunOnlyIfNetworkAvailable
 Register-ScheduledTask -TaskName 'meta31 backup' -Action $action -Trigger $trigger -Settings $settings -Description 'pg_dump de meta31 a OneDrive'
