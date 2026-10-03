@@ -1,0 +1,63 @@
+# CI: sin tests en verde no se integra.
+# El ruleset de main y develop exige que el job `verify` pase para poder mergear un PR.
+name: CI
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop, main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  WRANGLER_SEND_METRICS: false
+
+jobs:
+  verify:
+    name: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      # Toma la versión de pnpm de "packageManager" en package.json
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Instalar dependencias
+        run: pnpm install --frozen-lockfile
+
+      - name: Tipos
+        run: pnpm typecheck
+
+      - name: Tests
+        run: pnpm test
+
+      # Un cambio en schema.ts sin su migración generada hace fallar el CI
+      - name: Migraciones al día con el schema
+        working-directory: packages/db
+        run: |
+          pnpm exec drizzle-kit check
+          pnpm exec drizzle-kit generate
+          git diff --exit-code -- migrations || (echo "::error::Falta generar la migración: pnpm --filter @meta31/db generate" && exit 1)
+          test -z "$(git status --porcelain -- migrations)" || (echo "::error::Falta generar la migración: pnpm --filter @meta31/db generate" && exit 1)
+
+      - name: Build del Worker (dry-run, controla el tamaño del bundle)
+        run: pnpm --filter @meta31/worker run build
+
+      - name: Build de la PWA
+        run: pnpm --filter @meta31/web build
+        env:
+          VITE_SUPABASE_URL: https://ci.supabase.co
+          VITE_SUPABASE_PUBLISHABLE_KEY: ci
+          VITE_API_URL: https://ci.workers.dev
