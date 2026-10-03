@@ -72,6 +72,35 @@ export function periodRange(from: Period, count: number): Period[] {
   return Array.from({ length: count }, (_, i) => addMonths(from, i));
 }
 
+/** Number of days in the period's month (leap years included). */
+export function daysInMonth(p: Period): number {
+  const i = index(p);
+  const year = Math.floor(i / 12);
+  const month = (i % 12) + 1;
+  if (month === 2) return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0 ? 29 : 28;
+  return [4, 6, 9, 11].includes(month) ? 30 : 31;
+}
+
+/**
+ * Due date ('YYYY-MM-DD') for a day of the month within a period. A day beyond the
+ * month's length falls on its last day: due day 31 is always the last day of the month.
+ */
+export function dateInPeriod(p: Period, day: number): string {
+  if (!Number.isInteger(day) || day < 1 || day > 31) throw new RangeError(`Invalid day of month: ${day}`);
+  const d = Math.min(day, daysInMonth(p));
+  return `${p.slice(0, 8)}${String(d).padStart(2, '0')}`;
+}
+
+/** Calendar days from `from` to `to` ('YYYY-MM-DD'), signed. Counted in UTC, so no DST shifts. */
+export function daysBetween(from: string, to: string): number {
+  const utc = (date: string) => {
+    periodOf(date); // validates the format
+    const [y, m, d] = date.split('-').map(Number) as [number, number, number];
+    return Date.UTC(y, m - 1, d);
+  };
+  return Math.round((utc(to) - utc(from)) / 86_400_000);
+}
+
 /** Today's date ('YYYY-MM-DD') in the Buenos Aires time zone. */
 export function todayInBuenosAires(now: Date = new Date()): string {
   // en-CA formats as YYYY-MM-DD
