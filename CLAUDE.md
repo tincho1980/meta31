@@ -85,7 +85,7 @@ Capas dentro del Worker:
 - Base, código y herramientas MCP **en inglés**. Base en `snake_case`; TS en `camelCase` (Drizzle con `casing: 'snake_case'`). Tablas en singular.
 - Textos de la interfaz **en castellano**, tomados de `docs/glosario-es.yml` (se importa en el build de la PWA). No hardcodear etiquetas en los componentes.
 - Valores de enum en minúscula, salvo códigos ISO (`ARS`, `AR`…).
-- Comentarios y mensajes de commit en castellano.
+- **Idioma (decisión del 3/10):** en castellano solo lo que ve el usuario de la app (textos de la PWA, vía el glosario) y los documentos (`docs/` y este `CLAUDE.md`). Todo lo demás **en inglés**: comentarios, nombres de tests, mensajes de error y de log, scripts, archivos de configuración, mensajes de commit y descripciones de PR.
 
 **Base de datos**
 - PK `id uuid default gen_random_uuid()` (salvo `month`, con PK `period`).
@@ -147,7 +147,7 @@ Las 12 reglas de negocio (`docs/requisitos-funcionales.md`) son invariantes. Las
 
 - `main` = producción (lo que está desplegado). `develop` = integración. Trabajo en ramas `feat/…`, `fix/…` que salen de `develop`.
 - `main` y `develop` están protegidas por un ruleset de GitHub: solo se entra por PR, y el PR no se puede mergear si no pasa el job `verify` del CI (`.github/workflows/ci.yml`: tipos, tests, migraciones al día con el schema, build del Worker y de la PWA). No se aceptan push directos ni force push.
-- Commits chicos, en castellano, con prefijo: `feat:`, `fix:`, `test:`, `refactor:`, `docs:`, `chore:`.
+- Commits chicos, en inglés, con prefijo: `feat:`, `fix:`, `test:`, `refactor:`, `docs:`, `chore:`.
 - No hacer push, merge a `main` ni deploy sin que Martín lo pida. Mergear a `main` es desplegar.
 - Comandos que requieren credenciales (`wrangler login`, `wrangler secret put`, `wrangler hyperdrive create`, migraciones contra Supabase, deploy) los corre Martín. Prepará el comando exacto y explicá qué hace.
 - Al terminar una tarea, decí en una o dos líneas qué quedó hecho y qué sigue. Sin resúmenes largos.
