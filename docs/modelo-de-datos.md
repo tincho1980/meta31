@@ -131,6 +131,8 @@ Transversales sin relaciones fuertes: `category` (la usan casi todas), `exchange
 
 Cotización vigente a una fecha = la fila con mayor `valid_from ≤ fecha`. UYU → ARS pasa por USD.
 
+**Sentido de `rate`** (decidido el 3/10): en los dos pares es cuántas unidades de moneda local vale un dólar, como lo informan bancos y diarios. `USD_ARS` = pesos argentinos por USD (≈ 1.450); `UYU_USD` = pesos uruguayos por USD (≈ 40). El nombre del par no indica el sentido; manda esta definición.
+
 **economic_index** (RF-05, RF-24)
 
 | Campo | Tipo | Notas |
