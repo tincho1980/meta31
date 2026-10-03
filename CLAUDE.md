@@ -25,7 +25,7 @@ Reglas sobre los documentos:
 - Repo: remoto `github.com/tincho1980/meta31`. E0 en la rama `feat/e0-esqueleto`.
 - Infra creada por Martín: proyecto Supabase con login de Google configurado, credencial OAuth de Google, cuenta de Cloudflare.
 - **E0: cerrado el 3/10/2026.** Login con Google desde el celular → "Hola, Martín"; una cuenta no habilitada recibe 403. Producción: PWA en `https://meta31.pages.dev`, Worker en `https://meta31-api.miramallo.workers.dev`. Se publicaron a mano desde `feat/e0-esqueleto`, así que `main` todavía no refleja producción.
-- **Pendiente al cerrar E0:** mergear a `develop` y `main`, y conectar Pages y el Worker (Workers Builds) al repo para que se publiquen solos con cada push a `main`. Desde ahí, nada de deploys a mano. Después E1. Meta inmediata: cerrar E1 y E2; después E3 (MCP); E4 (simulador, IPC, rentabilidad) al final.
+- **Deploy automático:** cada merge a `main` corre `verify` y, si pasa, el job `deploy` del CI publica el Worker y la PWA (credenciales en el environment `production` de GitHub, solo para `main`). Nada de deploys a mano; detalle en `docs/setup.md` paso 10. Las migraciones contra Supabase las corre Martín antes de mergear a `main`. Siguiente: E1. Meta inmediata: cerrar E1 y E2; después E3 (MCP); E4 (simulador, IPC, rentabilidad) al final.
 
 ## Stack (cerrado, no cambiar sin hablarlo)
 
@@ -148,7 +148,7 @@ Las 12 reglas de negocio (`docs/requisitos-funcionales.md`) son invariantes. Las
 - `main` = producción (lo que está desplegado). `develop` = integración. Trabajo en ramas `feat/…`, `fix/…` que salen de `develop`.
 - `main` y `develop` están protegidas por un ruleset de GitHub: solo se entra por PR, y el PR no se puede mergear si no pasa el job `verify` del CI (`.github/workflows/ci.yml`: tipos, tests, migraciones al día con el schema, build del Worker y de la PWA). No se aceptan push directos ni force push.
 - Commits chicos, en castellano, con prefijo: `feat:`, `fix:`, `test:`, `refactor:`, `docs:`, `chore:`.
-- No hacer push, merge a `main` ni deploy sin que Martín lo pida.
+- No hacer push, merge a `main` ni deploy sin que Martín lo pida. Mergear a `main` es desplegar.
 - Comandos que requieren credenciales (`wrangler login`, `wrangler secret put`, `wrangler hyperdrive create`, migraciones contra Supabase, deploy) los corre Martín. Prepará el comando exacto y explicá qué hace.
 - Al terminar una tarea, decí en una o dos líneas qué quedó hecho y qué sigue. Sin resúmenes largos.
 
