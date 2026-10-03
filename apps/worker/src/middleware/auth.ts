@@ -9,14 +9,14 @@ import {
 } from 'jose';
 import type { AppEnv, Bindings } from '../env.js';
 
-/** Verifica la firma y los claims de un JWT y devuelve su payload; si no es válido, lanza. */
+/** Verifies a JWT's signature and claims and returns its payload; throws if invalid. */
 export type TokenVerifier = (token: string) => Promise<JWTPayload>;
 
 type VerifierOptions = {
   issuer: string;
-  /** Claves públicas (JWKS) para tokens asimétricos (ES256/RS256). */
+  /** Public keys (JWKS) for asymmetric tokens (ES256/RS256). */
   jwks: JWTVerifyGetKey;
-  /** Secreto HS256 legado, si el proyecto todavía lo usa. */
+  /** Legacy HS256 secret, if the project still uses it. */
   hsSecret?: string | undefined;
 };
 
@@ -26,17 +26,17 @@ export function createTokenVerifier({ issuer, jwks, hsSecret }: VerifierOptions)
   return async (token) => {
     const { alg } = decodeProtectedHeader(token);
     if (alg === 'HS256') {
-      if (!secret) throw new Error('Token HS256 sin secreto configurado');
+      if (!secret) throw new Error('HS256 token but no secret configured');
       return (await jwtVerify(token, secret, { ...claims, algorithms: ['HS256'] })).payload;
     }
     return (await jwtVerify(token, jwks, { ...claims, algorithms: ['ES256', 'RS256'] })).payload;
   };
 }
 
-// El JWKS se cachea por isolate: son claves públicas, no conexiones.
+// The JWKS is cached per isolate: public keys, not connections.
 const jwksByUrl = new Map<string, JWTVerifyGetKey>();
 
-/** Verificador contra el proyecto Supabase configurado en el Worker. */
+/** Verifier for the Supabase project configured in the Worker. */
 export function supabaseVerifier(env: Bindings): TokenVerifier {
   const issuer = `${env.SUPABASE_URL}/auth/v1`;
   const jwksUrl = `${issuer}/.well-known/jwks.json`;
@@ -49,9 +49,9 @@ export function supabaseVerifier(env: Bindings): TokenVerifier {
 }
 
 /**
- * Middleware único de autenticación (RNF-07):
- * - sin token, o token inválido o vencido → 401
- * - token válido pero mail fuera de la lista blanca (person.is_user) → 403
+ * Single authentication middleware (RNF-07):
+ * - no token, or invalid or expired token → 401
+ * - valid token but email not in the allowlist (person.is_user) → 403
  */
 export function auth(getVerifier: (env: Bindings) => TokenVerifier) {
   return createMiddleware<AppEnv>(async (c, next) => {

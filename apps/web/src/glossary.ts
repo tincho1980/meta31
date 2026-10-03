@@ -1,4 +1,4 @@
-// Etiquetas de la interfaz: salen de docs/glosario-es.yml (RNF-17). No hardcodear textos en componentes.
+// UI labels come from docs/glosario-es.yml (RNF-17). Never hardcode texts in components.
 import raw from '../../../docs/glosario-es.yml';
 
 type Glossary = {
@@ -9,17 +9,17 @@ type Glossary = {
 
 const glossary = raw as Glossary;
 
-/** Texto de la interfaz, con reemplazo de `{variable}`. */
+/** UI text, with `{variable}` substitution. */
 export function t(key: string, vars: Record<string, string> = {}): string {
   const text = glossary.ui[key];
   if (text === undefined) {
-    if (import.meta.env.DEV) console.warn(`Falta la clave ui.${key} en docs/glosario-es.yml`);
+    if (import.meta.env.DEV) console.warn(`Missing key ui.${key} in docs/glosario-es.yml`);
     return key;
   }
   return text.replace(/\{(\w+)\}/g, (_, name: string) => vars[name] ?? `{${name}}`);
 }
 
-/** Etiqueta de un valor de enum. */
+/** Label of an enum value. */
 export function enumLabel(enumName: string, value: string): string {
   return glossary.enums[enumName]?.[value] ?? value;
 }

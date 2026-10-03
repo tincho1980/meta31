@@ -15,10 +15,10 @@ import { createTokenVerifier } from '../src/middleware/auth.js';
 
 const SUPABASE_URL = 'https://test-project.supabase.co';
 const ISSUER = `${SUPABASE_URL}/auth/v1`;
-const HS_SECRET = 'secreto-legado-de-prueba-con-largo-suficiente';
+const HS_SECRET = 'legacy-test-secret-that-is-long-enough';
 
 const env: Bindings = {
-  HYPERDRIVE: { connectionString: 'no-se-usa-en-tests' },
+  HYPERDRIVE: { connectionString: 'unused-in-tests' },
   SUPABASE_URL,
   ALLOWED_ORIGINS: 'http://localhost:5173',
 };
@@ -79,69 +79,69 @@ function getMe(authorization?: string) {
   return app.request('/api/me', { headers }, env);
 }
 
-describe('middleware de auth', () => {
-  it('token válido de un usuario de la lista → 200 con su nombre leído de person', async () => {
+describe('auth middleware', () => {
+  it('valid token of an allowlisted user → 200 with their name read from person', async () => {
     const res = await getMe(`Bearer ${await token()}`);
     expect(res.status).toBe(200);
     expect(await res.json()).toMatchObject({ name: 'Martín', email: 'martin@example.com' });
   });
 
-  it('el mail se compara sin mayúsculas', async () => {
+  it('email comparison is case-insensitive', async () => {
     const res = await getMe(`Bearer ${await token({ claims: { email: 'Rosalia@Example.COM' } })}`);
     expect(res.status).toBe(200);
     expect(await res.json()).toMatchObject({ name: 'Rosalía' });
   });
 
-  it('token vencido → 401', async () => {
+  it('expired token → 401', async () => {
     const expired = Math.floor(Date.now() / 1000) - 60;
     const res = await getMe(`Bearer ${await token({ expiresIn: expired })}`);
     expect(res.status).toBe(401);
   });
 
-  it('mail fuera de la lista blanca → 403', async () => {
-    const res = await getMe(`Bearer ${await token({ claims: { email: 'intruso@example.com' } })}`);
+  it('email not in the allowlist → 403', async () => {
+    const res = await getMe(`Bearer ${await token({ claims: { email: 'intruder@example.com' } })}`);
     expect(res.status).toBe(403);
   });
 
-  it('token válido sin claim de mail → 403', async () => {
+  it('valid token without an email claim → 403', async () => {
     const res = await getMe(`Bearer ${await token({ claims: { email: undefined } })}`);
     expect(res.status).toBe(403);
   });
 
-  it('sin header Authorization → 401', async () => {
+  it('no Authorization header → 401', async () => {
     expect((await getMe()).status).toBe(401);
     expect((await getMe('Basic abc')).status).toBe(401);
   });
 
-  it('firma con otra clave → 401', async () => {
+  it('signed with another key → 401', async () => {
     const res = await getMe(`Bearer ${await token({ key: otherPrivateKey })}`);
     expect(res.status).toBe(401);
   });
 
-  it('issuer o audiencia de otro proyecto → 401', async () => {
-    const otherIssuer = await token({ issuer: 'https://otro.supabase.co/auth/v1' });
+  it('issuer or audience of another project → 401', async () => {
+    const otherIssuer = await token({ issuer: 'https://other.supabase.co/auth/v1' });
     const otherAudience = await token({ audience: 'anon' });
     expect((await getMe(`Bearer ${otherIssuer}`)).status).toBe(401);
     expect((await getMe(`Bearer ${otherAudience}`)).status).toBe(401);
   });
 
-  it('token basura → 401', async () => {
-    expect((await getMe('Bearer no.es.un-jwt')).status).toBe(401);
+  it('garbage token → 401', async () => {
+    expect((await getMe('Bearer not.a.jwt')).status).toBe(401);
   });
 
-  it('acepta el secreto HS256 legado si está configurado', async () => {
+  it('accepts the legacy HS256 secret when configured', async () => {
     const key = new TextEncoder().encode(HS_SECRET);
     const res = await getMe(`Bearer ${await token({ alg: 'HS256', key })}`);
     expect(res.status).toBe(200);
   });
 
-  it('HS256 firmado con otro secreto → 401', async () => {
-    const key = new TextEncoder().encode('otro-secreto-que-no-es-el-del-proyecto!!');
+  it('HS256 signed with another secret → 401', async () => {
+    const key = new TextEncoder().encode('another-secret-not-the-project-one!!!!!');
     const res = await getMe(`Bearer ${await token({ alg: 'HS256', key })}`);
     expect(res.status).toBe(401);
   });
 
-  it('HS256 sin secreto configurado → 401', async () => {
+  it('HS256 without a configured secret → 401', async () => {
     const pair = await generateKeyPair('ES256');
     const jwk = { ...(await exportJWK(pair.publicKey)), kid: 'k1', alg: 'ES256' };
     const noSecret = createTokenVerifier({ issuer: ISSUER, jwks: createLocalJWKSet({ keys: [jwk] }) });
@@ -151,7 +151,7 @@ describe('middleware de auth', () => {
 });
 
 describe('CORS', () => {
-  it('habilita solo los orígenes configurados', async () => {
+  it('allows only the configured origins', async () => {
     const preflight = (origin: string) =>
       app.request(
         '/api/me',
@@ -163,7 +163,7 @@ describe('CORS', () => {
       );
     const ok = await preflight('http://localhost:5173');
     expect(ok.headers.get('Access-Control-Allow-Origin')).toBe('http://localhost:5173');
-    const bad = await preflight('https://malicioso.example');
+    const bad = await preflight('https://malicious.example');
     expect(bad.headers.get('Access-Control-Allow-Origin')).toBeNull();
   });
 });

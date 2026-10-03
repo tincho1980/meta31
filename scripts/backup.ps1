@@ -1,14 +1,14 @@
-﻿<#
+<#
 .SYNOPSIS
-  Backup de la base de meta31 con pg_dump (RNF-12). Lo corre el Programador de tareas de Windows.
+  meta31 database backup with pg_dump (RNF-12). Run by the Windows Task Scheduler.
 
 .DESCRIPTION
-  - Lee DATABASE_URL de un archivo fuera del repo (por defecto %USERPROFILE%\.meta31\backup.env).
-  - Vuelca los esquemas public (datos) y drizzle (historial de migraciones) en formato custom (-Fc, comprimido).
-    Los esquemas que administra Supabase (auth, storage, etc.) no se incluyen.
-  - Guarda en una carpeta sincronizada con OneDrive y conserva los últimos $Keep archivos.
-  - Deja un log en la misma carpeta.
-  Restaurar: pg_restore --clean --if-exists --no-owner --no-privileges -d "<DATABASE_URL>" <archivo>.dump
+  - Reads DATABASE_URL from a file outside the repo (default: %USERPROFILE%\.meta31\backup.env).
+  - Dumps the public (data) and drizzle (migration history) schemas in custom format (-Fc, compressed).
+    Schemas managed by Supabase (auth, storage, etc.) are not included.
+  - Saves to a folder synced with OneDrive and keeps the latest $Keep files.
+  - Writes a log in the same folder.
+  Restore: pg_restore --clean --if-exists --no-owner --no-privileges -d "<DATABASE_URL>" <file>.dump
 
 .EXAMPLE
   powershell -NoProfile -ExecutionPolicy Bypass -File scripts\backup.ps1
@@ -32,16 +32,16 @@ function Write-Log([string]$message) {
 }
 
 try {
-  if (-not (Test-Path $EnvFile)) { throw "No existe $EnvFile (ver docs/setup.md)" }
+  if (-not (Test-Path $EnvFile)) { throw "$EnvFile does not exist (see docs/setup.md)" }
   $databaseUrl = (Get-Content $EnvFile -Encoding utf8 |
     Where-Object { $_ -match '^\s*DATABASE_URL\s*=' } |
     Select-Object -First 1) -replace '^\s*DATABASE_URL\s*=\s*', ''
-  if (-not $databaseUrl) { throw "Falta DATABASE_URL en $EnvFile" }
+  if (-not $databaseUrl) { throw "DATABASE_URL missing in $EnvFile" }
 
   $file = Join-Path $Destination ('meta31-{0:yyyy-MM-dd_HHmm}.dump' -f (Get-Date))
   & $PgDump --format=custom --no-owner --no-privileges --schema=public --schema=drizzle `
     --file=$file $databaseUrl
-  if ($LASTEXITCODE -ne 0) { throw "pg_dump terminó con código $LASTEXITCODE" }
+  if ($LASTEXITCODE -ne 0) { throw "pg_dump exited with code $LASTEXITCODE" }
 
   $size = [math]::Round((Get-Item $file).Length / 1KB, 1)
   Write-Log "OK $file ($size KB)"
@@ -49,7 +49,7 @@ try {
   Get-ChildItem $Destination -Filter 'meta31-*.dump' |
     Sort-Object LastWriteTime -Descending |
     Select-Object -Skip $Keep |
-    ForEach-Object { Remove-Item $_.FullName; Write-Log "Borrado por antigüedad: $($_.Name)" }
+    ForEach-Object { Remove-Item $_.FullName; Write-Log "Deleted (retention): $($_.Name)" }
 }
 catch {
   Write-Log "ERROR $($_.Exception.Message)"

@@ -1,8 +1,8 @@
-# CI y deploy.
-# - verify: en cada PR y push a develop/main. El ruleset exige que pase para mergear.
-# - deploy: solo en push a main (al mergear un PR) y solo si verify pasó.
-#   Publica el Worker y la PWA con las credenciales del environment `production`,
-#   que GitHub entrega únicamente a jobs que corren sobre main.
+# CI and deploy.
+# - verify: on every PR and push to develop/main. The ruleset requires it to pass before merging.
+# - deploy: only on push to main (when a PR is merged) and only if verify passed.
+#   Publishes the Worker and the PWA with the credentials of the `production` environment,
+#   which GitHub only hands to jobs running on main.
 name: CI
 
 on:
@@ -13,7 +13,7 @@ on:
 
 concurrency:
   group: ci-${{ github.ref }}
-  # En PRs se cancela la corrida vieja; en develop/main no, para no cortar un deploy a la mitad.
+  # On PRs the old run is cancelled; on develop/main it is not, so a deploy is never cut in half.
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
@@ -30,7 +30,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      # Toma la versión de pnpm de "packageManager" en package.json
+      # Takes the pnpm version from "packageManager" in package.json
       - uses: pnpm/action-setup@v6
 
       - uses: actions/setup-node@v7
@@ -38,28 +38,28 @@ jobs:
           node-version: 22
           cache: pnpm
 
-      - name: Instalar dependencias
+      - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Tipos
+      - name: Typecheck
         run: pnpm typecheck
 
       - name: Tests
         run: pnpm test
 
-      # Un cambio en schema.ts sin su migración generada hace fallar el CI
-      - name: Migraciones al día con el schema
+      # A schema.ts change without its generated migration fails the CI
+      - name: Migrations in sync with the schema
         working-directory: packages/db
         run: |
           pnpm exec drizzle-kit check
           pnpm exec drizzle-kit generate
-          git diff --exit-code -- migrations || (echo "::error::Falta generar la migración: pnpm --filter @meta31/db generate" && exit 1)
-          test -z "$(git status --porcelain -- migrations)" || (echo "::error::Falta generar la migración: pnpm --filter @meta31/db generate" && exit 1)
+          git diff --exit-code -- migrations || (echo "::error::Migration not generated: pnpm --filter @meta31/db generate" && exit 1)
+          test -z "$(git status --porcelain -- migrations)" || (echo "::error::Migration not generated: pnpm --filter @meta31/db generate" && exit 1)
 
-      - name: Build del Worker (dry-run, controla el tamaño del bundle)
+      - name: Worker build (dry-run, checks the bundle size)
         run: pnpm --filter @meta31/worker run build
 
-      - name: Build de la PWA
+      - name: PWA build
         run: pnpm --filter @meta31/web build
         env:
           VITE_SUPABASE_URL: https://ci.supabase.co
@@ -88,20 +88,20 @@ jobs:
           node-version: 22
           cache: pnpm
 
-      - name: Instalar dependencias
+      - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # Primero el Worker: la PWA nueva puede depender de rutas nuevas de la API.
-      - name: Deploy del Worker
+      # Worker first: the new PWA may depend on new API routes.
+      - name: Deploy Worker
         run: pnpm --filter @meta31/worker run deploy
 
-      - name: Build de la PWA
+      - name: PWA build
         run: pnpm --filter @meta31/web build
         env:
           VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
           VITE_API_URL: ${{ vars.VITE_API_URL }}
 
-      - name: Deploy de la PWA (Cloudflare Pages)
+      - name: Deploy PWA (Cloudflare Pages)
         working-directory: apps/worker
         run: pnpm exec wrangler pages deploy ../web/dist --project-name meta31 --branch main --commit-hash ${{ github.sha }}

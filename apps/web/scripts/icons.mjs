@@ -1,5 +1,5 @@
-// Genera los íconos PNG de la PWA sin dependencias: fondo verde y tres barras crecientes.
-// Uso: pnpm --filter @meta31/web icons  (los PNG quedan versionados en public/)
+// Generates the PWA PNG icons without dependencies: green background and three rising bars.
+// Usage: pnpm --filter @meta31/web icons  (the PNGs are committed in public/)
 import { writeFileSync } from 'node:fs';
 import { deflateSync } from 'node:zlib';
 
@@ -25,7 +25,7 @@ function chunk(type, data) {
   return Buffer.concat([len, body, crc]);
 }
 
-/** padding: fracción del lado que queda libre en cada borde (zona segura de maskable). */
+/** padding: fraction of the side left empty on each edge (maskable safe zone). */
 function icon(size, padding) {
   const inner = size * (1 - 2 * padding);
   const barW = inner / 5;
@@ -37,7 +37,7 @@ function icon(size, padding) {
   }));
   const raw = Buffer.alloc(size * (size * 3 + 1));
   for (let y = 0; y < size; y++) {
-    raw[y * (size * 3 + 1)] = 0; // filtro: ninguno
+    raw[y * (size * 3 + 1)] = 0; // filter: none
     for (let x = 0; x < size; x++) {
       const on = bars.some((b) => x >= b.x0 && x < b.x1 && y >= b.y0 && y < b.y1);
       const [r, g, bl] = on ? FG : BG;
@@ -50,7 +50,7 @@ function icon(size, padding) {
   const ihdr = Buffer.alloc(13);
   ihdr.writeUInt32BE(size, 0);
   ihdr.writeUInt32BE(size, 4);
-  ihdr[8] = 8; // bits por canal
+  ihdr[8] = 8; // bits per channel
   ihdr[9] = 2; // RGB
   return Buffer.concat([
     Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
@@ -65,4 +65,4 @@ writeFileSync(new URL('pwa-192.png', out), icon(192, 0.2));
 writeFileSync(new URL('pwa-512.png', out), icon(512, 0.2));
 writeFileSync(new URL('pwa-maskable-512.png', out), icon(512, 0.28));
 writeFileSync(new URL('apple-touch-icon.png', out), icon(180, 0.2));
-console.log('Íconos generados en apps/web/public/');
+console.log('Icons generated in apps/web/public/');

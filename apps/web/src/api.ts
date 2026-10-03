@@ -8,7 +8,7 @@ export class ApiError extends Error {
   }
 }
 
-/** Llama al Worker con el JWT de la sesión de Supabase. */
+/** Calls the Worker with the Supabase session JWT. */
 async function apiGet<T>(path: string): Promise<T> {
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;

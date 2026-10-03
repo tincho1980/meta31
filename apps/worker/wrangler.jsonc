@@ -12,16 +12,16 @@
 	"hyperdrive": [
 		{
 			"binding": "HYPERDRIVE",
-			// Lo devuelve `wrangler hyperdrive create` (ver docs/setup.md). No es secreto.
+			// Returned by `wrangler hyperdrive create` (see docs/setup.md). Not a secret.
 			"id": "b5352ce596b94da99fe8cb7d3eacc705",
 		},
 	],
 	"vars": {
-		// URL del proyecto Supabase (no es secreta): JWKS e issuer del JWT.
+		// Supabase project URL (not a secret): JWKS and JWT issuer.
 		"SUPABASE_URL": "https://lrusgoutbemqskxrvfhx.supabase.co",
-		// Orígenes de la PWA habilitados para CORS, separados por coma.
+		// PWA origins allowed by CORS, comma separated.
 		"ALLOWED_ORIGINS": "http://localhost:5173,https://meta31.pages.dev",
 	},
-	// Secreto opcional, solo si el proyecto firma con HS256 legado:
+	// Optional secret, only if the project signs with legacy HS256:
 	// wrangler secret put SUPABASE_JWT_SECRET
 }

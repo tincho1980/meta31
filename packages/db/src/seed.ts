@@ -5,9 +5,9 @@ import { person } from './schema.js';
 export type SeedEmails = { martin: string; rosalia: string };
 
 /**
- * Personas iniciales: Martín y Rosalía (usuarios) y Amaia (no usuaria).
- * Idempotente: si la persona ya existe (por nombre) actualiza mail y rol.
- * Los mails no están en el repo: vienen de variables de entorno.
+ * Initial people: Martín and Rosalía (users) and Amaia (not a user).
+ * Idempotent: if the person already exists (by name) it updates email and role.
+ * Emails are not in the repo: they come from environment variables.
  */
 export async function seedPeople(db: Db, emails: SeedEmails): Promise<void> {
   const people = [

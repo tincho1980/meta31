@@ -3,7 +3,7 @@ import { defineConfig, type Plugin } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { parse } from 'yaml';
 
-/** Importa archivos .yml como objetos (el glosario de docs/glosario-es.yml). */
+/** Imports .yml files as objects (the glossary in docs/glosario-es.yml). */
 function yamlPlugin(): Plugin {
   return {
     name: 'meta31-yaml',
@@ -37,7 +37,7 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // La API vive en otro origen (workers.dev): no se cachea, siempre va a la red.
+        // The API lives on another origin (workers.dev): never cached, always network.
         navigateFallbackDenylist: [/^\/api\//],
       },
     }),
