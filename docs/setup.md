@@ -82,7 +82,7 @@ pnpm exec wrangler secret put SUPABASE_JWT_SECRET
 
 Pide el valor por consola; no queda en ningún archivo.
 
-## 5. Deploy del Worker
+## 5. Deploy del Worker (primera vez; después lo hace el CI, ver paso 10)
 
 ```powershell
 pnpm --filter @meta31/worker run deploy
@@ -96,7 +96,7 @@ Prueba rápida (sin token tiene que dar 401):
 curl.exe -i https://meta31-api.<subdominio>.workers.dev/api/me
 ```
 
-## 6. Deploy de la PWA (Cloudflare Pages)
+## 6. Deploy de la PWA (primera vez; después lo hace el CI, ver paso 10)
 
 Crear `apps/web/.env.production.local` (no va al repo) con:
 
@@ -178,3 +178,31 @@ pg_restore --clean --if-exists --no-owner --no-privileges -d "<DATABASE_URL>" "<
 1. Desde el celular, abrir la URL de Pages, *Ingresar con Google* con la cuenta de Martín → "Hola, Martín".
 2. Instalar la PWA (menú del navegador → Instalar app / Agregar a pantalla de inicio).
 3. Con una cuenta de Google que no esté en la lista → "La cuenta … no está habilitada." (el Worker responde 403).
+
+## 10. Deploy automático desde `main`
+
+Desde el 3/10 no se publica a mano. Al mergear un PR a `main`, el workflow `.github/workflows/ci.yml` corre `verify` y, si pasa, el job `deploy` publica el Worker y después la PWA.
+
+Pages no se conectó a GitHub desde el panel: un proyecto creado con *Direct Upload* no se puede pasar a la integración con Git. Por eso el deploy lo hace GitHub Actions con `wrangler`, y así queda atado a que pasen los tests.
+
+**Configuración en GitHub** (ya hecha, salvo el token): environment `production`, que solo pueden usar jobs sobre `main`.
+
+| Nombre | Tipo | Valor |
+| --- | --- | --- |
+| `CLOUDFLARE_API_TOKEN` | secreto | token de API de Cloudflare (ver abajo) |
+| `CLOUDFLARE_ACCOUNT_ID` | variable | ID de la cuenta de Cloudflare |
+| `VITE_SUPABASE_URL` | variable | `https://<ref>.supabase.co` |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | variable | publishable key (es pública) |
+| `VITE_API_URL` | variable | URL del Worker |
+
+**Token de API de Cloudflare.** En el panel: My Profile → API Tokens → Create Token → plantilla *Edit Cloudflare Workers*. Agregar el permiso **Account · Cloudflare Pages · Edit**. En *Account Resources*, solo tu cuenta; en *Zone Resources*, *All zones* (no hay zonas propias). Crear y copiar el token (se muestra una sola vez). Cargarlo sin que quede en ningún archivo:
+
+```powershell
+gh secret set CLOUDFLARE_API_TOKEN --repo tincho1980/meta31 --env production
+```
+
+Pide el valor por consola.
+
+**Migraciones.** El CI no migra la base de Supabase (no tiene la cadena de conexión). Si un PR trae una migración nueva, correr `pnpm --filter @meta31/db migrate` **antes** de mergear a `main`, para que el Worker nuevo no arranque contra un schema viejo. Las migraciones tienen que ser compatibles con el Worker anterior (agregar columnas o tablas, no renombrar ni borrar en el mismo paso).
+
+**Deploy manual de emergencia** (solo si GitHub Actions no anda): pasos 5 y 6, desde `main` actualizado.
