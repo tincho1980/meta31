@@ -33,6 +33,8 @@ Todo período se guarda como `date` con día 1 (check `extract(day) = 1`).
 **D7 · Periodicidad = cada k meses + mes ancla.**
 `every_months` (1, 2, 3, 6, 12) y `anchor_month` (1–12). Mensual = 1; bimestral desde febrero = 2/2; anual en marzo = 12/3. Cubre la regla 8 sin casos especiales.
 
+**Vigencia** (`valid_from` / `valid_to`): se compara por mes y los dos extremos cuentan. Algo con `valid_to` en diciembre tiene su último cargo en diciembre, aunque la fecha sea el 10; algo con `valid_from` el 15 de marzo rige desde marzo. Validado por Martín el 3/10.
+
 **D8 · La simulación no tiene tablas.**
 El Worker recibe la operación hipotética en el request, la suma a las reglas en memoria y devuelve la proyección. Confirmar = la misma llamada de alta de siempre.
 
