@@ -1,6 +1,6 @@
 import { defineProject } from 'vitest/config';
 
-// Los tests corren en Node contra PGlite: la app de Hono se prueba con app.request().
+// Tests run in Node against PGlite: the Hono app is exercised with app.request().
 export default defineProject({
   test: {
     name: 'worker',

@@ -4,7 +4,7 @@ import { person } from './schema.js';
 
 export type AppUser = { id: string; name: string; email: string };
 
-/** Busca un usuario habilitado (lista blanca, RNF-07). El mail se compara sin mayúsculas. */
+/** Looks up an enabled user (allowlist, RNF-07). Email comparison is case-insensitive. */
 export async function findUserByEmail(db: Db, email: string): Promise<AppUser | null> {
   const rows = await db
     .select({ id: person.id, name: person.name, email: person.email })

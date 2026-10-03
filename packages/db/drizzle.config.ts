@@ -3,8 +3,8 @@ import { defineConfig } from 'drizzle-kit';
 
 if (existsSync('.env')) process.loadEnvFile('.env');
 
-// DATABASE_URL solo se necesita para `migrate`. `generate` trabaja contra el schema.
-// Contra Supabase usar el Session pooler (puerto 5432), ver docs/setup.md.
+// DATABASE_URL is only needed for `migrate`. `generate` works against the schema.
+// For Supabase use the Session pooler (port 5432), see docs/setup.md.
 export default defineConfig({
   dialect: 'postgresql',
   schema: './src/schema.ts',

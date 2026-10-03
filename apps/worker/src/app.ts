@@ -5,7 +5,7 @@ import { auth, type TokenVerifier } from './middleware/auth.js';
 import { me } from './routes/me.js';
 
 export type AppDeps = {
-  /** Deja `c.var.db` listo. En producción: Hyperdrive; en tests: PGlite. */
+  /** Sets `c.var.db`. Production: Hyperdrive; tests: PGlite. */
   db: MiddlewareHandler<AppEnv>;
   verifier: (env: Bindings) => TokenVerifier;
 };
@@ -17,7 +17,7 @@ export function createApp(deps: AppDeps) {
     '/api/*',
     cors({
       origin: (origin, c) => {
-        // cors() tipa el contexto sin nuestros bindings
+        // cors() types the context without our bindings
         const allowed = (c.env as Bindings).ALLOWED_ORIGINS.split(',').map((o) => o.trim());
         return allowed.includes(origin) ? origin : null;
       },
