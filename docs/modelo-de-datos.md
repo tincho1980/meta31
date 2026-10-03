@@ -52,6 +52,9 @@ El Worker recibe la operación hipotética en el request, la suma a las reglas e
 | entry_mode | enum `entry_mode` | manual · claude |
 | source_document_id | uuid → source_document, null | comprobante del que salió, si salió de uno |
 
+  Precisiones del schema (E0): van en las 20 tablas salvo `source_document`, que es el comprobante mismo y solo tiene `created_at`/`updated_at` además de `uploaded_by` y `reviewed_by`. `created_by` y `updated_by` admiten null para lo que carga el sistema (seed, scripts de importación); `entry_mode` tiene default `manual`.
+
+- **Checks** además de los unique: período con día 1 (D6) en `period`, `origin_period`, `from_period`, `first_period` e `income_source.valid_from`; `every_months in (1,2,3,6,12)` y `anchor_month` 1–12 (D7); días del mes 1–31; cuotas ≥ 1; `rate > 0` en cotizaciones; `credit_card.local_currency in (ARS, UYU)`; `loan.principal_uva` presente si y solo si `kind = uva`; `commitment` con exactamente un origen (`num_nonnulls` de las cuatro FK = 1). Nombres de constraints en `snake_case`.
 - Las entidades maestras no se borran: tienen `active boolean` o fecha de fin. Los compromisos se anulan, no se borran.
 - RLS activado sin políticas en todas las tablas (RNF-09).
 
@@ -461,4 +464,4 @@ Abrir un mes es idempotente gracias al unique de `source_key`: si dos usuarios e
 
 Validado el 2/10: D1 a D8; IPC como nivel del índice; préstamos con tasa y sistema de amortización, cuota teórica calculada y solo el importe real cargado mes a mes; identificadores en inglés con traducción en `glosario-es.yml`.
 
-Siguiente paso: schema de Drizzle (`schema.ts`) y la primera migración.
+Schema de Drizzle en `packages/db/src/schema.ts` y primera migración en `packages/db/migrations/0000_init.sql` (E0).
