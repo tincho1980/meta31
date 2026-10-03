@@ -359,6 +359,17 @@ enums:
     confirmed: Confirmado
     discarded: Descartado
 
+# Textos de la interfaz que no son tablas, columnas ni enums.
+# Admiten variables entre llaves: {name}, {email}.
+ui:
+  app_name: meta31
+  loading: Cargando…
+  sign_in_with_google: Ingresar con Google
+  sign_out: Salir
+  greeting: Hola, {name}
+  not_authorized: "La cuenta {email} no está habilitada."
+  error_generic: No se pudo conectar con el servidor.
+
 # Derivados (no son columnas ni enums, pero aparecen en pantalla)
 derived:
   postponed: Postergado
