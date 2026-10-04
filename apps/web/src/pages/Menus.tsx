@@ -53,6 +53,8 @@ export function More({ onSignOut }: { onSignOut: () => void }) {
           { to: '/gastos-puntuales', label: t('nav_one_off_expenses') },
         ]}
       />
+      <h2>{t('nav_reports')}</h2>
+      <Menu entries={[{ to: '/reportes/costo-financiero', label: t('report_financial_cost') }]} />
       <h2>{t('nav_settings')}</h2>
       <p className="muted">{t('more_intro')}</p>
       <Menu

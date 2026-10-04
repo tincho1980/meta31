@@ -17,6 +17,7 @@ import { oneOffIncomes } from './routes/one-off-incomes.js';
 import { commitments, incomes } from './routes/payments.js';
 import { people } from './routes/people.js';
 import { properties } from './routes/properties.js';
+import { reports } from './routes/reports.js';
 import { recurringExpenses } from './routes/recurring-expenses.js';
 import { ServiceError } from './services/errors.js';
 
@@ -63,6 +64,7 @@ export function createApp(deps: AppDeps) {
   app.route('/api/card-statements', cardStatements);
   app.route('/api/commitments', commitments);
   app.route('/api/incomes', incomes);
+  app.route('/api/reports', reports);
 
   app.notFound((c) => c.json({ error: 'not_found' }, 404));
   app.onError((err, c) => {

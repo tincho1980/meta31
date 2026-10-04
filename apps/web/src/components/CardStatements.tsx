@@ -6,6 +6,7 @@ import { api } from '../api';
 import { formatDate, formatDecimal, formatMoney, formatMonth, parseDecimalInput } from '../format';
 import { columnLabel, errorMessage, t, tableLabel } from '../glossary';
 import { Field } from './Field';
+import { StatementBreakdown } from './StatementBreakdown';
 
 const TABLE = 'card_statement';
 
@@ -166,6 +167,7 @@ function StatementForm({ card, initial, schema, withCard, pending, error, onSubm
 
 function StatementRow({ card, statement, onSaved }: { card: CreditCard; statement: CardStatement; onSaved: () => Promise<unknown> }) {
   const [editing, setEditing] = useState(false);
+  const [breakdown, setBreakdown] = useState(false);
   const update = useMutation({
     mutationFn: (input: unknown) => api('PATCH', `/api/card-statements/${statement.id}`, input),
     onSuccess: async () => {
@@ -188,11 +190,15 @@ function StatementRow({ card, statement, onSaved }: { card: CreditCard; statemen
       </span>
       {!editing && (
         <span className="actions">
+          <button type="button" className="link" aria-expanded={breakdown} onClick={() => setBreakdown(!breakdown)}>
+            {t('breakdown')}
+          </button>
           <button type="button" className="link" onClick={() => setEditing(true)}>
             {t('edit')}
           </button>
         </span>
       )}
+      {breakdown && !editing && <StatementBreakdown card={card} statement={statement} />}
       {editing && (
         <div className="row-panel">
           <StatementForm

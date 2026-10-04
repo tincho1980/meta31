@@ -2,6 +2,7 @@
 export * from './amount-history.js';
 export * from './card-items.js';
 export * from './card-statement.js';
+export * from './card-transaction.js';
 export * from './category.js';
 export * from './common.js';
 export * from './credit-card.js';

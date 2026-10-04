@@ -386,6 +386,7 @@ ui:
   nav_recurring_expenses: Gastos recurrentes
   nav_one_off_expenses: Gastos puntuales
   nav_settings: Configuración
+  nav_reports: Reportes
   load_intro: ¿Qué querés cargar?
   more_intro: Datos de base que usan las proyecciones.
   pending_screen: Esta pantalla todavía no está. Viene en las próximas entregas.
@@ -455,6 +456,21 @@ ui:
   view_all: Todo
   filter: Filtro
   pay: Pagar
+  breakdown: Desglose
+  breakdown_check: "El desglose suma {local} de {localTotal} y {usd} de {usdTotal}."
+  negative_for_payments: Negativo para pagos y bonificaciones
+  paid_by_card: Pagado con tarjeta
+  paid_by_card_reason: Pagado con tarjeta
+  paid_by_card_help: Si este mes lo pagaste con tarjeta, se anula acá y queda como consumo del resumen (regla 2).
+  report_financial_cost: Costo financiero de tarjetas
+  report_financial_cost_help: Intereses por no pagar el total, gastos administrativos e impuestos de cada resumen, por tarjeta y por mes. Sale del desglose de los resúmenes.
+  report_financial_cost_empty: Todavía no hay intereses, gastos ni impuestos cargados en el desglose de ningún resumen.
+  card: Tarjeta
+  cost_interest: Intereses
+  cost_admin_fee: Gastos adm.
+  cost_tax: Impuestos
+  cost_total: Total
+  cost_total_ars: Total en $
   pay_statement: Pagar resumen
   card_local_part: "En {currency} (faltan {left})"
   card_usd_part: "Parte en dólares, en {currency} (faltan {left})"
@@ -554,6 +570,7 @@ ui:
   error_cancelled: Está anulado.
   error_already_paid: Ya está pagado.
   error_not_open: Ese mes todavía no está abierto.
+  error_installment_number: Esa compra no tiene tantas cuotas.
   error_month_closed: Ese mes está cerrado. Para cambiar algo, reabrilo.
   error_already_closed: El mes ya está cerrado.
   error_not_closed: El mes no está cerrado.
