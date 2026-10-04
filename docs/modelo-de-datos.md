@@ -471,6 +471,8 @@ Con ~50 reglas y 12 meses son unas 600 operaciones en memoria: entra cómodo en 
 
 Abrir un mes es idempotente gracias al unique de `source_key`: si dos usuarios entran a la vez, el segundo no duplica.
 
+Implementación (`apps/worker/src/services/open-month.ts`): en una sola transacción se inserta la fila de `month` con `ON CONFLICT DO NOTHING`; si ya existía, no se hace nada más. Si es nueva, se generan los candidatos del mes y se insertan con `ON CONFLICT (source_key) DO NOTHING`, así lo ya grabado (tocado antes, postergado o anulado) nunca se pisa ni se duplica. Las reglas que no pudieron generar (sin monto vigente, UVA sin valor) vuelven como avisos.
+
 ## 8. Fuera de este modelo (a propósito)
 
 - **Cuentas, saldos y transferencias**: fuera de alcance.
