@@ -33,6 +33,8 @@ Todo período se guarda como `date` con día 1 (check `extract(day) = 1`).
 **D7 · Periodicidad = cada k meses + mes ancla.**
 `every_months` (1, 2, 3, 6, 12) y `anchor_month` (1–12). Mensual = 1; bimestral desde febrero = 2/2; anual en marzo = 12/3. Cubre la regla 8 sin casos especiales.
 
+**Vigencia** (`valid_from` / `valid_to`): se compara por mes y los dos extremos cuentan. Algo con `valid_to` en diciembre tiene su último cargo en diciembre, aunque la fecha sea el 10; algo con `valid_from` el 15 de marzo rige desde marzo. Validado por Martín el 3/10.
+
 **D8 · La simulación no tiene tablas.**
 El Worker recibe la operación hipotética en el request, la suma a las reglas en memoria y devuelve la proyección. Confirmar = la misma llamada de alta de siempre.
 
@@ -55,7 +57,7 @@ El Worker recibe la operación hipotética en el request, la suma a las reglas e
   Precisiones del schema (E0): van en las 20 tablas salvo `source_document`, que es el comprobante mismo y solo tiene `created_at`/`updated_at` además de `uploaded_by` y `reviewed_by`. `created_by` y `updated_by` admiten null para lo que carga el sistema (seed, scripts de importación); `entry_mode` tiene default `manual`.
 
 - **Checks** además de los unique: período con día 1 (D6) en `period`, `origin_period`, `from_period`, `first_period` e `income_source.valid_from`; `every_months in (1,2,3,6,12)` y `anchor_month` 1–12 (D7); días del mes 1–31; cuotas ≥ 1; `rate > 0` en cotizaciones; `credit_card.local_currency in (ARS, UYU)`; `loan.principal_uva` presente si y solo si `kind = uva`; `commitment` con exactamente un origen (`num_nonnulls` de las cuatro FK = 1). Nombres de constraints en `snake_case`.
-- Las entidades maestras no se borran: tienen `active boolean` o fecha de fin. Los compromisos se anulan, no se borran.
+- Las entidades maestras no se borran: tienen `active boolean` o fecha de fin. Los compromisos se anulan, no se borran. Excepción: `recurring_expense` y `one_off_expense` se pueden borrar mientras no tengan compromisos grabados (ver 4.4).
 - RLS activado sin políticas en todas las tablas (RNF-09).
 
 ## 3. Diagrama
@@ -129,6 +131,8 @@ Transversales sin relaciones fuertes: `category` (la usan casi todas), `exchange
 
 Cotización vigente a una fecha = la fila con mayor `valid_from ≤ fecha`. UYU → ARS pasa por USD.
 
+**Sentido de `rate`** (decidido el 3/10): en los dos pares es cuántas unidades de moneda local vale un dólar, como lo informan bancos y diarios. `USD_ARS` = pesos argentinos por USD (≈ 1.450); `UYU_USD` = pesos uruguayos por USD (≈ 40). El nombre del par no indica el sentido; manda esta definición.
+
 **economic_index** (RF-05, RF-24)
 
 | Campo | Tipo | Notas |
@@ -158,7 +162,7 @@ Pesos constantes: monto × (IPC del mes de referencia / IPC del mes del monto).
 | name | text | "Sueldo docente Martín", "Alquiler Pocitos" |
 | category_id | → category | |
 | holder_id | → person, null | informativo (RF-02) |
-| property_id | → property, null | obligatorio para alquileres; alimenta rentabilidad por propiedad |
+| property_id | → property, null | opcional, también en alquileres; alimenta rentabilidad por propiedad |
 | currency | currency | |
 | every_months / anchor_month | smallint / smallint | D7 |
 | expected_day | smallint, null | día esperado de cobro |
@@ -173,6 +177,8 @@ Pesos constantes: monto × (IPC del mes de referencia / IPC del mes del monto).
 | from_period | date | rige desde ese mes hasta la próxima fila |
 | amount | numeric(14,2) | en la moneda de la fuente |
 | | | unique(income_source_id, from_period) |
+
+Reglas de carga (E1): la fuente se da de alta con su primer monto, que rige desde `valid_from`, en la misma transacción. Siempre tiene que haber un monto que rija en el primer mes de la fuente: no se acepta mover `valid_from` antes del primer monto ni correr el primer monto después de `valid_from`. La categoría tiene que ser de ingresos. Dar de baja una fuente = cargar `valid_to` (último mes que se cobra, inclusive); los meses ya grabados conservan sus ingresos (D1).
 
 **income** — ingreso esperado materializado, o ingreso puntual (RF-08, RF-09)
 
@@ -191,6 +197,8 @@ Pesos constantes: monto × (IPC del mes de referencia / IPC del mes del monto).
 | applied_rate | numeric(14,6), null | se fija al cobrar |
 | status | enum `income_status` | expected · received · cancelled |
 
+Ingresos puntuales (RF-09, E1): filas de `income` sin `income_source_id` ni `source_key`, grabadas al darlas de alta. La fecha esperada cae en `period`. Se editan y se borran mientras estén `expected`; cobradas o anuladas se manejan desde la vista del mes (E2).
+
 ### 4.3 Tarjetas
 
 **credit_card** (RF-10)
@@ -201,7 +209,7 @@ Pesos constantes: monto × (IPC del mes de referencia / IPC del mes del monto).
 | bank | text | |
 | country | country | |
 | holder_id | → person | |
-| local_currency | currency | ARS o UYU; también es la moneda de pago (regla 3) |
+| local_currency | currency | ARS o UYU; también es la moneda de pago (regla 3). Sale del país: AR → ARS, UY → UYU; no se elige |
 | closing_day / due_day | smallint | aproximados; el real viene en el resumen |
 | estimated_spend_local | numeric(14,2) | para estimar resúmenes futuros (RF-16) |
 | estimated_spend_usd | numeric(14,2) | |
@@ -221,6 +229,8 @@ Pesos constantes: monto × (IPC del mes de referencia / IPC del mes del monto).
 
 Monto pagado y saldo financiado no se guardan: salen de los pagos de sus dos compromisos.
 
+Reglas de carga (E1): el período es el mes del vencimiento; el cierre es anterior al vencimiento. El resumen real reemplaza la estimación del mes (RF-16, regla 10): si el mes no está abierto, el generador ya usa sus totales; si está abierto, en la misma transacción los compromisos `cc:` pendientes de esa tarjeta toman los totales y el vencimiento del resumen, y se crea el de la moneda que no existía. Los compromisos ya pagados (total o parcial) no se tocan. Por ahora no se borra: se corrige.
+
 **installment_purchase** — compra en cuotas; sus cuotas se proyectan (RF-13)
 
 | Campo | Tipo | Notas |
@@ -235,6 +245,8 @@ Monto pagado y saldo financiado no se guardan: salen de los pagos de sus dos com
 | first_period | date | resumen donde cae la cuota 1 |
 
 Al arrancar (RNF-15) se carga con el número de cuota del último resumen: si el resumen de octubre dice "4 de 12", `first_period` = julio.
+
+Reglas de carga (E1), también para `subscription`: la moneda es la local de la tarjeta o USD (D4); la categoría es de gastos y no puede ser "Tarjetas de crédito". Se pueden borrar mientras ningún `card_transaction` de un resumen real las referencie; después se editan, o se da de baja la suscripción.
 
 **subscription** — suscripciones y débitos automáticos en tarjeta (RF-14)
 
@@ -292,6 +304,8 @@ Costo financiero de tarjetas = suma de `interest + admin_fee + tax` por tarjeta 
 
 Cargar la factura real de un servicio actualiza el compromiso del mes y, si se elige, agrega una fila acá desde el mes siguiente (RF-19).
 
+Reglas de carga (E1): las mismas que `income_source` (alta con el primer monto estimado desde `valid_from`, siempre un monto vigente en el primer mes, baja con `valid_to`). La categoría tiene que ser de gastos y no puede ser "Tarjetas de crédito": lo que se paga con tarjeta vive en el resumen (regla 1). Se puede borrar (con su historial) solo mientras no tenga compromisos grabados; después se le pone fin o se anula el compromiso desde la vista del mes (decidido por Martín el 3/10).
+
 **one_off_expense** — gasto puntual (RF-21)
 
 | Campo | Tipo | Notas |
@@ -306,6 +320,8 @@ Cargar la factura real de un servicio actualiza el compromiso del mes y, si se e
 | planned_date | date, null | |
 
 Cuota = total / cuotas; la última absorbe el redondeo.
+
+Reglas de carga (E1): hasta 120 cuotas; la fecha prevista es la del primer pago y cae en `first_period`. Categoría de gastos, nunca "Tarjetas de crédito": si se paga con tarjeta es una `installment_purchase` (regla 1). Editar cambia las cuotas que todavía son virtuales; las ya grabadas conservan su monto (D1). Se puede borrar solo mientras ninguna cuota esté grabada; si ya hay alguna, esa cuota se anula desde la vista del mes (decidido por Martín el 3/10).
 
 ### 4.5 Préstamos
 
@@ -331,16 +347,25 @@ Al dar de alta el préstamo se cargan sus condiciones y el sistema calcula el cu
 | granted_date | date | fecha de otorgamiento; define el primer período de interés |
 | installments_total | smallint | |
 | first_period | date | mes de la cuota 1 |
-| due_day | smallint | |
+| due_day | smallint | día de vencimiento; si el mes tiene menos días (p. ej. 31), vence el último día del mes |
 | quoted_installment | numeric(14,2), null | cuota que informó el banco al otorgar |
 
 **Cálculo y control**
 
-- **Cuota teórica n**: sale de principal, TNA/12, sistema, cuotas totales, IVA y seguro. En UVA se calcula en UVAs y se pasa a pesos con el valor UVA del vencimiento (o el último cargado, para cuotas futuras: RF-24).
+- **Cuota teórica n** (convención validada al centavo contra 8 cuotas reales de un préstamo bancario, 3/10):
+  - **Capital** según el sistema: francés = cuadro de libro con tasa mensual TNA/12 (cuota pura constante); alemán = capital / n; americano = todo el capital en la última cuota.
+  - **Interés** por los días reales del período sobre el saldo de capital: tasa del período = TNA × días / 365, redondeada a 8 decimales; interés = saldo × tasa del período, truncado a centavos. El primer período va de `granted_date` al primer vencimiento; los siguientes, entre vencimientos. Por eso la cuota varía con los días del mes y la primera es mayor si el otorgamiento es más de un mes antes.
+  - Vencimientos: `first_period` + `due_day` (31 = último día de cada mes).
+  - IVA = interés × `interest_vat_rate`; más `monthly_insurance`. Capital redondeado a centavos; la última cuota toma el saldo que quede, así el préstamo cierra en cero.
+  - En UVA se calcula en UVAs y se pasa a pesos con el valor UVA del vencimiento (o el último cargado, para cuotas futuras: RF-24).
+- **Cuotas por fecha, no por número.** Los avisos del banco se emparejan con la cuota del cuadro por la fecha de vencimiento: los bancos numeran distinto (algunos cuentan el desembolso como cuota 1).
 - **Cuota estimada** de los compromisos futuros = cuota teórica. No se carga a mano.
 - **Desvío por cuota** = monto real − cuota teórica, en importe y en %. Detecta que algo no cierra; para saber qué, hay que mirar el aviso del banco.
 - **Deuda remanente (RF-25)** = saldo de capital del cuadro teórico después de la última cuota pagada.
-- Las fórmulas viven en el dominio del Worker y son de los primeros tests (RNF-11): francés, alemán, americano y UVA, contra cuadros reales de los dos préstamos.
+- **Desvío típico:** el banco cobra aparte "intereses exceso" (compensatorio + punitorio, 1,5 × TNA, por los días de atraso) cuando la cuota se debita después del vencimiento. Aparece como desvío positivo.
+- Las fórmulas viven en `packages/domain/src/loan.ts` (RNF-11): francés con un préstamo inventado que sigue la misma convención; la validación contra las cuotas reales vive en un test local fuera de git (`*.local.test.ts`), porque el repo es público. Alemán, americano y UVA contra ejemplos calculados a mano. El préstamo de Rosalía se valida cuando estén sus datos.
+- **Reglas de carga (E1):** la primera cuota vence después de `granted_date` (si no, no hay primer período de interés); `principal_uva` va si y solo si `kind = uva`; los préstamos UVA son en ARS (la UVA es un índice en pesos). Categoría de gastos, nunca "Tarjetas de crédito". Se puede borrar mientras ninguna cuota esté grabada, como los gastos (decidido por Martín el 3/10 para recurrentes y puntuales; extendido a préstamos). La pantalla muestra el cuadro teórico, la cuota del mes y la deuda remanente teórica al inicio del mes; con los pagos de E2 pasa a ser la deuda después de la última cuota pagada.
+- **Pendiente (otros bancos):** si un préstamo de otro banco calcula distinto, agregar la opción de dividir el monto total en n cuotas iguales, sin cuadro. Se decide al cargar ese préstamo.
 
 ### 4.6 Compromisos
 
@@ -449,9 +474,24 @@ Para cada mes M de la proyección, el Worker:
 3. Descarta los candidatos cuya `source_key` ya está grabada (aunque esté en otro mes porque se postergó, o anulada).
 4. Suma: resultado estimado = ingresos − compromisos, convirtiendo cada importe con la cotización vigente a su fecha. El resultado real (meses cerrados) usa montos cobrados y `allocated_amount` de los pagos.
 
+**Precisiones de la generación** (`packages/domain/src/generators.ts`, 3/10):
+- **Tarjetas:** un compromiso por moneda (D4), local y USD. Si una moneda no tiene nada que pagar en el mes, no se genera su compromiso (una tarjeta sin consumos en USD tiene un solo compromiso). Con resumen real cargado se usan sus totales y su vencimiento; si no, cuotas que caen en el mes + suscripciones vigentes + consumo estimado. Una tarjeta inactiva sigue generando sus cuotas y suscripciones pendientes, pero no el consumo estimado. Una compra o suscripción en una moneda que la tarjeta no factura es un error de datos.
+- **Categoría del pago de tarjeta:** `credit_card` no tiene categoría y `commitment.category_id` es obligatorio, así que el pago de los resúmenes usa la categoría de gasto **"Tarjetas de crédito"**, que crea el seed (decidido por Martín el 3/10). Se busca por nombre: no renombrarla. El detalle por rubro de lo comprado con tarjeta sale de `card_transaction`.
+- **Categoría de alquileres:** es alquiler toda fuente de ingreso (o ingreso puntual) con la categoría de ingresos **"Alquileres"**, tenga o no una propiedad asignada (decidido por Martín el 3/10). La crea el seed y, como "Tarjetas de crédito", es del sistema: se busca por nombre y no se puede renombrar ni desactivar.
+- **Sin monto vigente:** si una fuente de ingreso o un gasto recurrente no tiene monto cargado para el mes, no se genera el candidato y se informa como aviso (no se descarta en silencio). Igual con un préstamo UVA sin valor UVA cargado.
+- **Gasto puntual en cuotas:** la fecha prevista se aplica a la primera cuota; las demás quedan sin vencimiento.
+
 Con ~50 reglas y 12 meses son unas 600 operaciones en memoria: entra cómodo en los 10 ms de CPU del Worker. Las consultas son 6–8 por proyección, no una por mes.
 
 Abrir un mes es idempotente gracias al unique de `source_key`: si dos usuarios entran a la vez, el segundo no duplica.
+
+**Proyección** (`packages/domain/src/projection.ts`, servicio `apps/worker/src/services/projection.ts`, 3/10):
+- Cada mes = compromisos e ingresos grabados con `period` en el mes (no anulados) + candidatos virtuales cuya `source_key` no está grabada. Monto vigente del compromiso = `coalesce(actual_amount, estimated_amount) + surcharge`; del ingreso, `coalesce(actual_amount, estimated_amount)`. "Postergado" se deriva de `origin_period ≠ period`.
+- Totales en cada moneda original (siempre) y convertidos a ARS y USD con la cotización vigente a la fecha de cada línea (vencimiento o fecha esperada; si no tiene, el día 1 del mes). Si falta una cotización, los totales convertidos quedan vacíos y se informa qué par y fecha faltan, sin cortar la proyección.
+- **Carga de cuotas (RF-33)** = (cuotas de compras con tarjeta que caen en el mes + cuotas de préstamos) en ARS ÷ ingresos del mes en ARS. Sin ingresos, el porcentaje queda vacío.
+- Solo lectura: proyectar no materializa nada. Horizonte de 1 a 36 meses.
+
+Implementación (`apps/worker/src/services/open-month.ts`): en una sola transacción se inserta la fila de `month` con `ON CONFLICT DO NOTHING`; si ya existía, no se hace nada más. Si es nueva, se generan los candidatos del mes y se insertan con `ON CONFLICT (source_key) DO NOTHING`, así lo ya grabado (tocado antes, postergado o anulado) nunca se pisa ni se duplica. Las reglas que no pudieron generar (sin monto vigente, UVA sin valor) vuelven como avisos.
 
 ## 8. Fuera de este modelo (a propósito)
 

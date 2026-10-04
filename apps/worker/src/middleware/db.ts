@@ -4,8 +4,8 @@ import pg from 'pg';
 import type { AppEnv } from '../env.js';
 
 /**
- * Un cliente `pg` por request contra Hyperdrive (Hyperdrive hace el pooling).
- * Nunca guardar conexiones en variables globales del Worker.
+ * One `pg` client per request against Hyperdrive (Hyperdrive does the pooling).
+ * Never keep connections in Worker global variables.
  */
 export const withDb = createMiddleware<AppEnv>(async (c, next) => {
   const client = new pg.Client({ connectionString: c.env.HYPERDRIVE.connectionString });

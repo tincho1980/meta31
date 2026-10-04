@@ -2,12 +2,12 @@ import { sql } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { findUserByEmail } from '../src/queries.js';
 import { category, month, person } from '../src/schema.js';
-import { seedPeople } from '../src/seed.js';
+import { CARD_PAYMENT_CATEGORY, cardPaymentCategoryId, seedCategories, seedPeople } from '../src/seed.js';
 import { createTestDb, type TestDb } from '../src/testing.js';
 
 let t: TestDb;
 
-/** `execute` sobre el tipo común Db no conoce la forma del resultado: la fijamos acá. */
+/** `execute` on the shared Db type does not know the result shape: we pin it here. */
 async function rows<T>(query: ReturnType<typeof sql>): Promise<T[]> {
   const result = (await t.db.execute(query)) as unknown as { rows: T[] };
   return result.rows;
@@ -21,8 +21,8 @@ afterAll(async () => {
   await t.close();
 });
 
-describe('migración inicial', () => {
-  it('crea las 21 tablas del modelo con RLS activado y sin políticas (RNF-09)', async () => {
+describe('initial migration', () => {
+  it('creates the 21 model tables with RLS enabled and no policies (RNF-09)', async () => {
     const tables = await rows<{ relname: string; relrowsecurity: boolean }>(sql`
       select c.relname, c.relrowsecurity
       from pg_class c join pg_namespace n on n.oid = c.relnamespace
@@ -35,22 +35,22 @@ describe('migración inicial', () => {
     expect(policies).toHaveLength(0);
   });
 
-  it('rechaza un período que no es día 1 (D6)', async () => {
+  it('rejects a period that is not day 1 (D6)', async () => {
     await expect(t.db.insert(month).values({ period: '2026-10-15' })).rejects.toThrow();
     await t.db.insert(month).values({ period: '2026-10-01' });
   });
 
-  it('category es única por nombre y tipo', async () => {
+  it('category is unique by name and kind', async () => {
     await t.db.insert(category).values({ name: 'Sueldos', kind: 'income' });
     await t.db.insert(category).values({ name: 'Sueldos', kind: 'expense' });
     await expect(t.db.insert(category).values({ name: 'Sueldos', kind: 'income' })).rejects.toThrow();
   });
 });
 
-describe('seed de personas', () => {
+describe('people seed', () => {
   const emails = { martin: 'Martin@Example.com', rosalia: 'rosalia@example.com' };
 
-  it('carga Martín y Rosalía como usuarios y Amaia como no usuaria, sin duplicar si se repite', async () => {
+  it('loads Martín and Rosalía as users and Amaia as non-user, without duplicates when repeated', async () => {
     await seedPeople(t.db, emails);
     await seedPeople(t.db, emails);
     const rows = await t.db
@@ -64,14 +64,25 @@ describe('seed de personas', () => {
     ]);
   });
 
-  it('encuentra usuarios de la lista blanca sin importar mayúsculas', async () => {
+  it('finds allowlisted users regardless of case', async () => {
     const user = await findUserByEmail(t.db, 'MARTIN@example.com');
     expect(user?.name).toBe('Martín');
     expect(await findUserByEmail(t.db, 'intruso@example.com')).toBeNull();
   });
 
-  it('no habilita a una persona que no es usuaria aunque tenga mail', async () => {
+  it('does not enable a non-user person even with an email', async () => {
     await t.db.insert(person).values({ name: 'Otra', email: 'otra@example.com', isUser: false });
     expect(await findUserByEmail(t.db, 'otra@example.com')).toBeNull();
+  });
+});
+
+describe('system categories seed', () => {
+  it('creates the card payment category once, even when run twice', async () => {
+    await seedCategories(t.db);
+    await seedCategories(t.db);
+    const id = await cardPaymentCategoryId(t.db);
+    const rows = await t.db.select().from(category);
+    expect(rows.filter((r) => r.name === CARD_PAYMENT_CATEGORY.name && r.kind === 'expense')).toHaveLength(1);
+    expect(rows.find((r) => r.name === CARD_PAYMENT_CATEGORY.name)?.id).toBe(id);
   });
 });

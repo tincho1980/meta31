@@ -1,5 +1,5 @@
-// Schema de la base. Fuente de verdad: docs/modelo-de-datos.md (21 tablas).
-// Nombres en inglés; Drizzle mapea camelCase → snake_case (casing: 'snake_case').
+// Database schema. Source of truth: docs/modelo-de-datos.md (21 tables).
+// English names; Drizzle maps camelCase → snake_case (casing: 'snake_case').
 import { sql } from 'drizzle-orm';
 import {
   type AnyPgColumn,
@@ -19,7 +19,7 @@ import {
 } from 'drizzle-orm/pg-core';
 
 // ---------------------------------------------------------------------------
-// Enums (sección 5)
+// Enums (section 5)
 // ---------------------------------------------------------------------------
 
 export const currency = pgEnum('currency', ['ARS', 'USD', 'UYU']);
@@ -79,32 +79,32 @@ export const documentStatus = pgEnum('document_status', [
 ]);
 
 // ---------------------------------------------------------------------------
-// Tipos de columna (RNF-10)
+// Column types (RNF-10)
 // ---------------------------------------------------------------------------
 
-/** Importe: numeric(14,2). Drizzle lo devuelve como string → Decimal en el borde. */
+/** Amount: numeric(14,2). Drizzle returns it as a string → Decimal at the boundary. */
 const amount = () => numeric({ precision: 14, scale: 2 });
-/** Cotización o índice: numeric(14,6). */
+/** Exchange rate or index: numeric(14,6). */
 const rate = () => numeric({ precision: 14, scale: 6 });
-/** Tasa en %: numeric(9,6). */
+/** Rate in %: numeric(9,6). */
 const percent = () => numeric({ precision: 9, scale: 6 });
-/** Fecha sin hora, como string 'YYYY-MM-DD'. */
+/** Date without time, as a 'YYYY-MM-DD' string. */
 const day = () => date({ mode: 'string' });
 const id = () => uuid().primaryKey().defaultRandom();
 
-/** Check D6: un período es una fecha con día 1. */
+/** Check D6: a period is a date on day 1. */
 const firstDay = (name: string, column: AnyPgColumn) =>
   check(name, sql`extract(day from ${column}) = 1`);
-/** Check D7: periodicidad válida. */
+/** Check D7: valid periodicity. */
 const periodicity = (prefix: string, everyMonths: AnyPgColumn, anchorMonth: AnyPgColumn) => [
   check(`${prefix}_every_months_check`, sql`${everyMonths} in (1, 2, 3, 6, 12)`),
   check(`${prefix}_anchor_month_check`, sql`${anchorMonth} between 1 and 12`),
 ];
 
 // ---------------------------------------------------------------------------
-// Auditoría (RF-01). Va en todas las tablas salvo source_document, que es el
-// comprobante mismo y tiene sus propias columnas (uploaded_by, reviewed_by).
-// created_by/updated_by admiten null para lo que carga el sistema (seed, scripts).
+// Audit columns (RF-01). On every table except source_document, which is the
+// document itself and has its own columns (uploaded_by, reviewed_by).
+// created_by/updated_by are nullable for system-loaded data (seed, scripts).
 // ---------------------------------------------------------------------------
 
 const audit = () => ({
@@ -194,7 +194,7 @@ export const month = pgTable(
 ).enableRLS();
 
 // ---------------------------------------------------------------------------
-// 4.2 Ingresos
+// 4.2 Income
 // ---------------------------------------------------------------------------
 
 export const incomeSource = pgTable(
@@ -266,7 +266,7 @@ export const income = pgTable(
 ).enableRLS();
 
 // ---------------------------------------------------------------------------
-// 4.3 Tarjetas
+// 4.3 Credit cards
 // ---------------------------------------------------------------------------
 
 export const creditCard = pgTable(
@@ -383,7 +383,7 @@ export const cardTransaction = pgTable(
 ).enableRLS();
 
 // ---------------------------------------------------------------------------
-// 4.4 Gastos
+// 4.4 Expenses
 // ---------------------------------------------------------------------------
 
 export const recurringExpense = pgTable(
@@ -452,7 +452,7 @@ export const oneOffExpense = pgTable(
 ).enableRLS();
 
 // ---------------------------------------------------------------------------
-// 4.5 Préstamos
+// 4.5 Loans
 // ---------------------------------------------------------------------------
 
 export const loan = pgTable(
@@ -495,7 +495,7 @@ export const loan = pgTable(
 ).enableRLS();
 
 // ---------------------------------------------------------------------------
-// 4.6 Compromisos
+// 4.6 Commitments
 // ---------------------------------------------------------------------------
 
 export const commitment = pgTable(
@@ -555,7 +555,7 @@ export const commitmentPayment = pgTable(
 ).enableRLS();
 
 // ---------------------------------------------------------------------------
-// 4.7 Carga por Claude
+// 4.7 Loading by Claude
 // ---------------------------------------------------------------------------
 
 export const sourceDocument = pgTable('source_document', {

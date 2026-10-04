@@ -12,6 +12,7 @@ Proyecto personal. Lo programa Claude con supervisión de Martín. Hablale a Mar
 | `docs/modelo-de-datos.md` | 21 tablas, columnas, enums, decisiones D1–D8, cómo se calcula un mes |
 | `docs/plan-de-entregas.md` | Entregas E0–E4: alcance, tests y criterio de cierre de cada una |
 | `docs/glosario-es.yml` | Traducción al castellano de cada tabla, columna y valor de enum; fuente de etiquetas de la PWA |
+| `docs/manual-de-marca.md` | Marca Meta31: concepto, colores, tipografía, montos, estados, navegación, voz. Tokens exactos y componentes en el sistema de diseño enlazado al final |
 
 Reglas sobre los documentos:
 - Antes de implementar algo, leé la sección que corresponde. Si el código y el documento no coinciden, **el documento manda** salvo que Martín decida otra cosa.
@@ -25,7 +26,8 @@ Reglas sobre los documentos:
 - Repo: remoto `github.com/tincho1980/meta31`. E0 en la rama `feat/e0-esqueleto`.
 - Infra creada por Martín: proyecto Supabase con login de Google configurado, credencial OAuth de Google, cuenta de Cloudflare.
 - **E0: cerrado el 3/10/2026.** Login con Google desde el celular → "Hola, Martín"; una cuenta no habilitada recibe 403. Producción: PWA en `https://meta31.pages.dev`, Worker en `https://meta31-api.miramallo.workers.dev`. Se publicaron a mano desde `feat/e0-esqueleto`, así que `main` todavía no refleja producción.
-- **Deploy automático:** cada merge a `main` corre `verify` y, si pasa, el job `deploy` del CI publica el Worker y la PWA (credenciales en el environment `production` de GitHub, solo para `main`). Nada de deploys a mano; detalle en `docs/setup.md` paso 10. Las migraciones contra Supabase las corre Martín antes de mergear a `main`. Siguiente: E1. Meta inmediata: cerrar E1 y E2; después E3 (MCP); E4 (simulador, IPC, rentabilidad) al final.
+- **Deploy automático:** cada merge a `main` corre `verify` y, si pasa, el job `deploy` del CI publica el Worker y la PWA (credenciales en el environment `production` de GitHub, solo para `main`). Nada de deploys a mano; detalle en `docs/setup.md` paso 10. Las migraciones contra Supabase las corre Martín antes de mergear a `main`.
+- **E1 en curso:** dominio completo (períodos, montos y cotizaciones, amortización, generadores, apertura de mes, proyección y carga de cuotas). Altas (RF-34) completas: categorías, cotizaciones, propiedades, fuentes de ingreso, gastos recurrentes (los dos con historial de montos), gastos puntuales, tarjetas, compras en cuotas, suscripciones y préstamos (con cuadro teórico). Vista del mes (abre el mes en curso) y proyección a 12 meses con el indicador de cuotas: hechas. Ingresos puntuales (RF-09) y resumen real de tarjeta con totales (RF-11): hechos. Carga inicial por script (`initial-load`, docs/setup.md paso 11): hecha. Falta el cierre de E1: Martín corre la carga inicial con sus datos y planifica el mes siguiente solo con el sistema. Meta inmediata: cerrar E1 y E2; después E3 (MCP); E4 (simulador, IPC, rentabilidad) al final.
 
 ## Stack (cerrado, no cambiar sin hablarlo)
 
@@ -38,6 +40,8 @@ Reglas sobre los documentos:
 | Auth | Supabase Auth con Google. La PWA manda `Authorization: Bearer <jwt>`; un middleware único del Worker lo verifica |
 | Dinero | `decimal.js`. Prohibido `number` para importes |
 | Tests | Vitest |
+| Validación de la API | zod (esquemas compartidos en `packages/contracts`) |
+| PWA | react-router, TanStack Query |
 | Gestor de paquetes | pnpm (workspaces) |
 
 Todo en planes gratuitos. Límites a vigilar (RNF-13): Worker 3 MB comprimido, 10 ms de CPU por request, 100.000 requests/día; Supabase 500 MB y pausa a los 7 días sin uso. Descartados y por qué: Prisma (peso y límites del plan free), Render (demora al despertar).
@@ -52,10 +56,13 @@ packages/
   domain/     Lógica pura: períodos, periodicidad, montos vigentes, cotizaciones, amortización,
               generadores de compromisos, proyección. Sin I/O, sin Drizzle, sin Hono
   db/         Schema Drizzle, migraciones, fábrica de cliente
+  contracts/  Esquemas zod de la API (entrada y salida de cada endpoint) y códigos de error de campo
 docs/         Documentos del proyecto
 ```
 
-Dependencias permitidas: `worker → domain, db` · `web → (tipos compartidos)` · `domain → nada` (solo `decimal.js`). Si `domain` necesita un dato, se lo pasan como argumento.
+Dependencias permitidas: `worker → domain, db, contracts` · `web → contracts` · `contracts → nada` (solo `zod`) · `domain → nada` (solo `decimal.js`). Si `domain` necesita un dato, se lo pasan como argumento.
+
+Patrón de cada alta (RF-34): esquema en `contracts` → servicio en `apps/worker/src/services` (errores de negocio con `ServiceError`) → ruta que valida con `validate()` → pantalla en `apps/web/src/pages` que valida con el mismo esquema antes de enviar y traduce los códigos de error con el glosario (`ui.invalid_*`, `ui.error_*`). Errores de la API: `{ error, reason?, fields? }`. Para probar pantallas sin datos reales: `pnpm dev:local` + `pnpm dev:local:web` (ver `docs/setup.md`).
 
 Capas dentro del Worker:
 1. **Rutas** (REST y MCP): validan la entrada (zod) y llaman a un caso de uso. No tienen lógica.
@@ -84,15 +91,16 @@ Capas dentro del Worker:
 **Nombres**
 - Base, código y herramientas MCP **en inglés**. Base en `snake_case`; TS en `camelCase` (Drizzle con `casing: 'snake_case'`). Tablas en singular.
 - Textos de la interfaz **en castellano**, tomados de `docs/glosario-es.yml` (se importa en el build de la PWA). No hardcodear etiquetas en los componentes.
+- **Pantallas según `docs/manual-de-marca.md`** (diseño aprobado: versión D). Tokens en `apps/web/src/styles.css` (mismos nombres que el sistema de diseño: `verde-casa`, `girasol`, `papel`, `arena`, `tinta`…). Solo tema claro. Girasol únicamente para la meta y el botón Cargar; las acciones principales de un formulario van en `verde-casa`. Fraunces para títulos y montos (con `tabular-nums`), Instrument Sans para el resto. El logotipo es el componente `Logo` (nunca "META31" ni "meta31" en un texto). Navegación: barra lateral en desktop (≥ 900 px) y barra inferior con Cargar al centro en el celular. Voz de la casa: "Entra / Sale", "Llegás al 31 con", "lo pasaste al 15".
 - Valores de enum en minúscula, salvo códigos ISO (`ARS`, `AR`…).
-- Comentarios y mensajes de commit en castellano.
+- **Idioma (decisión del 3/10):** en castellano solo lo que ve el usuario de la app (textos de la PWA, vía el glosario) y los documentos (`docs/` y este `CLAUDE.md`). Todo lo demás **en inglés**: comentarios, nombres de tests, mensajes de error y de log, scripts, archivos de configuración, mensajes de commit y descripciones de PR.
 
 **Base de datos**
 - PK `id uuid default gen_random_uuid()` (salvo `month`, con PK `period`).
 - Columnas de auditoría en todas las tablas de dominio: `created_at`, `updated_at`, `created_by`, `updated_by`, `entry_mode` (`manual` · `claude`), `source_document_id`.
 - Nada se cambia a mano en el panel de Supabase: todo por migración de drizzle-kit.
 - RLS activado y **sin políticas** en todas las tablas (RNF-09). El Worker se conecta con un rol que lo saltea; la API pública de Supabase no ve nada.
-- Las entidades maestras no se borran: `active` o fecha de fin. Los compromisos se anulan (`cancelled`), no se borran.
+- Las entidades maestras no se borran: `active` o fecha de fin. Los compromisos se anulan (`cancelled`), no se borran. Excepción (3/10): un gasto recurrente o puntual cargado por error se puede borrar mientras no tenga compromisos grabados; si ya tiene, se anulan desde la vista del mes.
 - Las escrituras que tocan varias tablas (cargar resumen, pagar, postergar, confirmar un comprobante) van en **una transacción**.
 - En el Worker se crea un cliente `pg` por request contra Hyperdrive (Hyperdrive hace el pooling). No guardar conexiones en variables globales.
 
@@ -147,7 +155,7 @@ Las 12 reglas de negocio (`docs/requisitos-funcionales.md`) son invariantes. Las
 
 - `main` = producción (lo que está desplegado). `develop` = integración. Trabajo en ramas `feat/…`, `fix/…` que salen de `develop`.
 - `main` y `develop` están protegidas por un ruleset de GitHub: solo se entra por PR, y el PR no se puede mergear si no pasa el job `verify` del CI (`.github/workflows/ci.yml`: tipos, tests, migraciones al día con el schema, build del Worker y de la PWA). No se aceptan push directos ni force push.
-- Commits chicos, en castellano, con prefijo: `feat:`, `fix:`, `test:`, `refactor:`, `docs:`, `chore:`.
+- Commits chicos, en inglés, con prefijo: `feat:`, `fix:`, `test:`, `refactor:`, `docs:`, `chore:`.
 - No hacer push, merge a `main` ni deploy sin que Martín lo pida. Mergear a `main` es desplegar.
 - Comandos que requieren credenciales (`wrangler login`, `wrangler secret put`, `wrangler hyperdrive create`, migraciones contra Supabase, deploy) los corre Martín. Prepará el comando exacto y explicá qué hace.
 - Al terminar una tarea, decí en una o dos líneas qué quedó hecho y qué sigue. Sin resúmenes largos.

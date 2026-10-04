@@ -3,7 +3,7 @@ import { defineConfig, type Plugin } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { parse } from 'yaml';
 
-/** Importa archivos .yml como objetos (el glosario de docs/glosario-es.yml). */
+/** Imports .yml files as objects (the glossary in docs/glosario-es.yml). */
 function yamlPlugin(): Plugin {
   return {
     name: 'meta31-yaml',
@@ -22,14 +22,14 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
       manifest: {
-        name: 'meta31 · Economía familiar',
-        short_name: 'meta31',
-        description: 'Planificación económica familiar',
+        name: 'Meta31',
+        short_name: 'Meta31',
+        description: 'Llegar al 31 con lo que queda.',
         lang: 'es-AR',
         start_url: '/',
         display: 'standalone',
-        background_color: '#f8fafc',
-        theme_color: '#0f766e',
+        background_color: '#FFFDF8', // papel
+        theme_color: '#234236', // verde-casa
         icons: [
           { src: 'pwa-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'pwa-512.png', sizes: '512x512', type: 'image/png' },
@@ -37,8 +37,16 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // La API vive en otro origen (workers.dev): no se cachea, siempre va a la red.
+        // The API lives on another origin (workers.dev): never cached, always network.
         navigateFallbackDenylist: [/^\/api\//],
+        // brand fonts from Google Fonts, cached for offline use
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/,
+            handler: 'StaleWhileRevalidate',
+            options: { cacheName: 'google-fonts' },
+          },
+        ],
       },
     }),
   ],
