@@ -14,6 +14,7 @@ import { z } from 'zod';
 import type { AppEnv } from '../env.js';
 import { ServiceError } from '../services/errors.js';
 import { listCancelled } from '../services/commitment-actions.js';
+import { closeMonth, getMonthStatus, reopenMonth } from '../services/month-close.js';
 import { openMonth } from '../services/open-month.js';
 import { projection } from '../services/projection.js';
 import { validate } from './validate.js';
@@ -83,4 +84,13 @@ export const months = new Hono<AppEnv>()
   })
   .get('/:period/cancelled', validate('param', periodParam), async (c) => {
     return c.json(await listCancelled(c.var.db, c.req.valid('param').period));
+  })
+  .get('/:period/status', validate('param', periodParam), async (c) => {
+    return c.json(await getMonthStatus(c.var.db, c.req.valid('param').period));
+  })
+  .post('/:period/close', validate('param', periodParam), async (c) => {
+    return c.json(await closeMonth(c.var.db, c.req.valid('param').period, c.var.user.id));
+  })
+  .post('/:period/reopen', validate('param', periodParam), async (c) => {
+    return c.json(await reopenMonth(c.var.db, c.req.valid('param').period, c.var.user.id));
   });

@@ -3,13 +3,16 @@ import { type Db, schema } from '@meta31/db';
 import { addMonths, comparePeriods, moneyToDb, paymentStatus, periodOf, toMoney, toPeriod } from '@meta31/domain';
 import { and, eq } from 'drizzle-orm';
 import { ServiceError } from './errors.js';
+import { assertMonthNotClosed } from './month-close.js';
 import { amountInForce, getCommitmentDetail } from './payments.js';
 
 const { commitment, commitmentPayment, income, recurringExpenseAmount } = schema;
 
+/** A commitment to change: it must exist and its month must not be closed. */
 async function load(db: Db, id: string) {
   const [c] = await db.select().from(commitment).where(eq(commitment.id, id));
   if (!c) throw new ServiceError('not_found');
+  await assertMonthNotClosed(db, c.period);
   return c;
 }
 
@@ -30,6 +33,7 @@ export async function postponeCommitment(db: Db, id: string, input: PostponeInpu
   if (c.status === 'paid') throw new ServiceError('conflict', 'already_paid');
   const target = periodOf(input.dueDate);
   if (comparePeriods(target, toPeriod(c.period)) < 0) throw new ServiceError('conflict', 'postpone_backwards');
+  await assertMonthNotClosed(db, target);
 
   if (c.status === 'pending') {
     await db.update(commitment).set({ period: target, dueDate: input.dueDate, updatedBy: userId }).where(eq(commitment.id, id));
@@ -106,6 +110,7 @@ const toIncomeDetail = (i: IncomeRow): IncomeDetail => ({
 export async function cancelIncome(db: Db, id: string, userId: string): Promise<IncomeDetail> {
   const [i] = await db.select().from(income).where(eq(income.id, id));
   if (!i) throw new ServiceError('not_found');
+  await assertMonthNotClosed(db, i.period);
   if (i.status !== 'expected') throw new ServiceError('conflict', 'not_expected');
   const [row] = await db.update(income).set({ status: 'cancelled', updatedBy: userId }).where(eq(income.id, id)).returning();
   return toIncomeDetail(row!);
@@ -114,6 +119,7 @@ export async function cancelIncome(db: Db, id: string, userId: string): Promise<
 export async function restoreIncome(db: Db, id: string, userId: string): Promise<IncomeDetail> {
   const [i] = await db.select().from(income).where(eq(income.id, id));
   if (!i) throw new ServiceError('not_found');
+  await assertMonthNotClosed(db, i.period);
   if (i.status !== 'cancelled') throw new ServiceError('conflict', 'not_cancelled');
   const [row] = await db.update(income).set({ status: 'expected', updatedBy: userId }).where(eq(income.id, id)).returning();
   return toIncomeDetail(row!);
