@@ -106,23 +106,8 @@ export async function loadRules(db: Db): Promise<Rules> {
     plannedDate: o.plannedDate,
   }));
 
-  const loanRules: LoanRule[] = loans.map((l) => ({
-    id: l.id,
-    lender: l.lender,
-    categoryId: l.categoryId,
-    currency: l.currency,
-    kind: l.kind,
-    system: l.amortizationSystem,
-    // UVA loans are scheduled in UVAs (the check guarantees principal_uva is present)
-    principal: toMoney(l.kind === 'uva' && l.principalUva !== null ? l.principalUva : l.principal),
-    nominalAnnualRate: toMoney(l.nominalAnnualRate),
-    interestVatRate: toMoney(l.interestVatRate),
-    monthlyInsurance: toMoney(l.monthlyInsurance),
-    grantedDate: l.grantedDate,
-    firstPeriod: l.firstPeriod,
-    dueDay: l.dueDay,
-    installmentsTotal: l.installmentsTotal,
-  }));
+  const loanRules: LoanRule[] = loans.map(loanRuleOf);
+
 
   const creditCards: CreditCardRule[] = cards.map((c) => ({
     id: c.id,
@@ -162,5 +147,28 @@ export async function loadRules(db: Db): Promise<Rules> {
     creditCards,
     cardPaymentCategoryId: cardCategoryId,
     latestUvaValue: latestUva[0] ? toMoney(latestUva[0].value) : null,
+  };
+}
+
+/**
+ * Loan row → domain rule. UVA loans are scheduled in UVAs (the check guarantees principal_uva
+ * is present). Shared by the projection and the loan screen, so both use the same schedule.
+ */
+export function loanRuleOf(l: typeof schema.loan.$inferSelect): LoanRule {
+  return {
+    id: l.id,
+    lender: l.lender,
+    categoryId: l.categoryId,
+    currency: l.currency,
+    kind: l.kind,
+    system: l.amortizationSystem,
+    principal: toMoney(l.kind === 'uva' && l.principalUva !== null ? l.principalUva : l.principal),
+    nominalAnnualRate: toMoney(l.nominalAnnualRate),
+    interestVatRate: toMoney(l.interestVatRate),
+    monthlyInsurance: toMoney(l.monthlyInsurance),
+    grantedDate: l.grantedDate,
+    firstPeriod: l.firstPeriod,
+    dueDay: l.dueDay,
+    installmentsTotal: l.installmentsTotal,
   };
 }

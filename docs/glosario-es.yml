@@ -435,6 +435,23 @@ ui:
   since_date: "desde el {date}"
   cancelled_on: "baja el {date}"
   cancel_subscription: Dar de baja
+  loan_help: Préstamos personales e hipotecarios. Se cargan las condiciones del contrato; el sistema calcula el cuadro teórico y proyecta las cuotas.
+  loan_schedule: Cuadro teórico
+  loan_schedule_help: "Calculado con las condiciones cargadas: no se graba. En los préstamos UVA, los montos están en UVAs y se pasan a pesos con el valor UVA del vencimiento."
+  loan_optional_help: TEA, CFT y la cuota informada son opcionales; la cuota informada sirve para controlar el cálculo.
+  quoted_vs_theoretical: "La cuota 1 teórica es {theoretical}; el banco informó {quoted} (desvío {deviation})."
+  schedule_number: N°
+  schedule_due: Vence
+  schedule_days: Días
+  schedule_principal: Capital
+  schedule_interest: Interés
+  schedule_vat: IVA
+  schedule_insurance: Seguro
+  schedule_total: Cuota
+  schedule_balance: Saldo
+  current_installment_short: "cuota {n} de {total}"
+  view_schedule: Ver cuadro
+  optional: (opcional)
   one_off_expense_help: Compras o pagos que no se repiten, en un pago o en cuotas, fuera de la tarjeta. Si va con tarjeta, se carga como compra en cuotas de la tarjeta.
   one_off_edit_help: Las cuotas de los meses ya abiertos o pagados conservan su monto; el cambio vale para las que faltan.
   single_payment: Un pago
@@ -461,6 +478,9 @@ ui:
   error_planned_date_month: La fecha prevista tiene que caer en el mes del primer pago.
   error_card_currency: La moneda tiene que ser la de la tarjeta o dólares.
   error_in_statement: Ya figura en un resumen cargado. No se puede borrar; podés editarla o darla de baja.
+  error_granted_after_first_due: La primera cuota tiene que vencer después de la fecha de otorgamiento.
+  error_uva_currency: Los préstamos UVA son en pesos argentinos.
+  error_uva_principal: Los préstamos UVA llevan el capital en UVAs; los de tasa fija no.
   error_card_payment_category: Esa categoría es la del pago de las tarjetas; elegí otra.
   error_system_category: Es una categoría del sistema y no se puede modificar.
   error_validation: Revisá los datos marcados.
@@ -475,7 +495,8 @@ ui:
   invalid_day: Un día entre 1 y 31 (31 = último día del mes).
   invalid_range: No puede ser anterior al inicio.
   invalid_month_mismatch: Tiene que caer en el mes del primer pago.
-  invalid_installments: Entre 1 y 120 cuotas.
+  invalid_installments: Cantidad de cuotas inválida.
+  invalid_uva_principal: Obligatorio en los préstamos UVA; vacío en los de tasa fija.
   invalid_empty: No hay cambios para guardar.
   invalid_default: Valor inválido.
 

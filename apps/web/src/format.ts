@@ -96,3 +96,9 @@ export function addMonthsToMonthInput(value: string, delta: number): string {
   const index = y! * 12 + (m! - 1) + delta;
   return `${Math.floor(index / 12)}-${String((index % 12) + 1).padStart(2, '0')}`;
 }
+
+/** UVA amount: '1500.500000' → '1.500,50 UVA'. */
+export const formatUva = (value: string): string => `${formatDecimal(value, 2)} UVA`;
+
+/** Rate in %: '65.000000' → '65 %', '60.500000' → '60,5 %'. */
+export const formatPercent = (value: string): string => `${formatDecimal(value, 0)} %`;

@@ -13,6 +13,8 @@ import { CreditCards } from './pages/CreditCards';
 import { ExchangeRates } from './pages/ExchangeRates';
 import { Home } from './pages/Home';
 import { IncomeSources } from './pages/IncomeSources';
+import { LoanDetail } from './pages/LoanDetail';
+import { Loans } from './pages/Loans';
 import { Load, More, Pending } from './pages/Menus';
 import { OneOffExpenses } from './pages/OneOffExpenses';
 import { Properties } from './pages/Properties';
@@ -97,7 +99,8 @@ function Authenticated({ identity, onSignOut: signOut }: { identity: Identity; o
         <Route path="/bandeja" element={<Pending titleKey="nav_inbox" />} />
         <Route path="/tarjetas" element={<CreditCards />} />
         <Route path="/tarjetas/:id" element={<CardDetail />} />
-        <Route path="/prestamos" element={<Pending titleKey="nav_loans" />} />
+        <Route path="/prestamos" element={<Loans />} />
+        <Route path="/prestamos/:id" element={<LoanDetail />} />
         <Route path="/propiedades" element={<Properties />} />
         <Route path="/ingresos" element={<IncomeSources />} />
         <Route path="*" element={<Navigate to="/" replace />} />
