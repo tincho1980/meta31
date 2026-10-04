@@ -12,6 +12,7 @@ Proyecto personal. Lo programa Claude con supervisión de Martín. Hablale a Mar
 | `docs/modelo-de-datos.md` | 21 tablas, columnas, enums, decisiones D1–D8, cómo se calcula un mes |
 | `docs/plan-de-entregas.md` | Entregas E0–E4: alcance, tests y criterio de cierre de cada una |
 | `docs/glosario-es.yml` | Traducción al castellano de cada tabla, columna y valor de enum; fuente de etiquetas de la PWA |
+| `docs/manual-de-marca.md` | Marca Meta31: concepto, colores, tipografía, montos, estados, navegación, voz. Tokens exactos y componentes en el sistema de diseño enlazado al final |
 
 Reglas sobre los documentos:
 - Antes de implementar algo, leé la sección que corresponde. Si el código y el documento no coinciden, **el documento manda** salvo que Martín decida otra cosa.
@@ -90,6 +91,7 @@ Capas dentro del Worker:
 **Nombres**
 - Base, código y herramientas MCP **en inglés**. Base en `snake_case`; TS en `camelCase` (Drizzle con `casing: 'snake_case'`). Tablas en singular.
 - Textos de la interfaz **en castellano**, tomados de `docs/glosario-es.yml` (se importa en el build de la PWA). No hardcodear etiquetas en los componentes.
+- **Pantallas según `docs/manual-de-marca.md`** (diseño aprobado: versión D). Tokens en `apps/web/src/styles.css` (mismos nombres que el sistema de diseño: `verde-casa`, `girasol`, `papel`, `arena`, `tinta`…). Solo tema claro. Girasol únicamente para la meta y el botón Cargar; las acciones principales de un formulario van en `verde-casa`. Fraunces para títulos y montos (con `tabular-nums`), Instrument Sans para el resto. El logotipo es el componente `Logo` (nunca "META31" ni "meta31" en un texto). Navegación: barra lateral en desktop (≥ 900 px) y barra inferior con Cargar al centro en el celular. Voz de la casa: "Entra / Sale", "Llegás al 31 con", "lo pasaste al 15".
 - Valores de enum en minúscula, salvo códigos ISO (`ARS`, `AR`…).
 - **Idioma (decisión del 3/10):** en castellano solo lo que ve el usuario de la app (textos de la PWA, vía el glosario) y los documentos (`docs/` y este `CLAUDE.md`). Todo lo demás **en inglés**: comentarios, nombres de tests, mensajes de error y de log, scripts, archivos de configuración, mensajes de commit y descripciones de PR.
 

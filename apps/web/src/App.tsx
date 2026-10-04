@@ -5,11 +5,12 @@ import { Navigate, Route, Routes } from 'react-router';
 import { ApiError, getMe } from './api';
 import { localAuth } from './auth';
 import { Layout } from './components/Layout';
+import { Logo } from './components/Logo';
 import { t } from './glossary';
 import { Categories } from './pages/Categories';
 import { ExchangeRates } from './pages/ExchangeRates';
 import { Home } from './pages/Home';
-import { Settings } from './pages/Settings';
+import { Load, More, Pending } from './pages/Menus';
 import { supabase } from './supabase';
 
 export function App() {
@@ -38,8 +39,9 @@ function WithSupabase() {
 
 function Centered({ children }: { children: React.ReactNode }) {
   return (
-    <main className="centered">
-      <h1 className="brand">{t('app_name')}</h1>
+    <main className="centered on-green">
+      <Logo />
+      <p className="tagline">{t('tagline')}</p>
       {children}
     </main>
   );
@@ -79,9 +81,16 @@ function Authenticated({ identity, onSignOut: signOut }: { identity: Identity; o
     <Layout userName={me.data.name} onSignOut={signOut}>
       <Routes>
         <Route path="/" element={<Home name={me.data.name} />} />
-        <Route path="/configuracion" element={<Settings />} />
-        <Route path="/configuracion/categorias" element={<Categories />} />
-        <Route path="/configuracion/cotizaciones" element={<ExchangeRates />} />
+        <Route path="/cargar" element={<Load />} />
+        <Route path="/mas" element={<More onSignOut={signOut} />} />
+        <Route path="/categorias" element={<Categories />} />
+        <Route path="/cotizaciones" element={<ExchangeRates />} />
+        <Route path="/proyeccion" element={<Pending titleKey="nav_projection" />} />
+        <Route path="/bandeja" element={<Pending titleKey="nav_inbox" />} />
+        <Route path="/tarjetas" element={<Pending titleKey="nav_cards" />} />
+        <Route path="/prestamos" element={<Pending titleKey="nav_loans" />} />
+        <Route path="/propiedades" element={<Pending titleKey="nav_properties" />} />
+        <Route path="/ingresos" element={<Pending titleKey="nav_incomes" />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Layout>

@@ -130,9 +130,9 @@ function CategoryRow({ category }: { category: Category }) {
     <li className={`row${category.active ? '' : ' inactive'}`}>
       <span className="grow">
         {category.name}
-        {!category.active && <span className="badge">{t('inactive')}</span>}
+        {!category.active && <span className="note">{t('inactive')}</span>}
         {category.system && (
-          <span className="badge" title={t('system_category_help')}>
+          <span className="note" title={t('system_category_help')}>
             {t('system')}
           </span>
         )}

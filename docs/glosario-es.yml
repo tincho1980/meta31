@@ -362,7 +362,8 @@ enums:
 # Textos de la interfaz que no son tablas, columnas ni enums.
 # Admiten variables entre llaves: {name}, {email}.
 ui:
-  app_name: meta31
+  app_name: Meta31
+  tagline: Llegar al 31 con lo que queda.
   loading: Cargando…
   sign_in_with_google: Ingresar con Google
   sign_out: Salir
@@ -370,10 +371,23 @@ ui:
   not_authorized: "La cuenta {email} no está habilitada."
   error_generic: No se pudo conectar con el servidor.
 
-  # Navegación
-  nav_home: Inicio
+  # Navegación (manual de marca: barra inferior en el celular, barra lateral en desktop)
+  nav_main: Principal
+  nav_month: Mes
+  nav_projection: Proyección
+  nav_load: Cargar
+  nav_inbox: Bandeja
+  nav_more: Más
+  nav_what_we_have: Lo que tenemos
+  nav_cards: Tarjetas
+  nav_loans: Préstamos
+  nav_properties: Propiedades
+  nav_incomes: Ingresos
   nav_settings: Configuración
-  settings_intro: Datos de base que usan las proyecciones.
+  load_intro: ¿Qué querés cargar?
+  more_intro: Datos de base que usan las proyecciones.
+  pending_screen: Esta pantalla todavía no está. Viene en las próximas entregas.
+  rates_updated: "act. {date}"
 
   # Acciones
   add: Agregar
