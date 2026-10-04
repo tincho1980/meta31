@@ -8,6 +8,7 @@ import { incomeSources } from './routes/income-sources.js';
 import { me } from './routes/me.js';
 import { people } from './routes/people.js';
 import { properties } from './routes/properties.js';
+import { recurringExpenses } from './routes/recurring-expenses.js';
 import { ServiceError } from './services/errors.js';
 
 export type AppDeps = {
@@ -41,6 +42,7 @@ export function createApp(deps: AppDeps) {
   app.route('/api/people', people);
   app.route('/api/properties', properties);
   app.route('/api/income-sources', incomeSources);
+  app.route('/api/recurring-expenses', recurringExpenses);
 
   app.notFound((c) => c.json({ error: 'not_found' }, 404));
   app.onError((err, c) => {

@@ -15,12 +15,15 @@ export function formatDecimal(value: string, minDecimals = 2): string {
 }
 
 /**
- * What the user types → decimal string for the API. Accepts '1450,5', '1.450,50' and '1450.5'.
- * With a comma, dots are thousands separators; without one, a dot is the decimal point.
+ * What the user types → decimal string for the API. Accepts '1450,5', '1.450,50', '480.000'
+ * and '1450.5'. With a comma, dots are thousands separators. Without one, dots that group
+ * digits by three ('480.000', '1.500.000') are thousands too, as written in Argentina;
+ * any other dot is the decimal point.
  */
 export function parseDecimalInput(input: string): string {
   const v = input.trim().replace(/\s/g, '');
-  return v.includes(',') ? v.replace(/\./g, '').replace(',', '.') : v;
+  if (v.includes(',')) return v.replace(/\./g, '').replace(',', '.');
+  return /^\d{1,3}(\.\d{3})+$/.test(v) ? v.replace(/\./g, '') : v;
 }
 
 /** '2026-10-04' → '04/10/2026'. */
@@ -50,12 +53,14 @@ function roundToUnits(value: string): string {
 
 /**
  * Amount for lists (manual de marca): '1500000.00' ARS → '$ 1.500.000', USD → 'US$ 650',
- * UYU → 'UY$ 12.000'. Whole units, rounded half up. `income` adds the '+' of what comes in.
+ * UYU → 'UY$ 12.000'. Whole units, rounded half up. `income` adds the '+' of what comes in;
+ * `estimate` the '~' of an estimated amount.
  */
-export function formatMoney(value: string, currency: string, { income = false } = {}): string {
+export function formatMoney(value: string, currency: string, { income = false, estimate = false } = {}): string {
   const negative = value.startsWith('-');
   const units = formatDecimal(roundToUnits(value.replace(/^-/, '')), 0);
-  return `${income ? '+ ' : ''}${negative ? '-' : ''}${SYMBOL[currency] ?? currency} ${units}`;
+  const prefix = `${estimate ? '~ ' : ''}${income ? '+ ' : ''}`;
+  return `${prefix}${negative ? '-' : ''}${SYMBOL[currency] ?? currency} ${units}`;
 }
 
 /** '2026-10-01' → 'octubre 2026'. */

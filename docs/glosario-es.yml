@@ -383,6 +383,7 @@ ui:
   nav_loans: Préstamos
   nav_properties: Propiedades
   nav_incomes: Ingresos
+  nav_recurring_expenses: Gastos recurrentes
   nav_settings: Configuración
   load_intro: ¿Qué querés cargar?
   more_intro: Datos de base que usan las proyecciones.
@@ -412,7 +413,12 @@ ui:
   every_months_6: Semestral
   every_months_12: Anual
   anchor_month_help: Uno de los meses en que se cobra; los demás salen de la frecuencia.
-  valid_to_help: Último mes en que se cobra. Vacío si no tiene fin.
+  valid_to_help: Último mes en que rige. Vacío si no tiene fin.
+  no_beneficiary: Sin destinatario
+  first_estimated_amount: Monto estimado inicial
+  due_on_day: "vence el {day}"
+  recurring_expense_help: Servicios, impuestos, expensas y lo que se paga todos los meses fuera de la tarjeta. Lo que se paga con tarjeta va en el resumen, no acá.
+  expense_amount_help: El monto estimado se mantiene hasta que cargás uno nuevo con el mes desde el que rige (aumentos de tarifa, revalúos).
   income_amount_help: El monto se mantiene hasta que cargás uno nuevo con el mes desde el que rige (aumentos, actualizaciones de alquiler).
   first_amount: Monto inicial
   new_amount: Nuevo monto
@@ -430,6 +436,7 @@ ui:
   error_valid_to_before_valid_from: El fin no puede ser anterior al inicio.
   error_no_amount_at_start: El primer mes tiene que tener un monto. Corregí el historial de montos.
   error_duplicate_period: Ya hay un monto que rige desde ese mes.
+  error_card_payment_category: Esa categoría es la del pago de las tarjetas; elegí otra.
   error_system_category: Es una categoría del sistema y no se puede modificar.
   error_validation: Revisá los datos marcados.
 

@@ -24,6 +24,7 @@ export function Load() {
       <Menu
         entries={[
           { to: '/ingresos', label: tableLabel('income_source') },
+          { to: '/gastos-recurrentes', label: tableLabel('recurring_expense') },
           { to: '/propiedades', label: tableLabel('property') },
           { to: '/cotizaciones', label: tableLabel('exchange_rate') },
           { to: '/categorias', label: tableLabel('category') },
@@ -45,6 +46,7 @@ export function More({ onSignOut }: { onSignOut: () => void }) {
           { to: '/prestamos', label: t('nav_loans') },
           { to: '/propiedades', label: t('nav_properties') },
           { to: '/ingresos', label: t('nav_incomes') },
+          { to: '/gastos-recurrentes', label: t('nav_recurring_expenses') },
         ]}
       />
       <h2>{t('nav_settings')}</h2>
