@@ -384,6 +384,7 @@ ui:
   nav_properties: Propiedades
   nav_incomes: Ingresos
   nav_recurring_expenses: Gastos recurrentes
+  nav_one_off_expenses: Gastos puntuales
   nav_settings: Configuración
   load_intro: ¿Qué querés cargar?
   more_intro: Datos de base que usan las proyecciones.
