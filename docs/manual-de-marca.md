@@ -51,7 +51,7 @@ Por ahora solo hay tema claro. El tema oscuro queda pendiente: el encabezado ver
 ## Montos y monedas
 
 - Pesos: `$ 186.400`, con espacio después del signo, punto de miles y sin decimales en las listas.
-- Dólares: `US$ 650`. Pesos uruguayos: `UY$ 12.000`. En los totales, lo de Uruguay se muestra en dólares.
+- Dólares: `US$ 650`, sin decimales desde 100; por debajo de 100 se muestran siempre los centavos: `US$ 40,00`, `US$ 12,99` (decidido por Martín el 3/10). Pesos uruguayos: `UY$ 12.000`. En los totales, lo de Uruguay se muestra en dólares.
 - Lo que entra lleva `+` y va en `verde-ingreso`. Lo que sale no lleva signo: el contexto ya dice que es un gasto.
 - Los montos estimados llevan `~` y van en `tinta-suave`: `~ $ 58.000`.
 - En los resúmenes del celular se abrevia con coma decimal: `$ 3,25 M`, `$ 380 mil`.

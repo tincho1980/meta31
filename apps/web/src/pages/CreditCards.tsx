@@ -1,6 +1,7 @@
 import { type CreditCard, creditCardCreate, creditCardUpdate, fieldErrors, localCurrencyOf, type Person } from '@meta31/contracts';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
+import { Link } from 'react-router';
 import type { z } from 'zod';
 import { api } from '../api';
 import { Field } from '../components/Field';
@@ -235,13 +236,18 @@ function CardRow({ card, people }: { card: CreditCard; people: Person[] }) {
   return (
     <li className={`row${card.active ? '' : ' inactive'}`}>
       <span className="grow">
-        {card.name}
+        <Link to={`/tarjetas/${card.id}`} className="row-link">
+          {card.name}
+        </Link>
         <span className="note">{describe(card, people)}</span>
         {!card.active && <span className="note">{t('inactive')}</span>}
       </span>
       {estimated && <span className="amount estimate">{estimated}</span>}
       {!editing && (
         <span className="actions">
+          <Link to={`/tarjetas/${card.id}`} className="link">
+            {t('card_items')}
+          </Link>
           <button type="button" className="link" onClick={() => setEditing(true)}>
             {t('edit')}
           </button>

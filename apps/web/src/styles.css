@@ -632,3 +632,19 @@ button.link.danger:hover:not(:disabled) {
 .actions {
   flex-wrap: wrap;
 }
+
+/* row title that opens a detail page */
+.row-link {
+  color: var(--tinta);
+  text-decoration: none;
+  font-weight: 500;
+}
+.row-link:hover {
+  color: var(--verde-casa);
+  text-decoration: underline;
+}
+.actions a.link {
+  font-weight: 600;
+  text-decoration: none;
+  padding: var(--space-1) 0;
+}

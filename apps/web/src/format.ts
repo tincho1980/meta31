@@ -53,12 +53,18 @@ function roundToUnits(value: string): string {
 
 /**
  * Amount for lists (manual de marca): '1500000.00' ARS → '$ 1.500.000', USD → 'US$ 650',
- * UYU → 'UY$ 12.000'. Whole units, rounded half up. `income` adds the '+' of what comes in;
- * `estimate` the '~' of an estimated amount.
+ * UYU → 'UY$ 12.000'. Whole units, rounded half up, except dollars under 100, which keep
+ * their cents: 'US$ 40,00', 'US$ 12,99' (decided 3/10). `income` adds the '+' of what comes
+ * in; `estimate` the '~' of an estimated amount.
  */
 export function formatMoney(value: string, currency: string, { income = false, estimate = false } = {}): string {
   const negative = value.startsWith('-');
-  const units = formatDecimal(roundToUnits(value.replace(/^-/, '')), 0);
+  const abs = value.replace(/^-/, '');
+  const [intPart = '0', decPart = ''] = abs.split('.');
+  const withCents = currency === 'USD' && intPart.replace(/^0+(?=\d)/, '').length <= 2;
+  const units = withCents
+    ? `${intPart.replace(/^0+(?=\d)/, '')},${decPart.padEnd(2, '0').slice(0, 2)}`
+    : formatDecimal(roundToUnits(abs), 0);
   const prefix = `${estimate ? '~ ' : ''}${income ? '+ ' : ''}`;
   return `${prefix}${negative ? '-' : ''}${SYMBOL[currency] ?? currency} ${units}`;
 }
@@ -83,3 +89,10 @@ export const monthInputToPeriod = (value: string): string => (value ? `${value}-
 
 /** Current month in Buenos Aires as a period. */
 export const currentPeriodIso = (): string => `${todayIso().slice(0, 7)}-01`;
+
+/** Shifts an <input type="month"> value by whole months: ('2026-10', -3) → '2026-07'. */
+export function addMonthsToMonthInput(value: string, delta: number): string {
+  const [y, m] = value.split('-').map(Number);
+  const index = y! * 12 + (m! - 1) + delta;
+  return `${Math.floor(index / 12)}-${String((index % 12) + 1).padStart(2, '0')}`;
+}

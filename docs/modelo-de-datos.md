@@ -242,6 +242,8 @@ Monto pagado y saldo financiado no se guardan: salen de los pagos de sus dos com
 
 Al arrancar (RNF-15) se carga con el número de cuota del último resumen: si el resumen de octubre dice "4 de 12", `first_period` = julio.
 
+Reglas de carga (E1), también para `subscription`: la moneda es la local de la tarjeta o USD (D4); la categoría es de gastos y no puede ser "Tarjetas de crédito". Se pueden borrar mientras ningún `card_transaction` de un resumen real las referencie; después se editan, o se da de baja la suscripción.
+
 **subscription** — suscripciones y débitos automáticos en tarjeta (RF-14)
 
 | Campo | Tipo | Notas |
