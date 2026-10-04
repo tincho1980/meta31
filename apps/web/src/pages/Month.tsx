@@ -1,8 +1,9 @@
 import type { Category, MonthProjection, OpenMonthResult, ProjectionLine } from '@meta31/contracts';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { api } from '../api';
+import { LineActions } from '../components/LineActions';
 import { MonthPath } from '../components/MonthPath';
 import { glyphLabel, StatusGlyph } from '../components/StatusGlyph';
 import {
@@ -251,17 +252,26 @@ function LineRow({ line, isIncome }: { line: ProjectionLine; isIncome: boolean }
   const done = line.status === 'paid' || line.status === 'received';
   // estimated until it is paid (in full or in part): manual de marca, '~' and tinta-suave
   const estimate = !isIncome && (line.status === null || line.status === 'pending');
+  const [open, setOpen] = useState(false);
   const when = line.date ? t(isIncome ? 'comes_in_on' : 'due_on', { day: formatWeekdayDay(line.date) }) : null;
+  // manual de marca: "Parcial · pagaste $ 300.000 de $ 624.300"
+  const partial =
+    line.status === 'partially_paid' && line.paid
+      ? t('paid_of', { paid: formatMoney(line.paid, line.currency), total: formatMoney(line.amount, line.currency) })
+      : null;
   return (
-    <li className={`row line${done ? ' done' : ''}`}>
-      <StatusGlyph line={line} isIncome={isIncome} />
-      <span className="grow">
-        {line.description}
-        {when && <span className="note">{when}</span>}
-      </span>
-      <span className={`amount${isIncome ? ' income' : ''}${estimate ? ' estimate' : ''}`}>
-        {formatMoney(line.amount, line.currency, { income: isIncome, estimate })}
-      </span>
+    <li className={`row line${done ? ' done' : ''}${open ? ' open' : ''}`}>
+      <button type="button" className="line-toggle" aria-expanded={open} onClick={() => setOpen(!open)}>
+        <StatusGlyph line={line} isIncome={isIncome} />
+        <span className="grow">
+          {line.description}
+          {(partial ?? when) && <span className="note">{partial ?? when}</span>}
+        </span>
+        <span className={`amount${isIncome ? ' income' : ''}${estimate ? ' estimate' : ''}`}>
+          {formatMoney(line.amount, line.currency, { income: isIncome, estimate })}
+        </span>
+      </button>
+      {open && <LineActions line={line} isIncome={isIncome} onClose={() => setOpen(false)} />}
     </li>
   );
 }
@@ -282,6 +292,7 @@ function Legend() {
     status,
     postponed,
     amountArs: null,
+    paid: null,
   });
   const items: [ProjectionLine, boolean][] = [
     [sample('pending'), false],

@@ -971,3 +971,35 @@ button.link.danger:hover:not(:disabled) {
   text-transform: none;
   color: var(--tinta);
 }
+
+/* a month line opens its actions (pay, receive) */
+.row.line {
+  padding: 0;
+  flex-wrap: wrap;
+}
+.line-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2) 14px;
+  width: 100%;
+  min-height: 52px;
+  padding: 13px 16px;
+  background: none;
+  border: none;
+  border-radius: var(--radius-lg);
+  font: inherit;
+  font-weight: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.line-toggle:hover {
+  background: var(--arena-hover);
+}
+.row.line .row-panel {
+  margin: 0 16px 13px;
+}
+.row.line.done .line-toggle .amount,
+.row.line.done .line-toggle .grow {
+  color: var(--tinta-suave);
+}
