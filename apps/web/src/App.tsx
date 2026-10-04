@@ -7,6 +7,7 @@ import { localAuth } from './auth';
 import { Layout } from './components/Layout';
 import { Logo } from './components/Logo';
 import { t } from './glossary';
+import { CardDetail } from './pages/CardDetail';
 import { Categories } from './pages/Categories';
 import { CreditCards } from './pages/CreditCards';
 import { ExchangeRates } from './pages/ExchangeRates';
@@ -95,6 +96,7 @@ function Authenticated({ identity, onSignOut: signOut }: { identity: Identity; o
         <Route path="/proyeccion" element={<Pending titleKey="nav_projection" />} />
         <Route path="/bandeja" element={<Pending titleKey="nav_inbox" />} />
         <Route path="/tarjetas" element={<CreditCards />} />
+        <Route path="/tarjetas/:id" element={<CardDetail />} />
         <Route path="/prestamos" element={<Pending titleKey="nav_loans" />} />
         <Route path="/propiedades" element={<Properties />} />
         <Route path="/ingresos" element={<IncomeSources />} />

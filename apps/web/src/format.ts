@@ -83,3 +83,10 @@ export const monthInputToPeriod = (value: string): string => (value ? `${value}-
 
 /** Current month in Buenos Aires as a period. */
 export const currentPeriodIso = (): string => `${todayIso().slice(0, 7)}-01`;
+
+/** Shifts an <input type="month"> value by whole months: ('2026-10', -3) → '2026-07'. */
+export function addMonthsToMonthInput(value: string, delta: number): string {
+  const [y, m] = value.split('-').map(Number);
+  const index = y! * 12 + (m! - 1) + delta;
+  return `${Math.floor(index / 12)}-${String((index % 12) + 1).padStart(2, '0')}`;
+}

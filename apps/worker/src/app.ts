@@ -2,6 +2,7 @@ import { Hono, type MiddlewareHandler } from 'hono';
 import { cors } from 'hono/cors';
 import type { AppEnv, Bindings } from './env.js';
 import { auth, type TokenVerifier } from './middleware/auth.js';
+import { installmentPurchases, subscriptions } from './routes/card-items.js';
 import { categories } from './routes/categories.js';
 import { creditCards } from './routes/credit-cards.js';
 import { exchangeRates } from './routes/exchange-rates.js';
@@ -47,6 +48,8 @@ export function createApp(deps: AppDeps) {
   app.route('/api/recurring-expenses', recurringExpenses);
   app.route('/api/one-off-expenses', oneOffExpenses);
   app.route('/api/credit-cards', creditCards);
+  app.route('/api/installment-purchases', installmentPurchases);
+  app.route('/api/subscriptions', subscriptions);
 
   app.notFound((c) => c.json({ error: 'not_found' }, 404));
   app.onError((err, c) => {
