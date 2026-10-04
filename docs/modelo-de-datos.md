@@ -276,6 +276,8 @@ Reglas de carga (E1), también para `subscription`: la moneda es la local de la 
 
 Costo financiero de tarjetas = suma de `interest + admin_fee + tax` por tarjeta y mes.
 
+Carga (E2): el desglose se carga a mano por resumen (en E3 lo propone Claude). La moneda es la local de la tarjeta o USD; una cuota o suscripción puede apuntar a la compra o suscripción de esa misma tarjeta (con número de cuota dentro del total). Es informativo: la proyección usa los totales del resumen; la pantalla muestra la suma del desglose contra esos totales. El reporte de costo financiero agrupa por tarjeta, mes del resumen y moneda, con el total en ARS a la cotización del vencimiento.
+
 ### 4.4 Gastos
 
 **recurring_expense** — servicios, impuestos, expensas, recurrentes fuera de tarjeta y rubros estimados (D2; RF-17, RF-18, RF-20)

@@ -269,6 +269,14 @@ function CancelForm({ detail, onDone, onClose }: { detail: CommitmentDetail; onD
       <Field label={columnLabel('commitment', 'cancellation_reason')} error={error}>
         {(p) => <input {...p} value={reason} placeholder={t('cancel_reason_example')} onChange={(e) => setReason(e.target.value)} />}
       </Field>
+      {detail.origin === 'recurring_expense' && (
+        <div className="form-error">
+          <button type="button" className="secondary" onClick={() => setReason(t('paid_by_card_reason'))}>
+            {t('paid_by_card')}
+          </button>
+          <p className="muted">{t('paid_by_card_help')}</p>
+        </div>
+      )}
       <div className="form-actions">
         <button type="submit" className="primary" disabled={cancel.isPending}>
           {cancel.isPending ? t('saving') : t('cancel_commitment')}

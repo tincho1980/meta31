@@ -21,9 +21,12 @@ export function formatDecimal(value: string, minDecimals = 2): string {
  * any other dot is the decimal point.
  */
 export function parseDecimalInput(input: string): string {
-  const v = input.trim().replace(/\s/g, '');
-  if (v.includes(',')) return v.replace(/\./g, '').replace(',', '.');
-  return /^\d{1,3}(\.\d{3})+$/.test(v) ? v.replace(/\./g, '') : v;
+  const raw = input.trim().replace(/\s/g, '');
+  // a leading minus (payments and credits in a statement breakdown) is kept as is
+  const sign = raw.startsWith('-') ? '-' : '';
+  const v = raw.replace(/^-/, '');
+  if (v.includes(',')) return sign + v.replace(/\./g, '').replace(',', '.');
+  return sign + (/^\d{1,3}(\.\d{3})+$/.test(v) ? v.replace(/\./g, '') : v);
 }
 
 /** '2026-10-04' → '04/10/2026'. */

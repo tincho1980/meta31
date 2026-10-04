@@ -11,6 +11,7 @@ import { CardDetail } from './pages/CardDetail';
 import { Categories } from './pages/Categories';
 import { CreditCards } from './pages/CreditCards';
 import { ExchangeRates } from './pages/ExchangeRates';
+import { FinancialCost } from './pages/FinancialCost';
 import { IncomeSources } from './pages/IncomeSources';
 import { LoanDetail } from './pages/LoanDetail';
 import { Loans } from './pages/Loans';
@@ -96,6 +97,7 @@ function Authenticated({ identity, onSignOut: signOut }: { identity: Identity; o
         <Route path="/cotizaciones" element={<ExchangeRates />} />
         <Route path="/gastos-recurrentes" element={<RecurringExpenses />} />
         <Route path="/gastos-puntuales" element={<OneOffExpenses />} />
+        <Route path="/reportes/costo-financiero" element={<FinancialCost />} />
         <Route path="/proyeccion" element={<Projection />} />
         <Route path="/bandeja" element={<Pending titleKey="nav_inbox" />} />
         <Route path="/tarjetas" element={<CreditCards />} />
