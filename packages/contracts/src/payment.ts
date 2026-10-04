@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { amount, currency, id, isoDate, positiveAmount, rate } from './common.js';
+import { amount, currency, id, isoDate, period, positiveAmount, rate } from './common.js';
 
 export const paymentMethod = z.enum(['transfer', 'debit', 'cash', 'mercado_pago', 'other']);
 
@@ -104,3 +104,19 @@ export const actualAmountInput = z.object({
   updateFollowing: z.boolean().default(false),
 });
 export type ActualAmountInput = z.infer<typeof actualAmountInput>;
+
+/**
+ * Pay a card statement in its payment currency (RF-15, rule 3): the local part, and the USD part
+ * paid in local currency with its rate (left out, the one in force on the date). At least one.
+ */
+export const cardPaymentInput = z
+  .object({
+    period,
+    date: isoDate,
+    paymentMethod,
+    localAmount: positiveAmount.nullable().optional(),
+    usdPartAmount: positiveAmount.nullable().optional(),
+    appliedRate: rate.refine((v) => /[1-9]/.test(v), { message: 'must_be_positive' }).nullable().optional(),
+  })
+  .refine((v) => Boolean(v.localAmount || v.usdPartAmount), { message: 'required', path: ['localAmount'] });
+export type CardPaymentInput = z.infer<typeof cardPaymentInput>;

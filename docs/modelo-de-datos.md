@@ -415,6 +415,8 @@ Postergar y anular (E2): postergar recibe la nueva fecha; `period` pasa a su mes
 
 Monto real (E2): cargar el monto real lo guarda en `actual_amount` y recalcula el estado contra lo ya pagado (puede pasar de pagado a parcial si la factura vino más alta). En un gasto recurrente, la opción "usar desde el mes siguiente" agrega o actualiza la fila de `recurring_expense_amount` del mes siguiente al de origen (RF-19). Se puede volver al estimado. En préstamos, el desvío = real − cuota teórica (el estimado), en importe y %. **Cuotas pagadas (RF-25):** las anteriores a la primera cuota grabada cuentan como pagadas (son historia previa a la carga inicial); desde ahí, la última cuota pagada por completo en el sistema (una cuota dividida cuenta cuando todas sus partes están pagadas). Deuda remanente = saldo de capital del cuadro después de esa cuota.
 
+Pago de tarjeta (E2, RF-15, reglas 3 y 4): "Pagar resumen" paga en una transacción los dos compromisos `cc:` del mes en la moneda de pago de la tarjeta: la parte local y la parte en USD pesificada con la cotización aplicada (o la vigente). Lo no pagado se pasa al resumen siguiente postergando el resto (D5): nace una hija en el mes siguiente. Cuando se carga el resumen real de ese mes, su total ya trae ese saldo como "saldo anterior", así que las hijas pendientes de esa tarjeta en ese mes se anulan solas con el motivo "Incluido en el resumen como saldo anterior" (sin doble conteo). Los intereses de financiación se registran con el desglose del resumen (RF-12), junto con el costo financiero.
+
 ### 4.7 Carga por Claude
 
 **source_document** — comprobante: bandeja de revisión y control de duplicados (D3; RF-35)

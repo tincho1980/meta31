@@ -212,7 +212,7 @@ function MonthLines({ month }: { month: MonthProjection }) {
               </h4>
               <ul className="rows">
                 {g.lines.map((l) => (
-                  <LineRow key={l.sourceKey ?? l.id} line={l} isIncome={false} />
+                  <LineRow key={l.sourceKey ?? l.id} line={l} isIncome={false} cardLines={cardLinesOf(month, l)} />
                 ))}
               </ul>
             </div>
@@ -257,6 +257,15 @@ function Cancelled({ period }: { period: string }) {
   );
 }
 
+/**
+ * The month's statement lines of the card a line belongs to (local and USD, D4), to pay them
+ * together; carried balances (no source key) are paid on their own.
+ */
+function cardLinesOf(month: MonthProjection, line: ProjectionLine): ProjectionLine[] | undefined {
+  if (line.origin !== 'credit_card' || !line.sourceKey) return undefined;
+  return month.commitments.filter((l) => l.origin === 'credit_card' && l.originId === line.originId && l.sourceKey && l.id);
+}
+
 /** Sum of the lines in ARS; `partial` when some line could not be converted (missing rate). */
 function subtotalArs(lines: ProjectionLine[]): { value: string; partial: boolean } {
   const known = lines.map((l) => l.amountArs).filter((v): v is string => v !== null);
@@ -283,7 +292,7 @@ function Both({ value, income = false }: { value: string; income?: boolean }) {
 const sortByDate = (lines: ProjectionLine[]) =>
   [...lines].sort((a, b) => (a.date ?? '9999').localeCompare(b.date ?? '9999') || a.description.localeCompare(b.description));
 
-function LineRow({ line, isIncome }: { line: ProjectionLine; isIncome: boolean }) {
+function LineRow({ line, isIncome, cardLines }: { line: ProjectionLine; isIncome: boolean; cardLines?: ProjectionLine[] }) {
   const done = line.status === 'paid' || line.status === 'received';
   // estimated until it is paid (in full or in part): manual de marca, '~' and tinta-suave
   const estimate = !isIncome && line.estimate && (line.status === null || line.status === 'pending');
@@ -308,7 +317,7 @@ function LineRow({ line, isIncome }: { line: ProjectionLine; isIncome: boolean }
           {formatMoney(line.amount, line.currency, { income: isIncome, estimate })}
         </span>
       </button>
-      {open && <LineActions line={line} isIncome={isIncome} onClose={() => setOpen(false)} />}
+      {open && <LineActions line={line} isIncome={isIncome} onClose={() => setOpen(false)} cardLines={cardLines} />}
     </li>
   );
 }

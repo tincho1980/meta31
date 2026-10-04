@@ -1,7 +1,7 @@
 import type { CardStatement, CardStatementCreate, CardStatementUpdate } from '@meta31/contracts';
 import { cardPaymentCategoryId, type Db, schema } from '@meta31/db';
 import { periodOf, sourceKey, toPeriod } from '@meta31/domain';
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq, isNotNull } from 'drizzle-orm';
 import { isUniqueViolation, ServiceError } from './errors.js';
 
 const { cardStatement, commitment, creditCard, month } = schema;
@@ -23,13 +23,29 @@ const toStatement = (row: Row): CardStatement => ({
 
 type Tx = Parameters<Parameters<Db['transaction']>[0]>[0];
 
+/** Reason recorded on a carried balance once the next statement includes it (data, in Spanish). */
+export const CARRIED_INTO_STATEMENT = 'Incluido en el resumen como saldo anterior';
+
 /**
  * The real statement replaces the estimate (RF-16, rule 10). Months not opened yet need nothing:
- * the generator already uses the statement. In an opened month the card's commitments are
+ * the generator already uses the statement (but a carried balance stored there is cancelled). In an opened month the card's commitments are
  * stored (D1), so the pending ones take the statement totals and due date, and a currency that
  * had no commitment gets one. Commitments already paid (in full or in part) are left alone.
  */
 async function applyToStoredMonth(tx: Tx, row: Row, card: { name: string; localCurrency: 'ARS' | 'UYU' }, userId: string) {
+  // rule 4: a balance carried from the previous statement (the rest of a partial payment,
+  // postponed here) is already inside this statement's total as previous balance
+  await tx
+    .update(commitment)
+    .set({ status: 'cancelled', cancellationReason: CARRIED_INTO_STATEMENT, updatedBy: userId })
+    .where(
+      and(
+        eq(commitment.creditCardId, row.creditCardId),
+        eq(commitment.period, row.period),
+        isNotNull(commitment.parentCommitmentId),
+        eq(commitment.status, 'pending'),
+      ),
+    );
   const [opened] = await tx.select({ period: month.period }).from(month).where(eq(month.period, row.period));
   if (!opened) return;
   const categoryId = await cardPaymentCategoryId(tx as unknown as Db);
