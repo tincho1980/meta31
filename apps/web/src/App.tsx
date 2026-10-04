@@ -10,7 +10,9 @@ import { t } from './glossary';
 import { Categories } from './pages/Categories';
 import { ExchangeRates } from './pages/ExchangeRates';
 import { Home } from './pages/Home';
+import { IncomeSources } from './pages/IncomeSources';
 import { Load, More, Pending } from './pages/Menus';
+import { Properties } from './pages/Properties';
 import { supabase } from './supabase';
 
 export function App() {
@@ -89,8 +91,8 @@ function Authenticated({ identity, onSignOut: signOut }: { identity: Identity; o
         <Route path="/bandeja" element={<Pending titleKey="nav_inbox" />} />
         <Route path="/tarjetas" element={<Pending titleKey="nav_cards" />} />
         <Route path="/prestamos" element={<Pending titleKey="nav_loans" />} />
-        <Route path="/propiedades" element={<Pending titleKey="nav_properties" />} />
-        <Route path="/ingresos" element={<Pending titleKey="nav_incomes" />} />
+        <Route path="/propiedades" element={<Properties />} />
+        <Route path="/ingresos" element={<IncomeSources />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Layout>

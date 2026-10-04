@@ -49,7 +49,7 @@ Aplica `packages/db/migrations/*.sql` contra Supabase: crea las 21 tablas con RL
 pnpm --filter @meta31/db seed
 ```
 
-Carga Martín y Rosalía (usuarios, con los mails de `SEED_EMAIL_MARTIN` y `SEED_EMAIL_ROSALIA`) y Amaia (no usuaria). Es idempotente: correrlo de nuevo actualiza los mails sin duplicar. Los mails son la lista blanca del login: tienen que ser exactamente los de las cuentas de Google.
+Carga Martín y Rosalía (usuarios, con los mails de `SEED_EMAIL_MARTIN` y `SEED_EMAIL_ROSALIA`), Amaia (no usuaria) y las categorías del sistema ("Tarjetas de crédito" y "Alquileres"). Es idempotente: correrlo de nuevo actualiza los mails y agrega las categorías que falten, sin duplicar. Los mails son la lista blanca del login: tienen que ser exactamente los de las cuentas de Google.
 
 ## 4. Cloudflare: login, Hyperdrive y secretos
 

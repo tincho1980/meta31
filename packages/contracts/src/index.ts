@@ -2,6 +2,9 @@
 export * from './category.js';
 export * from './common.js';
 export * from './exchange-rate.js';
+export * from './income-source.js';
+export * from './person.js';
+export * from './property.js';
 
 import { z } from 'zod';
 
