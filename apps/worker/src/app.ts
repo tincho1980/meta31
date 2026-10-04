@@ -2,7 +2,10 @@ import { Hono, type MiddlewareHandler } from 'hono';
 import { cors } from 'hono/cors';
 import type { AppEnv, Bindings } from './env.js';
 import { auth, type TokenVerifier } from './middleware/auth.js';
+import { categories } from './routes/categories.js';
+import { exchangeRates } from './routes/exchange-rates.js';
 import { me } from './routes/me.js';
+import { ServiceError } from './services/errors.js';
 
 export type AppDeps = {
   /** Sets `c.var.db`. Production: Hyperdrive; tests: PGlite. */
@@ -30,9 +33,14 @@ export function createApp(deps: AppDeps) {
   app.use('/api/*', auth(deps.verifier));
 
   app.route('/api/me', me);
+  app.route('/api/categories', categories);
+  app.route('/api/exchange-rates', exchangeRates);
 
   app.notFound((c) => c.json({ error: 'not_found' }, 404));
   app.onError((err, c) => {
+    if (err instanceof ServiceError) {
+      return c.json({ error: err.code, ...(err.reason ? { reason: err.reason } : {}) }, err.code === 'not_found' ? 404 : 409);
+    }
     console.error(err);
     return c.json({ error: 'internal_error' }, 500);
   });

@@ -10,12 +10,15 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
+    "@hono/zod-validator": "^0.9.1",
+    "@meta31/contracts": "workspace:*",
     "@meta31/db": "workspace:*",
     "@meta31/domain": "workspace:*",
     "drizzle-orm": "^0.45.3",
     "hono": "^4.13.12",
     "jose": "^6.2.12",
-    "pg": "^8.23.1"
+    "pg": "^8.23.1",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@types/pg": "^8.23.1",
