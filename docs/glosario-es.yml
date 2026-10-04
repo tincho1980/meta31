@@ -452,6 +452,8 @@ ui:
   current_installment_short: "cuota {n} de {total}"
   view_schedule: Ver cuadro
   optional: (opcional)
+  view_all: Todo
+  filter: Filtro
   you_reach_31_with: Llegás al 31 con
   money_in: Entra
   money_out: Sale

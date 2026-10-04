@@ -128,3 +128,16 @@ export function formatMoneyShort(value: string, currency: string, { income = fal
   }
   return `${income ? '+ ' : ''}${negative ? '-' : ''}${SYMBOL[currency] ?? currency} ${text}`;
 }
+
+/** Sum of decimal strings with up to 2 decimals, exact (integer cents), as a 2-decimal string. */
+export function sumDecimals(values: readonly string[]): string {
+  const cents = (v: string) => {
+    const negative = v.startsWith('-');
+    const [i = '0', d = ''] = v.replace(/^-/, '').split('.');
+    const c = BigInt(i) * 100n + BigInt((d + '00').slice(0, 2));
+    return negative ? -c : c;
+  };
+  const total = values.reduce((acc, v) => acc + cents(v), 0n);
+  const abs = total < 0n ? -total : total;
+  return `${total < 0n ? '-' : ''}${abs / 100n}.${String(abs % 100n).padStart(2, '0')}`;
+}

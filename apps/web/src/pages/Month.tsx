@@ -1,11 +1,20 @@
-import type { MonthProjection, OpenMonthResult, ProjectionLine } from '@meta31/contracts';
+import type { Category, MonthProjection, OpenMonthResult, ProjectionLine } from '@meta31/contracts';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { useSearchParams } from 'react-router';
 import { api } from '../api';
 import { MonthPath } from '../components/MonthPath';
 import { glyphLabel, StatusGlyph } from '../components/StatusGlyph';
-import { addMonthsToMonthInput, currentPeriodIso, formatMoney, formatMoneyShort, formatMonth, formatWeekdayDay, todayIso } from '../format';
+import {
+  addMonthsToMonthInput,
+  currentPeriodIso,
+  formatMoney,
+  formatMoneyShort,
+  formatMonth,
+  formatWeekdayDay,
+  sumDecimals,
+  todayIso,
+} from '../format';
 import { errorMessage, t } from '../glossary';
 
 export const PROJECTION_KEY = ['projection'];
@@ -115,22 +124,114 @@ function MonthBody({ month }: { month: MonthProjection }) {
         </div>
       </div>
 
-      <h2>{t('this_month')}</h2>
-      {month.incomes.length + month.commitments.length === 0 ? (
-        <p className="muted">{t('empty_list')}</p>
-      ) : (
-        <ul className="rows">
-          {sortByDate(month.incomes).map((l) => (
-            <LineRow key={l.sourceKey ?? l.id} line={l} isIncome />
-          ))}
-          {sortByDate(month.commitments).map((l) => (
-            <LineRow key={l.sourceKey ?? l.id} line={l} isIncome={false} />
-          ))}
-        </ul>
-      )}
+      <MonthLines month={month} />
       <Legend />
     </>
   );
+}
+
+type View = 'all' | 'in' | 'out';
+const VIEWS: View[] = ['all', 'in', 'out'];
+const VIEW_LABEL: Record<View, string> = { all: 'view_all', in: 'money_in', out: 'money_out' };
+
+/**
+ * The month's lines, ordered: what comes in first, then what goes out grouped by category with
+ * a subtotal in ARS each (biggest first). A filter shows everything, only Entra or only Sale.
+ */
+function MonthLines({ month }: { month: MonthProjection }) {
+  const [params, setParams] = useSearchParams();
+  const view = (VIEWS as string[]).includes(params.get('ver') ?? '') ? (params.get('ver') as View) : 'all';
+  const setView = (v: View) => {
+    const next = new URLSearchParams(params);
+    if (v === 'all') next.delete('ver');
+    else next.set('ver', v);
+    setParams(next, { replace: true });
+  };
+  const categories = useQuery({ queryKey: ['categories'], queryFn: () => api<Category[]>('GET', '/api/categories') });
+  const categoryName = (id: string) => categories.data?.find((c) => c.id === id)?.name ?? '…';
+
+  // expenses by category, biggest subtotal first
+  const byCategory = new Map<string, ProjectionLine[]>();
+  for (const l of month.commitments) byCategory.set(l.categoryId, [...(byCategory.get(l.categoryId) ?? []), l]);
+  const groups = [...byCategory]
+    .map(([categoryId, lines]) => ({ categoryId, lines: sortByDate(lines), subtotal: subtotalArs(lines) }))
+    .sort((a, b) => compareDecimals(b.subtotal.value, a.subtotal.value) || categoryName(a.categoryId).localeCompare(categoryName(b.categoryId)));
+
+  if (month.incomes.length + month.commitments.length === 0) {
+    return (
+      <>
+        <h2>{t('this_month')}</h2>
+        <p className="muted">{t('empty_list')}</p>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <div className="lines-head">
+        <h2>{t('this_month')}</h2>
+        <div className="segmented" role="group" aria-label={t('filter')}>
+          {VIEWS.map((v) => (
+            <button key={v} type="button" aria-pressed={view === v} className={view === v ? 'on' : ''} onClick={() => setView(v)}>
+              {t(VIEW_LABEL[v])}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {view !== 'out' && month.incomes.length > 0 && (
+        <section className="line-group">
+          <h3 className="group-head">
+            <span>{t('money_in')}</span>
+            {month.ars && <span className="amount income">{formatMoney(month.ars.incomes, 'ARS', { income: true })}</span>}
+          </h3>
+          <ul className="rows">
+            {sortByDate(month.incomes).map((l) => (
+              <LineRow key={l.sourceKey ?? l.id} line={l} isIncome />
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {view !== 'in' && month.commitments.length > 0 && (
+        <section className="line-group">
+          <h3 className="group-head">
+            <span>{t('money_out')}</span>
+            {month.ars && <span className="amount">{formatMoney(month.ars.commitments, 'ARS')}</span>}
+          </h3>
+          {groups.map((g) => (
+            <div key={g.categoryId} className="category-group">
+              <h4 className="category-head">
+                <span>{categoryName(g.categoryId)}</span>
+                <span className="amount">
+                  {g.subtotal.partial && '~ '}
+                  {formatMoney(g.subtotal.value, 'ARS')}
+                </span>
+              </h4>
+              <ul className="rows">
+                {g.lines.map((l) => (
+                  <LineRow key={l.sourceKey ?? l.id} line={l} isIncome={false} />
+                ))}
+              </ul>
+            </div>
+          ))}
+        </section>
+      )}
+    </>
+  );
+}
+
+/** Sum of the lines in ARS; `partial` when some line could not be converted (missing rate). */
+function subtotalArs(lines: ProjectionLine[]): { value: string; partial: boolean } {
+  const known = lines.map((l) => l.amountArs).filter((v): v is string => v !== null);
+  return { value: sumDecimals(known), partial: known.length < lines.length };
+}
+
+/** Compares two 2-decimal strings without converting them to number. */
+function compareDecimals(a: string, b: string): number {
+  // sumDecimals normalizes to exactly 2 decimals, so dropping the point gives integer cents
+  const d = BigInt(sumDecimals([a]).replace('.', '')) - BigInt(sumDecimals([b]).replace('.', ''));
+  return d === 0n ? 0 : d > 0n ? 1 : -1;
 }
 
 /** Full amount on desktop, abbreviated on the phone (manual de marca). */
@@ -180,6 +281,7 @@ function Legend() {
     stored: true,
     status,
     postponed,
+    amountArs: null,
   });
   const items: [ProjectionLine, boolean][] = [
     [sample('pending'), false],
