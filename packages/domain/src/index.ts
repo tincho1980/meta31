@@ -6,4 +6,5 @@ export * from './merge.js';
 export * from './money.js';
 export * from './period.js';
 export * from './periodicity.js';
+export * from './projection.js';
 export * from './source-key.js';
