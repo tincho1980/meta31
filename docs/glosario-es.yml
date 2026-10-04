@@ -396,6 +396,8 @@ ui:
   cancel: Cancelar
   edit: Editar
   deactivate: Desactivar
+  delete: Borrar
+  confirm_delete: "¿Borrar «{name}»? No se puede deshacer."
   activate: Activar
   saving: Guardando…
   empty_list: Todavía no hay nada cargado.
@@ -441,6 +443,7 @@ ui:
   error_valid_to_before_valid_from: El fin no puede ser anterior al inicio.
   error_no_amount_at_start: El primer mes tiene que tener un monto. Corregí el historial de montos.
   error_duplicate_period: Ya hay un monto que rige desde ese mes.
+  error_has_stored_commitments: Ya tiene compromisos grabados (mes abierto o pagado). Anulalos desde la vista del mes; acá podés editarlo o ponerle fecha de fin.
   error_planned_date_month: La fecha prevista tiene que caer en el mes del primer pago.
   error_card_payment_category: Esa categoría es la del pago de las tarjetas; elegí otra.
   error_system_category: Es una categoría del sistema y no se puede modificar.

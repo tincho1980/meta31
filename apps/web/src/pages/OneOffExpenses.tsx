@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import type { z } from 'zod';
 import { api } from '../api';
+import { DeleteButton } from '../components/DeleteButton';
 import { Field } from '../components/Field';
 import { type Choices, CURRENCIES, useChoices } from '../components/rules';
 import {
@@ -267,6 +268,7 @@ function ExpenseRow({ expense, choices }: { expense: OneOffExpense; choices: Cho
           <button type="button" className="link" onClick={() => setEditing(true)}>
             {t('edit')}
           </button>
+          <DeleteButton path={`/api/one-off-expenses/${expense.id}`} name={expense.description} queryKey={KEY} />
         </span>
       )}
       {editing && (

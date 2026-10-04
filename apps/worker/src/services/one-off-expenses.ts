@@ -2,6 +2,7 @@ import type { OneOffExpense, OneOffExpenseCreate, OneOffExpenseUpdate } from '@m
 import { type Db, schema } from '@meta31/db';
 import { addMonths, moneyToDb, oneOffInstallmentAmount, toMoney, toPeriod } from '@meta31/domain';
 import { desc, eq } from 'drizzle-orm';
+import { checkNothingStored } from './deletion.js';
 import { ServiceError } from './errors.js';
 import { checkNotCardCategory, checkReferences } from './references.js';
 
@@ -65,4 +66,12 @@ export async function updateOneOffExpense(db: Db, id: string, input: OneOffExpen
     .where(eq(oneOffExpense.id, id))
     .returning();
   return toOneOffExpense(row!);
+}
+
+/** Deletes a one-off expense loaded by mistake, only if none of its installments is stored yet. */
+export async function deleteOneOffExpense(db: Db, id: string): Promise<void> {
+  const [current] = await db.select({ id: oneOffExpense.id }).from(oneOffExpense).where(eq(oneOffExpense.id, id));
+  if (!current) throw new ServiceError('not_found');
+  await checkNothingStored(db, { oneOffExpenseId: id });
+  await db.delete(oneOffExpense).where(eq(oneOffExpense.id, id));
 }

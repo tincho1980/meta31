@@ -26,6 +26,7 @@ export async function api<T>(method: string, path: string, body?: unknown): Prom
     const errorBody = (await res.json().catch(() => null)) as ApiErrorBody | null;
     throw new ApiError(res.status, errorBody);
   }
+  if (res.status === 204) return undefined as T;
   return (await res.json()) as T;
 }
 

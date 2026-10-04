@@ -106,4 +106,19 @@ describe('one-off expenses API (RF-21)', () => {
     expect(stored.map((c) => c.estimatedAmount)).toEqual(['333333.33']);
     expect(await estimatedIn('2026-12-01')).toEqual([['Termotanque (2/3)', '400000.00']]);
   });
+
+  it('deletes it while nothing is stored; once a month is opened it must be cancelled there', async () => {
+    const mistake = await create({ description: 'Error de carga' });
+    const res = await api.delete(`/api/one-off-expenses/${mistake.id}`);
+    expect(res.status).toBe(204);
+    expect((await (await api.get('/api/one-off-expenses')).json()) as OneOffExpense[]).toEqual([]);
+    expect((await api.delete(`/api/one-off-expenses/${mistake.id}`)).status).toBe(404);
+
+    const boiler = await create();
+    const userId = (await findUserByEmail(t.db, 'martin@example.com'))!.id;
+    await openMonth(t.db, toPeriod('2026-11-01'), userId);
+    const stored = await api.delete(`/api/one-off-expenses/${boiler.id}`);
+    expect(stored.status).toBe(409);
+    expect(await stored.json()).toEqual({ error: 'conflict', reason: 'has_stored_commitments' });
+  });
 });

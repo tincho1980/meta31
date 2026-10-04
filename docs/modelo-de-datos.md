@@ -57,7 +57,7 @@ El Worker recibe la operación hipotética en el request, la suma a las reglas e
   Precisiones del schema (E0): van en las 20 tablas salvo `source_document`, que es el comprobante mismo y solo tiene `created_at`/`updated_at` además de `uploaded_by` y `reviewed_by`. `created_by` y `updated_by` admiten null para lo que carga el sistema (seed, scripts de importación); `entry_mode` tiene default `manual`.
 
 - **Checks** además de los unique: período con día 1 (D6) en `period`, `origin_period`, `from_period`, `first_period` e `income_source.valid_from`; `every_months in (1,2,3,6,12)` y `anchor_month` 1–12 (D7); días del mes 1–31; cuotas ≥ 1; `rate > 0` en cotizaciones; `credit_card.local_currency in (ARS, UYU)`; `loan.principal_uva` presente si y solo si `kind = uva`; `commitment` con exactamente un origen (`num_nonnulls` de las cuatro FK = 1). Nombres de constraints en `snake_case`.
-- Las entidades maestras no se borran: tienen `active boolean` o fecha de fin. Los compromisos se anulan, no se borran.
+- Las entidades maestras no se borran: tienen `active boolean` o fecha de fin. Los compromisos se anulan, no se borran. Excepción: `recurring_expense` y `one_off_expense` se pueden borrar mientras no tengan compromisos grabados (ver 4.4).
 - RLS activado sin políticas en todas las tablas (RNF-09).
 
 ## 3. Diagrama
@@ -298,7 +298,7 @@ Costo financiero de tarjetas = suma de `interest + admin_fee + tax` por tarjeta 
 
 Cargar la factura real de un servicio actualiza el compromiso del mes y, si se elige, agrega una fila acá desde el mes siguiente (RF-19).
 
-Reglas de carga (E1): las mismas que `income_source` (alta con el primer monto estimado desde `valid_from`, siempre un monto vigente en el primer mes, baja con `valid_to`). La categoría tiene que ser de gastos y no puede ser "Tarjetas de crédito": lo que se paga con tarjeta vive en el resumen (regla 1).
+Reglas de carga (E1): las mismas que `income_source` (alta con el primer monto estimado desde `valid_from`, siempre un monto vigente en el primer mes, baja con `valid_to`). La categoría tiene que ser de gastos y no puede ser "Tarjetas de crédito": lo que se paga con tarjeta vive en el resumen (regla 1). Se puede borrar (con su historial) solo mientras no tenga compromisos grabados; después se le pone fin o se anula el compromiso desde la vista del mes (decidido por Martín el 3/10).
 
 **one_off_expense** — gasto puntual (RF-21)
 
@@ -315,7 +315,7 @@ Reglas de carga (E1): las mismas que `income_source` (alta con el primer monto e
 
 Cuota = total / cuotas; la última absorbe el redondeo.
 
-Reglas de carga (E1): hasta 120 cuotas; la fecha prevista es la del primer pago y cae en `first_period`. Categoría de gastos, nunca "Tarjetas de crédito": si se paga con tarjeta es una `installment_purchase` (regla 1). Editar cambia las cuotas que todavía son virtuales; las ya grabadas conservan su monto (D1). No se borra.
+Reglas de carga (E1): hasta 120 cuotas; la fecha prevista es la del primer pago y cae en `first_period`. Categoría de gastos, nunca "Tarjetas de crédito": si se paga con tarjeta es una `installment_purchase` (regla 1). Editar cambia las cuotas que todavía son virtuales; las ya grabadas conservan su monto (D1). Se puede borrar solo mientras ninguna cuota esté grabada; si ya hay alguna, esa cuota se anula desde la vista del mes (decidido por Martín el 3/10).
 
 ### 4.5 Préstamos
 

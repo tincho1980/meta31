@@ -100,7 +100,7 @@ Capas dentro del Worker:
 - Columnas de auditoría en todas las tablas de dominio: `created_at`, `updated_at`, `created_by`, `updated_by`, `entry_mode` (`manual` · `claude`), `source_document_id`.
 - Nada se cambia a mano en el panel de Supabase: todo por migración de drizzle-kit.
 - RLS activado y **sin políticas** en todas las tablas (RNF-09). El Worker se conecta con un rol que lo saltea; la API pública de Supabase no ve nada.
-- Las entidades maestras no se borran: `active` o fecha de fin. Los compromisos se anulan (`cancelled`), no se borran.
+- Las entidades maestras no se borran: `active` o fecha de fin. Los compromisos se anulan (`cancelled`), no se borran. Excepción (3/10): un gasto recurrente o puntual cargado por error se puede borrar mientras no tenga compromisos grabados; si ya tiene, se anulan desde la vista del mes.
 - Las escrituras que tocan varias tablas (cargar resumen, pagar, postergar, confirmar un comprobante) van en **una transacción**.
 - En el Worker se crea un cliente `pg` por request contra Hyperdrive (Hyperdrive hace el pooling). No guardar conexiones en variables globales.
 

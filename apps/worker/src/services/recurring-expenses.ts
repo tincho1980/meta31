@@ -1,6 +1,7 @@
 import type { AmountEntry, AmountEntryCreate, AmountEntryUpdate, RecurringExpense, RecurringExpenseCreate, RecurringExpenseUpdate } from '@meta31/contracts';
 import { type Db, schema } from '@meta31/db';
 import { and, asc, eq, inArray, lte, ne } from 'drizzle-orm';
+import { checkNothingStored } from './deletion.js';
 import { isUniqueViolation, ServiceError } from './errors.js';
 import { checkNotCardCategory, checkReferences } from './references.js';
 
@@ -164,4 +165,18 @@ export async function updateRecurringExpenseAmount(
     throw err;
   }
   return getRecurringExpense(db, expenseId);
+}
+
+/**
+ * Deletes a recurring expense loaded by mistake, with its amount history, only if none of its
+ * commitments is stored yet. Otherwise it is ended with `validTo`.
+ */
+export async function deleteRecurringExpense(db: Db, id: string): Promise<void> {
+  const [current] = await db.select({ id: recurringExpense.id }).from(recurringExpense).where(eq(recurringExpense.id, id));
+  if (!current) throw new ServiceError('not_found');
+  await checkNothingStored(db, { recurringExpenseId: id });
+  await db.transaction(async (tx) => {
+    await tx.delete(recurringExpenseAmount).where(eq(recurringExpenseAmount.recurringExpenseId, id));
+    await tx.delete(recurringExpense).where(eq(recurringExpense.id, id));
+  });
 }

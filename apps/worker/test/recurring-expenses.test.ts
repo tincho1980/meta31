@@ -1,9 +1,10 @@
 import type { Category, Person, Property, RecurringExpense } from '@meta31/contracts';
-import { schema, seedCategories, seedPeople } from '@meta31/db';
+import { findUserByEmail, schema, seedCategories, seedPeople } from '@meta31/db';
 import { createTestDb, type TestDb } from '@meta31/db/testing';
 import { generateForPeriod, toPeriod } from '@meta31/domain';
 import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { openMonth } from '../src/services/open-month.js';
 import { loadRules } from '../src/services/rules.js';
 import { type Client, createHttpClient } from './http.js';
 
@@ -113,5 +114,18 @@ describe('recurring expenses API (RF-17, RF-18, RF-20, D2)', () => {
     const first = power.amounts[0]!;
     const later = await api.patch(`/api/recurring-expenses/${power.id}/amounts/${first.id}`, { fromPeriod: '2027-02-01' });
     expect(await later.json()).toEqual({ error: 'conflict', reason: 'no_amount_at_start' });
+  });
+
+  it('deletes it with its history while nothing is stored; afterwards it can only be ended', async () => {
+    const mistake = await create({ name: 'Error de carga' });
+    await api.post(`/api/recurring-expenses/${mistake.id}/amounts`, { fromPeriod: '2027-01-01', amount: '1' });
+    expect((await api.delete(`/api/recurring-expenses/${mistake.id}`)).status).toBe(204);
+    expect(await t.db.select().from(schema.recurringExpenseAmount)).toEqual([]);
+
+    const power = await create();
+    const userId = (await findUserByEmail(t.db, 'martin@example.com'))!.id;
+    await openMonth(t.db, toPeriod('2026-10-01'), userId);
+    const stored = await api.delete(`/api/recurring-expenses/${power.id}`);
+    expect(await stored.json()).toEqual({ error: 'conflict', reason: 'has_stored_commitments' });
   });
 });
