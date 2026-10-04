@@ -413,6 +413,8 @@ Implementación (E2): `allocated_amount` sale de `amount_paid` con `applied_rate
 
 Postergar y anular (E2): postergar recibe la nueva fecha; `period` pasa a su mes (igual o posterior, nunca anterior) y `due_date` a esa fecha. Si está `partially_paid`, divide en una transacción (D5): la original toma `actual_amount` = lo pagado (menos el recargo) y queda `paid`; la hija hereda origen, categoría y `origin_period`, sin `source_key`, con el resto como estimado. Anular pide motivo (`cancellation_reason`) y no se permite con pagos cargados (se deshacen primero). Lo anulado se puede restaurar desde la lista "Anulados" del mes; un ingreso esperado también se anula ("no entra este mes") y se restaura.
 
+Monto real (E2): cargar el monto real lo guarda en `actual_amount` y recalcula el estado contra lo ya pagado (puede pasar de pagado a parcial si la factura vino más alta). En un gasto recurrente, la opción "usar desde el mes siguiente" agrega o actualiza la fila de `recurring_expense_amount` del mes siguiente al de origen (RF-19). Se puede volver al estimado. En préstamos, el desvío = real − cuota teórica (el estimado), en importe y %. **Cuotas pagadas (RF-25):** las anteriores a la primera cuota grabada cuentan como pagadas (son historia previa a la carga inicial); desde ahí, la última cuota pagada por completo en el sistema (una cuota dividida cuenta cuando todas sus partes están pagadas). Deuda remanente = saldo de capital del cuadro después de esa cuota.
+
 ### 4.7 Carga por Claude
 
 **source_document** — comprobante: bandeja de revisión y control de duplicados (D3; RF-35)

@@ -42,6 +42,10 @@ export function LoanDetail() {
           <div className="amount">{amount(loan.remainingPrincipal)}</div>
         </div>
         <div>
+          <div className="etiqueta">{t('paid_installments')}</div>
+          <div className="amount">{t('n_of_total', { n: String(loan.paidInstallments), total: String(loan.installmentsTotal) })}</div>
+        </div>
+        <div>
           <div className="etiqueta">{columnLabel('loan', 'nominal_annual_rate')}</div>
           <div className="amount">{formatPercent(loan.nominalAnnualRate)}</div>
         </div>
@@ -70,11 +74,13 @@ export function LoanDetail() {
                 <th>{t('schedule_insurance')}</th>
                 <th>{t('schedule_total')}</th>
                 <th>{t('schedule_balance')}</th>
+                <th>{t('schedule_actual')}</th>
+                <th>{derivedLabel('installment_deviation')}</th>
               </tr>
             </thead>
             <tbody>
               {schedule.data.rows.map((r) => (
-                <tr key={r.number} className={r.period === now ? 'current' : r.period < now ? 'past' : ''}>
+                <tr key={r.number} className={r.stored?.status === 'paid' || r.number <= loan.paidInstallments ? 'past' : r.period === now ? 'current' : ''}>
                   <td>{r.number}</td>
                   <td>{formatDate(r.dueDate)}</td>
                   <td>{r.days}</td>
@@ -84,6 +90,10 @@ export function LoanDetail() {
                   <td>{amount(r.insurance)}</td>
                   <td>{amount(r.total)}</td>
                   <td>{amount(r.closingBalance)}</td>
+                  <td>{r.stored?.actualAmount ? amount(r.stored.actualAmount) : ''}</td>
+                  <td className={r.stored?.deviation && !r.stored.deviation.amount.startsWith('-') && r.stored.deviation.amount !== '0.00' ? 'negative' : ''}>
+                    {r.stored?.deviation ? `${r.stored.deviation.amount.startsWith('-') ? '' : '+'}${amount(r.stored.deviation.amount)} (${r.stored.deviation.percent.replace('.', ',')} %)` : ''}
+                  </td>
                 </tr>
               ))}
             </tbody>

@@ -1,11 +1,11 @@
-import type { CancelInput, CancelledLine, CommitmentDetail, IncomeDetail, PostponeInput } from '@meta31/contracts';
+import type { ActualAmountInput, CancelInput, CancelledLine, CommitmentDetail, IncomeDetail, PostponeInput } from '@meta31/contracts';
 import { type Db, schema } from '@meta31/db';
-import { comparePeriods, moneyToDb, paymentStatus, periodOf, toMoney, toPeriod } from '@meta31/domain';
+import { addMonths, comparePeriods, moneyToDb, paymentStatus, periodOf, toMoney, toPeriod } from '@meta31/domain';
 import { and, eq } from 'drizzle-orm';
 import { ServiceError } from './errors.js';
 import { amountInForce, getCommitmentDetail } from './payments.js';
 
-const { commitment, commitmentPayment, income } = schema;
+const { commitment, commitmentPayment, income, recurringExpenseAmount } = schema;
 
 async function load(db: Db, id: string) {
   const [c] = await db.select().from(commitment).where(eq(commitment.id, id));
@@ -143,4 +143,40 @@ export async function listCancelled(db: Db, period: string): Promise<CancelledLi
       reason: c.cancellationReason,
     })),
   ];
+}
+
+/**
+ * Loads the real amount (rule 10): it replaces the estimate and the status is recomputed against
+ * what is already paid. For a recurring expense, `updateFollowing` makes it the estimate from the
+ * month after its origin month (RF-19), in the same transaction.
+ */
+export async function setActualAmount(db: Db, id: string, input: ActualAmountInput, userId: string): Promise<CommitmentDetail> {
+  const c = await load(db, id);
+  if (c.status === 'cancelled') throw new ServiceError('conflict', 'cancelled');
+  if (input.updateFollowing && !c.recurringExpenseId) throw new ServiceError('conflict', 'not_recurring');
+  const allocated = await allocatedOf(db, id);
+  const status = paymentStatus(toMoney(input.actualAmount).plus(toMoney(c.surcharge)), allocated);
+  await db.transaction(async (tx) => {
+    await tx.update(commitment).set({ actualAmount: input.actualAmount, status, updatedBy: userId }).where(eq(commitment.id, id));
+    if (input.updateFollowing) {
+      const fromPeriod = addMonths(toPeriod(c.originPeriod), 1);
+      await tx
+        .insert(recurringExpenseAmount)
+        .values({ recurringExpenseId: c.recurringExpenseId!, fromPeriod, amount: input.actualAmount, createdBy: userId, updatedBy: userId })
+        .onConflictDoUpdate({
+          target: [recurringExpenseAmount.recurringExpenseId, recurringExpenseAmount.fromPeriod],
+          set: { amount: input.actualAmount, updatedBy: userId },
+        });
+    }
+  });
+  return getCommitmentDetail(db, id);
+}
+
+/** Removes a real amount loaded by mistake: back to the estimate (the amount history is left as is). */
+export async function clearActualAmount(db: Db, id: string, userId: string): Promise<CommitmentDetail> {
+  const c = await load(db, id);
+  if (c.status === 'cancelled') throw new ServiceError('conflict', 'cancelled');
+  const status = paymentStatus(toMoney(c.estimatedAmount).plus(toMoney(c.surcharge)), await allocatedOf(db, id));
+  await db.update(commitment).set({ actualAmount: null, status, updatedBy: userId }).where(eq(commitment.id, id));
+  return getCommitmentDetail(db, id);
 }

@@ -73,6 +73,8 @@ export type ProjectionLine = {
   postponed: boolean;
   /** `amount` in ARS with the rate in force on the line's date (rule 6); null if a rate is missing. */
   amountArs: Money | null;
+  /** The amount is still an estimate: no real amount loaded yet (rule 10). */
+  estimate: boolean;
 };
 
 export type Totals = { incomes: Money; commitments: Money; result: Money };
@@ -132,6 +134,7 @@ function storedCommitmentLine(c: StoredCommitment): ProjectionLine {
     status: c.status,
     postponed: c.originPeriod !== c.period,
     amountArs: null,
+    estimate: c.actualAmount === null,
   };
 }
 
@@ -150,6 +153,7 @@ function storedIncomeLine(i: StoredIncome): ProjectionLine {
     status: i.status,
     postponed: false,
     amountArs: null,
+    estimate: i.actualAmount === null,
   };
 }
 
@@ -190,6 +194,7 @@ export function projectMonths(input: ProjectionInput): MonthProjection[] {
         status: null,
         postponed: false,
         amountArs: null,
+        estimate: true,
       })),
     ];
     const incomes: ProjectionLine[] = [
@@ -208,6 +213,7 @@ export function projectMonths(input: ProjectionInput): MonthProjection[] {
         status: null,
         postponed: false,
         amountArs: null,
+        estimate: true,
       })),
     ];
 

@@ -26,6 +26,8 @@ export const projectionLine = z.object({
   amountArs: z.string().nullable(),
   /** Stored commitments: allocated so far, in the line's currency; null otherwise. */
   paid: z.string().nullable(),
+  /** Still an estimate: no real amount loaded (rule 10). */
+  estimate: z.boolean(),
 });
 export type ProjectionLine = z.infer<typeof projectionLine>;
 

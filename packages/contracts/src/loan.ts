@@ -43,6 +43,12 @@ export const loan = z.object({
    * It becomes "after the last paid installment" once payments are loaded (E2).
    */
   remainingPrincipal: z.string(),
+  /**
+   * Computed (RF-25): installments taken as paid — the ones before the first stored installment
+   * (history before the initial load) and then the last one paid in the system.
+   */
+  paidInstallments: z.number(),
+  remainingInstallments: z.number(),
 });
 export type Loan = z.infer<typeof loan>;
 
@@ -106,6 +112,14 @@ export const scheduleRow = z.object({
   insurance: z.string(),
   total: z.string(),
   closingBalance: z.string(),
+  /** Stored installment: its real amount, deviation (RF-23) and status; null while virtual. */
+  stored: z
+    .object({
+      actualAmount: z.string().nullable(),
+      deviation: z.object({ amount: z.string(), percent: z.string() }).nullable(),
+      status: z.enum(['pending', 'partially_paid', 'paid', 'cancelled']),
+    })
+    .nullable(),
 });
 export type ScheduleRow = z.infer<typeof scheduleRow>;
 

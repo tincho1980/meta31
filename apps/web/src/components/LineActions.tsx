@@ -1,4 +1,5 @@
 import {
+  actualAmountInput,
   cancelInput,
   type CommitmentDetail,
   fieldErrors,
@@ -36,11 +37,12 @@ export function LineActions({ line, isIncome, onClose }: { line: ProjectionLine;
   return isIncome ? <ReceiveIncome line={line} onClose={onClose} /> : <PayCommitment id={line.id} onClose={onClose} />;
 }
 
-const MODE_LABEL = { pay: 'pay', postpone: 'postpone', cancel: 'cancel_commitment' } as const;
+type Mode = 'pay' | 'actual' | 'postpone' | 'cancel';
+const MODE_LABEL: Record<Mode, string> = { pay: 'pay', actual: 'actual_amount', postpone: 'postpone', cancel: 'cancel_commitment' };
 
 function PayCommitment({ id, onClose }: { id: string; onClose: () => void }) {
   const queryClient = useQueryClient();
-  const [mode, setMode] = useState<'pay' | 'postpone' | 'cancel'>('pay');
+  const [mode, setMode] = useState<Mode>('pay');
   const key = ['commitment', id];
   const detail = useQuery({ queryKey: key, queryFn: () => api<CommitmentDetail>('GET', `/api/commitments/${id}`) });
   const refresh = () => Promise.all([queryClient.invalidateQueries({ queryKey: key }), queryClient.invalidateQueries({ queryKey: PROJECTION_KEY })]);
@@ -81,10 +83,29 @@ function PayCommitment({ id, onClose }: { id: string; onClose: () => void }) {
         </>
       )}
       {undo.isError && <p className="warning">{errorMessage(undo.error)}</p>}
+      {d.deviation && (
+        <p className="muted">
+          {t('deviation_line', {
+            amount: `${d.deviation.amount.startsWith('-') ? '' : '+'}${formatMoney(d.deviation.amount, d.currency)}`,
+            percent: d.deviation.percent.replace('.', ','),
+          })}
+        </p>
+      )}
+      {d.status === 'paid' && mode !== 'actual' && (
+        <div className="form-actions">
+          <button type="button" className="link" onClick={() => setMode('actual')}>
+            {t('actual_amount')}
+          </button>
+          <button type="button" className="secondary" onClick={onClose}>
+            {t('close')}
+          </button>
+        </div>
+      )}
+      {d.status === 'paid' && mode === 'actual' && <ActualForm detail={d} onDone={refresh} onClose={onClose} />}
       {d.status !== 'paid' && d.status !== 'cancelled' ? (
         <>
           <div className="segmented panel-modes" role="group">
-            {(['pay', 'postpone', 'cancel'] as const).map((m) => (
+            {(['pay', 'actual', 'postpone', 'cancel'] as const).map((m) => (
               <button key={m} type="button" aria-pressed={mode === m} className={mode === m ? 'on' : ''} onClick={() => setMode(m)}>
                 {t(MODE_LABEL[m])}
               </button>
@@ -94,13 +115,14 @@ function PayCommitment({ id, onClose }: { id: string; onClose: () => void }) {
             <PaymentForm detail={d} remaining={remaining.startsWith('-') ? '0' : remaining} onPaid={refresh} onClose={onClose} />
           )}
           {mode === 'postpone' && <PostponeForm detail={d} onDone={refresh} onClose={onClose} />}
+          {mode === 'actual' && <ActualForm detail={d} onDone={refresh} onClose={onClose} />}
           {mode === 'cancel' && <CancelForm detail={d} onDone={refresh} onClose={onClose} />}
         </>
-      ) : (
+      ) : d.status === 'cancelled' ? (
         <button type="button" className="secondary" onClick={onClose}>
           {t('close')}
         </button>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -142,6 +164,57 @@ function PostponeForm({ detail, onDone, onClose }: { detail: CommitmentDetail; o
         </button>
       </div>
       {postpone.isError && <p className="warning form-error">{errorMessage(postpone.error)}</p>}
+    </form>
+  );
+}
+
+/**
+ * Real amount (rule 10): the bill, statement or bank notice replaces the estimate. A recurring
+ * expense can keep it as the estimate from the next month on (RF-19).
+ */
+function ActualForm({ detail, onDone, onClose }: { detail: CommitmentDetail; onDone: () => Promise<unknown>; onClose: () => void }) {
+  const [amount, setAmount] = useState(formatDecimal(detail.actualAmount ?? detail.estimatedAmount));
+  const [updateFollowing, setUpdateFollowing] = useState(false);
+  const [error, setError] = useState<string | undefined>();
+  const save = useMutation({
+    mutationFn: (input: unknown) => api('PUT', `/api/commitments/${detail.id}/actual`, input),
+    onSuccess: onDone,
+  });
+  const clear = useMutation({ mutationFn: () => api('DELETE', `/api/commitments/${detail.id}/actual`), onSuccess: onDone });
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    save.reset();
+    const parsed = actualAmountInput.safeParse({ actualAmount: parseDecimalInput(amount), updateFollowing });
+    if (!parsed.success) return setError(fieldErrors(parsed.error).actualAmount);
+    setError(undefined);
+    save.mutate(parsed.data);
+  };
+  return (
+    <form className="form-grid" onSubmit={submit} noValidate>
+      <Field label={`${columnLabel('commitment', 'actual_amount')} (${detail.currency})`} error={error}>
+        {(p) => <input {...p} inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />}
+      </Field>
+      <p className="muted form-error">{t('estimated_was', { amount: formatMoney(detail.estimatedAmount, detail.currency) })}</p>
+      {detail.origin === 'recurring_expense' && (
+        <label className="check form-error">
+          <input type="checkbox" checked={updateFollowing} onChange={(e) => setUpdateFollowing(e.target.checked)} />
+          {t('update_following')}
+        </label>
+      )}
+      <div className="form-actions">
+        <button type="submit" className="primary" disabled={save.isPending}>
+          {save.isPending ? t('saving') : t('save')}
+        </button>
+        {detail.actualAmount !== null && (
+          <button type="button" className="secondary" disabled={clear.isPending} onClick={() => clear.mutate()}>
+            {t('back_to_estimate')}
+          </button>
+        )}
+        <button type="button" className="secondary" onClick={onClose}>
+          {t('close')}
+        </button>
+      </div>
+      {(save.isError || clear.isError) && <p className="warning form-error">{errorMessage(save.error ?? clear.error)}</p>}
     </form>
   );
 }
