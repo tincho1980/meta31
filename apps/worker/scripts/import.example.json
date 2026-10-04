@@ -1,0 +1,118 @@
+{
+  "version": 1,
+  "categories": [
+    { "name": "Sueldos", "kind": "income" },
+    { "name": "Casa", "kind": "expense" },
+    { "name": "Servicios", "kind": "expense" },
+    { "name": "Impuestos", "kind": "expense" },
+    { "name": "Préstamos", "kind": "expense" },
+    { "name": "Suscripciones", "kind": "expense" }
+  ],
+  "properties": [
+    { "name": "Casa La Plata", "country": "AR", "currency": "ARS" },
+    { "name": "Depto Montevideo", "country": "UY", "currency": "UYU" }
+  ],
+  "exchangeRates": [
+    { "pair": "USD_ARS", "validFrom": "2026-10-01", "rate": "1450" },
+    { "pair": "UYU_USD", "validFrom": "2026-10-01", "rate": "40.5" }
+  ],
+  "incomeSources": [
+    {
+      "name": "Sueldo de ejemplo",
+      "category": "Sueldos",
+      "holder": "Martín",
+      "currency": "ARS",
+      "expectedDay": 5,
+      "validFrom": "2026-10-01",
+      "amounts": [
+        { "fromPeriod": "2026-10-01", "amount": "1500000" },
+        { "fromPeriod": "2027-01-01", "amount": "1650000" }
+      ]
+    },
+    {
+      "name": "Alquiler de ejemplo",
+      "category": "Alquileres",
+      "holder": "Rosalía",
+      "property": "Depto Montevideo",
+      "currency": "UYU",
+      "expectedDay": 10,
+      "validFrom": "2026-10-01",
+      "amounts": [{ "fromPeriod": "2026-10-01", "amount": "28000" }]
+    }
+  ],
+  "oneOffIncomes": [
+    { "description": "Proyecto de ejemplo", "category": "Sueldos", "period": "2026-12-01", "expectedDate": "2026-12-15", "currency": "USD", "estimatedAmount": "800" }
+  ],
+  "recurringExpenses": [
+    {
+      "name": "Luz",
+      "class": "utility",
+      "provider": "Proveedor de ejemplo",
+      "category": "Servicios",
+      "property": "Casa La Plata",
+      "currency": "ARS",
+      "dueDay": 20,
+      "validFrom": "2026-10-01",
+      "amounts": [{ "fromPeriod": "2026-10-01", "amount": "45000" }]
+    },
+    {
+      "name": "Inmobiliario anual",
+      "class": "tax",
+      "category": "Impuestos",
+      "property": "Casa La Plata",
+      "currency": "ARS",
+      "everyMonths": 12,
+      "anchorMonth": 3,
+      "validFrom": "2026-10-01",
+      "amounts": [{ "fromPeriod": "2026-10-01", "amount": "480000" }]
+    }
+  ],
+  "oneOffExpenses": [
+    { "description": "Termotanque", "category": "Casa", "currency": "ARS", "totalAmount": "900000", "installments": 3, "firstPeriod": "2026-11-01" }
+  ],
+  "creditCards": [
+    {
+      "name": "Visa de ejemplo",
+      "bank": "Banco de ejemplo",
+      "country": "AR",
+      "holder": "Martín",
+      "closingDay": 25,
+      "dueDay": 8,
+      "estimatedSpendLocal": "250000",
+      "estimatedSpendUsd": "20",
+      "installmentPurchases": [
+        {
+          "description": "Heladera",
+          "category": "Casa",
+          "purchaseDate": "2026-07-03",
+          "currency": "ARS",
+          "installmentAmount": "85000",
+          "installmentsTotal": 12,
+          "currentInstallment": { "number": 4, "period": "2026-10-01" }
+        }
+      ],
+      "subscriptions": [
+        { "description": "Streaming", "category": "Suscripciones", "currency": "USD", "amount": "12.99", "validFrom": "2026-01-10" }
+      ],
+      "statements": [
+        { "closingDate": "2026-09-25", "dueDate": "2026-10-08", "totalLocal": "612345.67", "totalUsd": "35.5", "minimumPaymentLocal": "61000" }
+      ]
+    }
+  ],
+  "loans": [
+    {
+      "lender": "Banco de ejemplo",
+      "holder": "Martín",
+      "category": "Préstamos",
+      "currency": "ARS",
+      "principal": "2400000",
+      "nominalAnnualRate": "65",
+      "interestVatRate": "21",
+      "monthlyInsurance": "1500",
+      "grantedDate": "2026-03-10",
+      "installmentsTotal": 18,
+      "firstPeriod": "2026-04-01",
+      "dueDay": 31
+    }
+  ]
+}

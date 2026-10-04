@@ -218,3 +218,23 @@ Pide el valor por consola.
 **Migraciones.** El CI no migra la base de Supabase (no tiene la cadena de conexión). Si un PR trae una migración nueva, correr `pnpm --filter @meta31/db migrate` **antes** de mergear a `main`, para que el Worker nuevo no arranque contra un schema viejo. Las migraciones tienen que ser compatibles con el Worker anterior (agregar columnas o tablas, no renombrar ni borrar en el mismo paso).
 
 **Deploy manual de emergencia** (solo si GitHub Actions no anda): pasos 5 y 6, desde `main` actualizado.
+
+## 11. Carga inicial (RNF-15, decisión 3 del plan)
+
+Claude (en Cowork) lee los últimos resúmenes de tarjeta, avisos de préstamos, recibos de sueldo y servicios, y arma un archivo de carga en JSON. El formato es el esquema `importFile` de `packages/contracts/src/import-file.ts`; hay un ejemplo con datos inventados en `apps/worker/scripts/import.example.json`. Las referencias van por nombre (categoría, persona, propiedad): las categorías que falten se crean; las personas tienen que ser las del seed (Martín, Rosalía, Amaia).
+
+Guardá el archivo con nombre `algo.load.json`: esa terminación está en `.gitignore`, para que tus datos nunca lleguen al repo público.
+
+Primero, la prueba (no graba nada; si algo no cierra, dice en qué ítem):
+
+```powershell
+pnpm --filter @meta31/worker run initial-load C:\ruta\carga.load.json --dry-run
+```
+
+Si da bien, la carga en Supabase (lee `DATABASE_URL` y `SEED_EMAIL_MARTIN` de `packages/db/.env`, como el seed):
+
+```powershell
+pnpm --filter @meta31/worker run initial-load C:\ruta\carga.load.json
+```
+
+Corre en una sola transacción, por los mismos casos de uso que la PWA: o se carga todo o nada. Se niega si la base ya tiene reglas cargadas (corre una sola vez). Para probar antes en local: `--local` usa la base PGlite de `.local-db/` (tiene que estar vacía de reglas: borrá esa carpeta para empezar de cero).
