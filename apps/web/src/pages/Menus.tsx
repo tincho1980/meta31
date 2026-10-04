@@ -46,6 +46,7 @@ export function More({ onSignOut }: { onSignOut: () => void }) {
           { to: '/prestamos', label: t('nav_loans') },
           { to: '/propiedades', label: t('nav_properties') },
           { to: '/ingresos', label: t('nav_incomes') },
+          { to: '/gastos-recurrentes', label: t('nav_recurring_expenses') },
         ]}
       />
       <h2>{t('nav_settings')}</h2>
