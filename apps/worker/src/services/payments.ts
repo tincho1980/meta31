@@ -2,6 +2,7 @@ import type { CommitmentDetail, IncomeDetail, IncomeReceive, PaymentCreate } fro
 import { type Db, schema } from '@meta31/db';
 import {
   allocatePayment,
+  installmentDeviation,
   type ExchangeRate,
   MissingRateError,
   moneyToDb,
@@ -25,6 +26,28 @@ async function loadRates(db: Db): Promise<ExchangeRate[]> {
   return rows.map((r) => ({ pair: r.pair, validFrom: r.validFrom, rate: toMoney(r.rate) }));
 }
 
+/** The origin foreign key that is set (the check guarantees exactly one). */
+export function originKind(c: CommitmentRow): CommitmentDetail['origin'] {
+  if (c.creditCardId) return 'credit_card';
+  if (c.recurringExpenseId) return 'recurring_expense';
+  if (c.oneOffExpenseId) return 'one_off_expense';
+  return 'loan';
+}
+
+/**
+ * Loans (RF-23): real installment against the theoretical one, which is the estimate. A split
+ * installment (D5) has no single real amount: its original only records what was paid, so it
+ * has no deviation.
+ */
+export function deviationOf(
+  c: Pick<CommitmentRow, 'loanId' | 'estimatedAmount' | 'actualAmount'>,
+  split = false,
+): CommitmentDetail['deviation'] {
+  if (!c.loanId || c.actualAmount === null || split) return null;
+  const d = installmentDeviation(toMoney(c.estimatedAmount), toMoney(c.actualAmount));
+  return { amount: moneyToDb(d.amount), percent: d.percent.toDecimalPlaces(1, 4).toFixed(1) };
+}
+
 export async function getCommitmentDetail(db: Db, id: string): Promise<CommitmentDetail> {
   const [c] = await db.select().from(commitment).where(eq(commitment.id, id));
   if (!c) throw new ServiceError('not_found');
@@ -34,6 +57,7 @@ export async function getCommitmentDetail(db: Db, id: string): Promise<Commitmen
     .where(eq(commitmentPayment.commitmentId, id))
     .orderBy(asc(commitmentPayment.date), asc(commitmentPayment.createdAt));
   const paid = payments.reduce((acc, p) => acc.plus(toMoney(p.allocatedAmount)), toMoney('0'));
+  const [child] = await db.select({ id: commitment.id }).from(commitment).where(eq(commitment.parentCommitmentId, id)).limit(1);
   return {
     id: c.id,
     description: c.description,
@@ -43,6 +67,11 @@ export async function getCommitmentDetail(db: Db, id: string): Promise<Commitmen
     paid: moneyToDb(paid),
     status: c.status,
     originPeriod: c.originPeriod,
+    estimatedAmount: c.estimatedAmount,
+    actualAmount: c.actualAmount,
+    surcharge: c.surcharge,
+    origin: originKind(c),
+    deviation: deviationOf(c, Boolean(child)),
     dueDate: c.dueDate,
     cancellationReason: c.cancellationReason,
     payments: payments.map((p) => ({

@@ -286,7 +286,7 @@ const sortByDate = (lines: ProjectionLine[]) =>
 function LineRow({ line, isIncome }: { line: ProjectionLine; isIncome: boolean }) {
   const done = line.status === 'paid' || line.status === 'received';
   // estimated until it is paid (in full or in part): manual de marca, '~' and tinta-suave
-  const estimate = !isIncome && (line.status === null || line.status === 'pending');
+  const estimate = !isIncome && line.estimate && (line.status === null || line.status === 'pending');
   const [open, setOpen] = useState(false);
   const when = line.date
     ? t(line.postponed ? 'moved_to' : isIncome ? 'comes_in_on' : 'due_on', { day: formatWeekdayDay(line.date) })
@@ -330,6 +330,7 @@ function Legend() {
     postponed,
     amountArs: null,
     paid: null,
+    estimate: false,
   });
   const items: [ProjectionLine, boolean][] = [
     [sample('pending'), false],

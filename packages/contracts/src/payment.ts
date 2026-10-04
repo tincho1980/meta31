@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { currency, id, isoDate, positiveAmount, rate } from './common.js';
+import { amount, currency, id, isoDate, positiveAmount, rate } from './common.js';
 
 export const paymentMethod = z.enum(['transfer', 'debit', 'cash', 'mercado_pago', 'other']);
 
@@ -30,6 +30,13 @@ export const commitmentDetail = z.object({
   status: z.enum(['pending', 'partially_paid', 'paid', 'cancelled']),
   /** Month it was born for (D5); different from `period` once postponed. */
   originPeriod: isoDate,
+  estimatedAmount: z.string(),
+  /** Real amount from the bill, statement or bank notice (rule 10); null while unknown. */
+  actualAmount: z.string().nullable(),
+  surcharge: z.string(),
+  origin: z.enum(['credit_card', 'recurring_expense', 'one_off_expense', 'loan']),
+  /** Loans (RF-23): actual − theoretical installment, in amount and %; null without an actual amount. */
+  deviation: z.object({ amount: z.string(), percent: z.string() }).nullable(),
   dueDate: isoDate.nullable(),
   cancellationReason: z.string().nullable(),
   payments: z.array(commitmentPayment),
@@ -87,3 +94,13 @@ export const cancelledLine = z.object({
   reason: z.string().nullable(),
 });
 export type CancelledLine = z.infer<typeof cancelledLine>;
+
+/**
+ * Real amount of a commitment (rule 10): it replaces the estimate. For a recurring expense,
+ * `updateFollowing` also makes it the estimate from the next month on (RF-19).
+ */
+export const actualAmountInput = z.object({
+  actualAmount: amount,
+  updateFollowing: z.boolean().default(false),
+});
+export type ActualAmountInput = z.infer<typeof actualAmountInput>;

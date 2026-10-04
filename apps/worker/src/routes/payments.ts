@@ -1,13 +1,15 @@
-import { cancelInput, incomeReceive, paymentCreate, postponeInput } from '@meta31/contracts';
+import { actualAmountInput, cancelInput, incomeReceive, paymentCreate, postponeInput } from '@meta31/contracts';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import type { AppEnv } from '../env.js';
 import {
   cancelCommitment,
   cancelIncome,
+  clearActualAmount,
   postponeCommitment,
   restoreCommitment,
   restoreIncome,
+  setActualAmount,
 } from '../services/commitment-actions.js';
 import { addPayment, deletePayment, getCommitmentDetail, receiveIncome, undoReceiveIncome } from '../services/payments.js';
 import { idParam, validate } from './validate.js';
@@ -32,6 +34,12 @@ export const commitments = new Hono<AppEnv>()
   })
   .post('/:id/restore', validate('param', idParam), async (c) => {
     return c.json(await restoreCommitment(c.var.db, c.req.valid('param').id, c.var.user.id));
+  })
+  .put('/:id/actual', validate('param', idParam), validate('json', actualAmountInput), async (c) => {
+    return c.json(await setActualAmount(c.var.db, c.req.valid('param').id, c.req.valid('json'), c.var.user.id));
+  })
+  .delete('/:id/actual', validate('param', idParam), async (c) => {
+    return c.json(await clearActualAmount(c.var.db, c.req.valid('param').id, c.var.user.id));
   });
 
 /** Incomes: mark received with the real amount (RF-08) or undo it; cancel and restore. */

@@ -455,6 +455,14 @@ ui:
   view_all: Todo
   filter: Filtro
   pay: Pagar
+  actual_amount: Monto real
+  estimated_was: "El estimado era {amount}."
+  update_following: Usar este monto como estimado desde el mes siguiente
+  back_to_estimate: Volver al estimado
+  deviation_line: "Desvío contra la cuota teórica: {amount} ({percent} %)."
+  paid_installments: Cuotas pagadas
+  n_of_total: "{n} de {total}"
+  schedule_actual: Real
   postpone: Postergar
   postpone_to: ¿Para qué fecha?
   postpone_rest_help: Ya pagaste una parte. Lo que falta pasa a esa fecha y este queda pagado por lo que pagaste.
@@ -530,6 +538,7 @@ ui:
   error_statement_month: El vencimiento no puede cambiar de mes; si te equivocaste de mes, avisá.
   error_cancelled: Está anulado.
   error_already_paid: Ya está pagado.
+  error_not_recurring: Solo los gastos recurrentes actualizan los meses siguientes.
   error_postpone_backwards: No se puede pasar a un mes anterior.
   error_has_payments: Tiene pagos cargados. Deshacelos primero si querés anularlo.
   error_not_cancelled: No está anulado.

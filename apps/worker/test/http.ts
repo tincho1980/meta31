@@ -20,6 +20,7 @@ export type Client = {
   post: (path: string, body: unknown) => Promise<Response>;
   patch: (path: string, body: unknown) => Promise<Response>;
   delete: (path: string) => Promise<Response>;
+  put: (path: string, body: unknown) => Promise<Response>;
 };
 
 /** App wired to `t.db`, plus a client that sends a valid token for `email`. */
@@ -53,5 +54,6 @@ export async function createHttpClient(t: TestDb, email = 'martin@example.com'):
     post: (path, body) => send('POST', path, body),
     patch: (path, body) => send('PATCH', path, body),
     delete: (path) => send('DELETE', path),
+    put: (path, body) => send('PUT', path, body),
   };
 }
