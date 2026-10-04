@@ -24,6 +24,7 @@ export function Load() {
       <Menu
         entries={[
           { to: '/ingresos', label: tableLabel('income_source') },
+          { to: '/gastos-recurrentes', label: tableLabel('recurring_expense') },
           { to: '/propiedades', label: tableLabel('property') },
           { to: '/cotizaciones', label: tableLabel('exchange_rate') },
           { to: '/categorias', label: tableLabel('category') },

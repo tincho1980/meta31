@@ -616,3 +616,8 @@ button.link:hover:not(:disabled) {
 .amount.income {
   color: var(--verde-ingreso);
 }
+
+/* estimated amounts (manual de marca): '~' and tinta-suave */
+.amount.estimate {
+  color: var(--tinta-suave);
+}
