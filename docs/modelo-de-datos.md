@@ -471,6 +471,12 @@ Con ~50 reglas y 12 meses son unas 600 operaciones en memoria: entra cómodo en 
 
 Abrir un mes es idempotente gracias al unique de `source_key`: si dos usuarios entran a la vez, el segundo no duplica.
 
+**Proyección** (`packages/domain/src/projection.ts`, servicio `apps/worker/src/services/projection.ts`, 3/10):
+- Cada mes = compromisos e ingresos grabados con `period` en el mes (no anulados) + candidatos virtuales cuya `source_key` no está grabada. Monto vigente del compromiso = `coalesce(actual_amount, estimated_amount) + surcharge`; del ingreso, `coalesce(actual_amount, estimated_amount)`. "Postergado" se deriva de `origin_period ≠ period`.
+- Totales en cada moneda original (siempre) y convertidos a ARS y USD con la cotización vigente a la fecha de cada línea (vencimiento o fecha esperada; si no tiene, el día 1 del mes). Si falta una cotización, los totales convertidos quedan vacíos y se informa qué par y fecha faltan, sin cortar la proyección.
+- **Carga de cuotas (RF-33)** = (cuotas de compras con tarjeta que caen en el mes + cuotas de préstamos) en ARS ÷ ingresos del mes en ARS. Sin ingresos, el porcentaje queda vacío.
+- Solo lectura: proyectar no materializa nada. Horizonte de 1 a 36 meses.
+
 Implementación (`apps/worker/src/services/open-month.ts`): en una sola transacción se inserta la fila de `month` con `ON CONFLICT DO NOTHING`; si ya existía, no se hace nada más. Si es nueva, se generan los candidatos del mes y se insertan con `ON CONFLICT (source_key) DO NOTHING`, así lo ya grabado (tocado antes, postergado o anulado) nunca se pisa ni se duplica. Las reglas que no pudieron generar (sin monto vigente, UVA sin valor) vuelven como avisos.
 
 ## 8. Fuera de este modelo (a propósito)

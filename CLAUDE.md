@@ -25,7 +25,8 @@ Reglas sobre los documentos:
 - Repo: remoto `github.com/tincho1980/meta31`. E0 en la rama `feat/e0-esqueleto`.
 - Infra creada por Martín: proyecto Supabase con login de Google configurado, credencial OAuth de Google, cuenta de Cloudflare.
 - **E0: cerrado el 3/10/2026.** Login con Google desde el celular → "Hola, Martín"; una cuenta no habilitada recibe 403. Producción: PWA en `https://meta31.pages.dev`, Worker en `https://meta31-api.miramallo.workers.dev`. Se publicaron a mano desde `feat/e0-esqueleto`, así que `main` todavía no refleja producción.
-- **Deploy automático:** cada merge a `main` corre `verify` y, si pasa, el job `deploy` del CI publica el Worker y la PWA (credenciales en el environment `production` de GitHub, solo para `main`). Nada de deploys a mano; detalle en `docs/setup.md` paso 10. Las migraciones contra Supabase las corre Martín antes de mergear a `main`. Siguiente: E1. Meta inmediata: cerrar E1 y E2; después E3 (MCP); E4 (simulador, IPC, rentabilidad) al final.
+- **Deploy automático:** cada merge a `main` corre `verify` y, si pasa, el job `deploy` del CI publica el Worker y la PWA (credenciales en el environment `production` de GitHub, solo para `main`). Nada de deploys a mano; detalle en `docs/setup.md` paso 10. Las migraciones contra Supabase las corre Martín antes de mergear a `main`.
+- **E1 en curso:** dominio completo (períodos, montos y cotizaciones, amortización, generadores, apertura de mes, proyección y carga de cuotas). Falta la capa visible: rutas de la API, pantallas de alta (RF-34), vista del mes, proyección a 12 meses con el indicador de cuotas, y la carga inicial por script (plan, decisión 3). Meta inmediata: cerrar E1 y E2; después E3 (MCP); E4 (simulador, IPC, rentabilidad) al final.
 
 ## Stack (cerrado, no cambiar sin hablarlo)
 
