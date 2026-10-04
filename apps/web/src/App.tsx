@@ -8,6 +8,7 @@ import { Layout } from './components/Layout';
 import { Logo } from './components/Logo';
 import { t } from './glossary';
 import { Categories } from './pages/Categories';
+import { CreditCards } from './pages/CreditCards';
 import { ExchangeRates } from './pages/ExchangeRates';
 import { Home } from './pages/Home';
 import { IncomeSources } from './pages/IncomeSources';
@@ -93,7 +94,7 @@ function Authenticated({ identity, onSignOut: signOut }: { identity: Identity; o
         <Route path="/gastos-puntuales" element={<OneOffExpenses />} />
         <Route path="/proyeccion" element={<Pending titleKey="nav_projection" />} />
         <Route path="/bandeja" element={<Pending titleKey="nav_inbox" />} />
-        <Route path="/tarjetas" element={<Pending titleKey="nav_cards" />} />
+        <Route path="/tarjetas" element={<CreditCards />} />
         <Route path="/prestamos" element={<Pending titleKey="nav_loans" />} />
         <Route path="/propiedades" element={<Properties />} />
         <Route path="/ingresos" element={<IncomeSources />} />

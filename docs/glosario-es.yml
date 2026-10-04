@@ -421,6 +421,10 @@ ui:
   due_on_day: "vence el {day}"
   recurring_expense_help: Servicios, impuestos, expensas y lo que se paga todos los meses fuera de la tarjeta. Lo que se paga con tarjeta va en el resumen, no acá.
   expense_amount_help: El monto estimado se mantiene hasta que cargás uno nuevo con el mes desde el que rige (aumentos de tarifa, revalúos).
+  estimated_spend: Consumo estimado por mes
+  estimated_spend_help: Lo que se gasta por mes con la tarjeta además de las cuotas y suscripciones. Sirve para estimar los resúmenes futuros hasta que llega el real.
+  card_currency_help: Las tarjetas argentinas se pagan en pesos argentinos y la uruguaya en pesos uruguayos, incluida la parte en dólares.
+  closes_on_day: "cierra el {day}"
   one_off_expense_help: Compras o pagos que no se repiten, en un pago o en cuotas, fuera de la tarjeta. Si va con tarjeta, se carga como compra en cuotas de la tarjeta.
   one_off_edit_help: Las cuotas de los meses ya abiertos o pagados conservan su monto; el cambio vale para las que faltan.
   single_payment: Un pago

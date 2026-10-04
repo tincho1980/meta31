@@ -207,7 +207,7 @@ Reglas de carga (E1): la fuente se da de alta con su primer monto, que rige desd
 | bank | text | |
 | country | country | |
 | holder_id | → person | |
-| local_currency | currency | ARS o UYU; también es la moneda de pago (regla 3) |
+| local_currency | currency | ARS o UYU; también es la moneda de pago (regla 3). Sale del país: AR → ARS, UY → UYU; no se elige |
 | closing_day / due_day | smallint | aproximados; el real viene en el resumen |
 | estimated_spend_local | numeric(14,2) | para estimar resúmenes futuros (RF-16) |
 | estimated_spend_usd | numeric(14,2) | |
