@@ -14,6 +14,7 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 import type { z } from 'zod';
 import { api } from '../api';
+import { CardStatements } from '../components/CardStatements';
 import { DeleteButton } from '../components/DeleteButton';
 import { Field } from '../components/Field';
 import {
@@ -51,6 +52,7 @@ export function CardDetail() {
         <Link to="/tarjetas">{tableLabel('credit_card', true)}</Link>
       </p>
       <h1>{card.name}</h1>
+      <CardStatements card={card} />
       <Purchases ctx={ctx} />
       <Subscriptions ctx={ctx} />
     </section>

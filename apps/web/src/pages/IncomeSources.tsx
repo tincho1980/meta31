@@ -5,6 +5,7 @@ import type { z } from 'zod';
 import { api } from '../api';
 import { AmountHistory } from '../components/AmountHistory';
 import { Field } from '../components/Field';
+import { OneOffIncomes } from '../components/OneOffIncomes';
 import {
   type Choices,
   CURRENCIES,
@@ -52,6 +53,7 @@ export function IncomeSources() {
             ))}
           </ul>
         ))}
+      <OneOffIncomes choices={choices} />
     </section>
   );
 }
