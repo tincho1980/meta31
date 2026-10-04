@@ -178,6 +178,8 @@ Pesos constantes: monto × (IPC del mes de referencia / IPC del mes del monto).
 | amount | numeric(14,2) | en la moneda de la fuente |
 | | | unique(income_source_id, from_period) |
 
+Reglas de carga (E1): la fuente se da de alta con su primer monto, que rige desde `valid_from`, en la misma transacción. Siempre tiene que haber un monto que rija en el primer mes de la fuente: no se acepta mover `valid_from` antes del primer monto ni correr el primer monto después de `valid_from`. La categoría tiene que ser de ingresos. Dar de baja una fuente = cargar `valid_to` (último mes que se cobra, inclusive); los meses ya grabados conservan sus ingresos (D1).
+
 **income** — ingreso esperado materializado, o ingreso puntual (RF-08, RF-09)
 
 | Campo | Tipo | Notas |

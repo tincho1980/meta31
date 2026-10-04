@@ -4,7 +4,10 @@ import type { AppEnv, Bindings } from './env.js';
 import { auth, type TokenVerifier } from './middleware/auth.js';
 import { categories } from './routes/categories.js';
 import { exchangeRates } from './routes/exchange-rates.js';
+import { incomeSources } from './routes/income-sources.js';
 import { me } from './routes/me.js';
+import { people } from './routes/people.js';
+import { properties } from './routes/properties.js';
 import { ServiceError } from './services/errors.js';
 
 export type AppDeps = {
@@ -35,6 +38,9 @@ export function createApp(deps: AppDeps) {
   app.route('/api/me', me);
   app.route('/api/categories', categories);
   app.route('/api/exchange-rates', exchangeRates);
+  app.route('/api/people', people);
+  app.route('/api/properties', properties);
+  app.route('/api/income-sources', incomeSources);
 
   app.notFound((c) => c.json({ error: 'not_found' }, 404));
   app.onError((err, c) => {
