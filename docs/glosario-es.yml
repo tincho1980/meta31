@@ -469,6 +469,11 @@ ui:
   projection_help: "Lo que entra, lo que sale y lo que queda cada mes, con lo cargado hoy. El resultado de un mes no pasa al siguiente. «En cuotas» es la parte del ingreso que se va en cuotas de tarjeta y préstamos."
   missing_rate: Falta una cotización para convertir algún monto; cargala en Cotizaciones.
   projection_issues: Hay reglas sin monto vigente o préstamos UVA sin valor UVA cargado; esos montos no suman.
+  one_off_incomes: Ingresos puntuales
+  one_off_income_help: Extras, proyectos, suplencias. Cuentan en su mes como esperados hasta que se cobran.
+  card_statement_help: El resumen real reemplaza la estimación de su mes. Se carga con los totales; si el mes ya está abierto, actualiza lo que falta pagar de la tarjeta.
+  closed_on: "cerró el {date}"
+  local_currency_word: moneda local
   one_off_expense_help: Compras o pagos que no se repiten, en un pago o en cuotas, fuera de la tarjeta. Si va con tarjeta, se carga como compra en cuotas de la tarjeta.
   one_off_edit_help: Las cuotas de los meses ya abiertos o pagados conservan su monto; el cambio vale para las que faltan.
   single_payment: Un pago
@@ -499,6 +504,11 @@ ui:
   error_uva_currency: Los préstamos UVA son en pesos argentinos.
   error_uva_principal: Los préstamos UVA llevan el capital en UVAs; los de tasa fija no.
   error_future_month: Los meses futuros no se abren; se ven proyectados.
+  error_not_expected: Ya se cobró o se anuló; se maneja desde la vista del mes.
+  error_expected_date_month: La fecha esperada tiene que caer en el mes del ingreso.
+  error_duplicate_statement: Esa tarjeta ya tiene cargado el resumen de ese mes.
+  error_closing_after_due: El cierre tiene que ser anterior al vencimiento.
+  error_statement_month: El vencimiento no puede cambiar de mes; si te equivocaste de mes, avisá.
   error_card_payment_category: Esa categoría es la del pago de las tarjetas; elegí otra.
   error_system_category: Es una categoría del sistema y no se puede modificar.
   error_validation: Revisá los datos marcados.

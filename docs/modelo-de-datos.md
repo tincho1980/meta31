@@ -197,6 +197,8 @@ Reglas de carga (E1): la fuente se da de alta con su primer monto, que rige desd
 | applied_rate | numeric(14,6), null | se fija al cobrar |
 | status | enum `income_status` | expected · received · cancelled |
 
+Ingresos puntuales (RF-09, E1): filas de `income` sin `income_source_id` ni `source_key`, grabadas al darlas de alta. La fecha esperada cae en `period`. Se editan y se borran mientras estén `expected`; cobradas o anuladas se manejan desde la vista del mes (E2).
+
 ### 4.3 Tarjetas
 
 **credit_card** (RF-10)
@@ -226,6 +228,8 @@ Reglas de carga (E1): la fuente se da de alta con su primer monto, que rige desd
 | | | unique(credit_card_id, period) — también frena duplicados de Claude |
 
 Monto pagado y saldo financiado no se guardan: salen de los pagos de sus dos compromisos.
+
+Reglas de carga (E1): el período es el mes del vencimiento; el cierre es anterior al vencimiento. El resumen real reemplaza la estimación del mes (RF-16, regla 10): si el mes no está abierto, el generador ya usa sus totales; si está abierto, en la misma transacción los compromisos `cc:` pendientes de esa tarjeta toman los totales y el vencimiento del resumen, y se crea el de la moneda que no existía. Los compromisos ya pagados (total o parcial) no se tocan. Por ahora no se borra: se corrige.
 
 **installment_purchase** — compra en cuotas; sus cuotas se proyectan (RF-13)
 
