@@ -12,8 +12,9 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { api } from '../api';
-import { formatDate, formatDecimal, formatMoney, parseDecimalInput, sumDecimals, todayIso } from '../format';
+import { formatDate, formatDecimal, formatMoney, nextMonthSameDay, parseDecimalInput, sumDecimals, todayIso } from '../format';
 import { columnLabel, enumLabel, errorMessage, t } from '../glossary';
+import { CardPaymentForm } from './CardPayment';
 import { Field } from './Field';
 
 const PROJECTION_KEY = ['projection'];
@@ -22,7 +23,13 @@ const PROJECTION_KEY = ['projection'];
 const payableIn = (currency: string): string[] => (currency === 'USD' ? ['USD', 'ARS', 'UYU'] : [currency, 'USD']);
 
 /** What can be done with a line of the month: pay a commitment (RF-28) or receive an income (RF-08). */
-export function LineActions({ line, isIncome, onClose }: { line: ProjectionLine; isIncome: boolean; onClose: () => void }) {
+export function LineActions({ line, isIncome, onClose, cardLines }: {
+  line: ProjectionLine;
+  isIncome: boolean;
+  onClose: () => void;
+  /** For a card statement line: the month's two lines of that card (D4), to pay them together. */
+  cardLines?: ProjectionLine[];
+}) {
   if (!line.id) {
     // a virtual line: nothing stored to act on until its month is opened (D1)
     return (
@@ -34,13 +41,13 @@ export function LineActions({ line, isIncome, onClose }: { line: ProjectionLine;
       </div>
     );
   }
-  return isIncome ? <ReceiveIncome line={line} onClose={onClose} /> : <PayCommitment id={line.id} onClose={onClose} />;
+  return isIncome ? <ReceiveIncome line={line} onClose={onClose} /> : <PayCommitment id={line.id} onClose={onClose} cardLines={cardLines} />;
 }
 
 type Mode = 'pay' | 'actual' | 'postpone' | 'cancel';
 const MODE_LABEL: Record<Mode, string> = { pay: 'pay', actual: 'actual_amount', postpone: 'postpone', cancel: 'cancel_commitment' };
 
-function PayCommitment({ id, onClose }: { id: string; onClose: () => void }) {
+function PayCommitment({ id, onClose, cardLines }: { id: string; onClose: () => void; cardLines?: ProjectionLine[] | undefined }) {
   const queryClient = useQueryClient();
   const [mode, setMode] = useState<Mode>('pay');
   const key = ['commitment', id];
@@ -49,6 +56,14 @@ function PayCommitment({ id, onClose }: { id: string; onClose: () => void }) {
   const undo = useMutation({
     mutationFn: (paymentId: string) => api('DELETE', `/api/commitments/${id}/payments/${paymentId}`),
     onSuccess: refresh,
+  });
+  // rule 4: the unpaid rest of a card statement goes to the next statement
+  const carry = useMutation({
+    mutationFn: (dueDate: string) => api('POST', `/api/commitments/${id}/postpone`, { dueDate }),
+    onSuccess: async () => {
+      await refresh();
+      onClose();
+    },
   });
 
   if (detail.isPending) return <div className="row-panel muted">{t('loading')}</div>;
@@ -91,6 +106,14 @@ function PayCommitment({ id, onClose }: { id: string; onClose: () => void }) {
           })}
         </p>
       )}
+      {d.origin === 'credit_card' && d.status === 'partially_paid' && d.dueDate && (
+        <div className="form-actions">
+          <button type="button" className="secondary" disabled={carry.isPending} onClick={() => carry.mutate(nextMonthSameDay(d.dueDate!))}>
+            {t('carry_to_next_statement')}
+          </button>
+        </div>
+      )}
+      {carry.isError && <p className="warning">{errorMessage(carry.error)}</p>}
       {d.status === 'paid' && mode !== 'actual' && (
         <div className="form-actions">
           <button type="button" className="link" onClick={() => setMode('actual')}>
@@ -111,9 +134,12 @@ function PayCommitment({ id, onClose }: { id: string; onClose: () => void }) {
               </button>
             ))}
           </div>
-          {mode === 'pay' && (
-            <PaymentForm detail={d} remaining={remaining.startsWith('-') ? '0' : remaining} onPaid={refresh} onClose={onClose} />
-          )}
+          {mode === 'pay' &&
+            (d.origin === 'credit_card' && cardLines && cardLines.length > 0 ? (
+              <CardPaymentForm lines={cardLines} onPaid={refresh} onClose={onClose} />
+            ) : (
+              <PaymentForm detail={d} remaining={remaining.startsWith('-') ? '0' : remaining} onPaid={refresh} onClose={onClose} />
+            ))}
           {mode === 'postpone' && <PostponeForm detail={d} onDone={refresh} onClose={onClose} />}
           {mode === 'actual' && <ActualForm detail={d} onDone={refresh} onClose={onClose} />}
           {mode === 'cancel' && <CancelForm detail={d} onDone={refresh} onClose={onClose} />}

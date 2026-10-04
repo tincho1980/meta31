@@ -455,6 +455,11 @@ ui:
   view_all: Todo
   filter: Filtro
   pay: Pagar
+  pay_statement: Pagar resumen
+  card_local_part: "En {currency} (faltan {left})"
+  card_usd_part: "Parte en dólares, en {currency} (faltan {left})"
+  card_payment_help: Las dos partes se pagan en la moneda de la tarjeta; la de dólares, con la cotización que aplicó el banco. Si pagás menos, después podés pasar el resto al próximo resumen.
+  carry_to_next_statement: Pasar el resto al próximo resumen
   actual_amount: Monto real
   estimated_was: "El estimado era {amount}."
   update_following: Usar este monto como estimado desde el mes siguiente
@@ -538,6 +543,7 @@ ui:
   error_statement_month: El vencimiento no puede cambiar de mes; si te equivocaste de mes, avisá.
   error_cancelled: Está anulado.
   error_already_paid: Ya está pagado.
+  error_not_open: Ese mes todavía no está abierto.
   error_not_recurring: Solo los gastos recurrentes actualizan los meses siguientes.
   error_postpone_backwards: No se puede pasar a un mes anterior.
   error_has_payments: Tiene pagos cargados. Deshacelos primero si querés anularlo.
