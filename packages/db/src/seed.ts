@@ -1,6 +1,6 @@
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import type { Db } from './client.js';
-import { person } from './schema.js';
+import { category, person } from './schema.js';
 
 export type SeedEmails = { martin: string; rosalia: string };
 
@@ -26,4 +26,30 @@ export async function seedPeople(db: Db, emails: SeedEmails): Promise<void> {
       }
     }
   });
+}
+
+/**
+ * Expense category used for credit card statement payments: cards have no category of
+ * their own and every commitment needs one. Use cases look it up by name and kind,
+ * so it must not be renamed.
+ */
+export const CARD_PAYMENT_CATEGORY = { name: 'Tarjetas de crédito', kind: 'expense' } as const;
+
+/** System categories. Idempotent: inserts only the missing ones. */
+export async function seedCategories(db: Db): Promise<void> {
+  await db
+    .insert(category)
+    .values([CARD_PAYMENT_CATEGORY])
+    .onConflictDoNothing({ target: [category.name, category.kind] });
+}
+
+/** Id of the card payment category; throws if the seed has not been run. */
+export async function cardPaymentCategoryId(db: Db): Promise<string> {
+  const rows = await db
+    .select({ id: category.id })
+    .from(category)
+    .where(and(eq(category.name, CARD_PAYMENT_CATEGORY.name), eq(category.kind, CARD_PAYMENT_CATEGORY.kind)));
+  const row = rows[0];
+  if (!row) throw new Error(`Missing category '${CARD_PAYMENT_CATEGORY.name}': run the seed`);
+  return row.id;
 }

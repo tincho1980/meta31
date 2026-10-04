@@ -2,7 +2,7 @@ import { sql } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { findUserByEmail } from '../src/queries.js';
 import { category, month, person } from '../src/schema.js';
-import { seedPeople } from '../src/seed.js';
+import { CARD_PAYMENT_CATEGORY, cardPaymentCategoryId, seedCategories, seedPeople } from '../src/seed.js';
 import { createTestDb, type TestDb } from '../src/testing.js';
 
 let t: TestDb;
@@ -73,5 +73,16 @@ describe('people seed', () => {
   it('does not enable a non-user person even with an email', async () => {
     await t.db.insert(person).values({ name: 'Otra', email: 'otra@example.com', isUser: false });
     expect(await findUserByEmail(t.db, 'otra@example.com')).toBeNull();
+  });
+});
+
+describe('system categories seed', () => {
+  it('creates the card payment category once, even when run twice', async () => {
+    await seedCategories(t.db);
+    await seedCategories(t.db);
+    const id = await cardPaymentCategoryId(t.db);
+    const rows = await t.db.select().from(category);
+    expect(rows.filter((r) => r.name === CARD_PAYMENT_CATEGORY.name && r.kind === 'expense')).toHaveLength(1);
+    expect(rows.find((r) => r.name === CARD_PAYMENT_CATEGORY.name)?.id).toBe(id);
   });
 });
