@@ -2,6 +2,7 @@
 export * from './amount-history.js';
 export * from './card-items.js';
 export * from './card-statement.js';
+export * from './card-transaction.js';
 export * from './category.js';
 export * from './common.js';
 export * from './credit-card.js';
@@ -11,10 +12,12 @@ export * from './income-source.js';
 export * from './loan.js';
 export * from './one-off-expense.js';
 export * from './one-off-income.js';
+export * from './payment.js';
 export * from './person.js';
 export * from './projection.js';
 export * from './property.js';
 export * from './recurring-expense.js';
+export * from './reports.js';
 
 import { z } from 'zod';
 

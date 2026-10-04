@@ -276,6 +276,8 @@ Reglas de carga (E1), también para `subscription`: la moneda es la local de la 
 
 Costo financiero de tarjetas = suma de `interest + admin_fee + tax` por tarjeta y mes.
 
+Carga (E2): el desglose se carga a mano por resumen (en E3 lo propone Claude). La moneda es la local de la tarjeta o USD; una cuota o suscripción puede apuntar a la compra o suscripción de esa misma tarjeta (con número de cuota dentro del total). Es informativo: la proyección usa los totales del resumen; la pantalla muestra la suma del desglose contra esos totales. El reporte de costo financiero agrupa por tarjeta, mes del resumen y moneda, con el total en ARS a la cotización del vencimiento.
+
 ### 4.4 Gastos
 
 **recurring_expense** — servicios, impuestos, expensas, recurrentes fuera de tarjeta y rubros estimados (D2; RF-17, RF-18, RF-20)
@@ -408,6 +410,16 @@ Monto vigente = `coalesce(actual_amount, estimated_amount) + surcharge`.
 | payment_method | enum `payment_method` | transfer · debit · cash · mercado_pago · other |
 
 Estado: suma de `allocated_amount` ≥ monto vigente → paid; > 0 → partially_paid. Lo calcula el Worker en la misma transacción del pago.
+
+Implementación (E2): `allocated_amount` sale de `amount_paid` con `applied_rate` (los dos pares son unidades locales por USD: compromiso en USD pagado en pesos = pesos / cotización; en pesos pagado en USD = USD × cotización). Solo hay conversión directa contra USD; ARS ↔ UYU no se acepta. Si no se informa la cotización, se usa la vigente a la fecha del pago, y queda guardada fija (regla 6). Un pago cargado por error se deshace (se borra) y el estado se recalcula. Solo se paga lo grabado: un compromiso virtual de un mes futuro se paga cuando se abre su mes. Cobrar un ingreso fija `actual_amount`, `received_date` y, si no es en ARS, `applied_rate` con su propio par (USD_ARS o UYU_USD) a la fecha del cobro; se puede deshacer.
+
+Postergar y anular (E2): postergar recibe la nueva fecha; `period` pasa a su mes (igual o posterior, nunca anterior) y `due_date` a esa fecha. Si está `partially_paid`, divide en una transacción (D5): la original toma `actual_amount` = lo pagado (menos el recargo) y queda `paid`; la hija hereda origen, categoría y `origin_period`, sin `source_key`, con el resto como estimado. Anular pide motivo (`cancellation_reason`) y no se permite con pagos cargados (se deshacen primero). Lo anulado se puede restaurar desde la lista "Anulados" del mes; un ingreso esperado también se anula ("no entra este mes") y se restaura.
+
+Monto real (E2): cargar el monto real lo guarda en `actual_amount` y recalcula el estado contra lo ya pagado (puede pasar de pagado a parcial si la factura vino más alta). En un gasto recurrente, la opción "usar desde el mes siguiente" agrega o actualiza la fila de `recurring_expense_amount` del mes siguiente al de origen (RF-19). Se puede volver al estimado. En préstamos, el desvío = real − cuota teórica (el estimado), en importe y %. **Cuotas pagadas (RF-25):** las anteriores a la primera cuota grabada cuentan como pagadas (son historia previa a la carga inicial); desde ahí, la última cuota pagada por completo en el sistema (una cuota dividida cuenta cuando todas sus partes están pagadas). Deuda remanente = saldo de capital del cuadro después de esa cuota.
+
+Pago de tarjeta (E2, RF-15, reglas 3 y 4): "Pagar resumen" paga en una transacción los dos compromisos `cc:` del mes en la moneda de pago de la tarjeta: la parte local y la parte en USD pesificada con la cotización aplicada (o la vigente). Lo no pagado se pasa al resumen siguiente postergando el resto (D5): nace una hija en el mes siguiente. Cuando se carga el resumen real de ese mes, su total ya trae ese saldo como "saldo anterior", así que las hijas pendientes de esa tarjeta en ese mes se anulan solas con el motivo "Incluido en el resumen como saldo anterior" (sin doble conteo). Los intereses de financiación se registran con el desglose del resumen (RF-12), junto con el costo financiero.
+
+Cierre de mes (E2): se cierra cuando no queda nada abierto (compromisos pagados, postergados o anulados; ingresos cobrados o anulados): `status = closed`, `closed_at`, `closed_by`. Un mes cerrado es definitivo: el Worker rechaza pagos, deshacer pagos, montos reales, postergaciones (desde o hacia ese mes), anulaciones, cobros, ingresos puntuales y resúmenes de tarjeta de ese mes (`month_closed`). Se puede reabrir. "Estado del mes" = lo pagado, lo que falta (lo pendiente y el resto de los parciales) y lo que nació ese mes y se pasó a otro (`origin_period` = mes y `period` posterior, D5).
 
 ### 4.7 Carga por Claude
 

@@ -2,6 +2,7 @@ import type { OneOffIncome, OneOffIncomeCreate, OneOffIncomeUpdate } from '@meta
 import { type Db, schema } from '@meta31/db';
 import { and, desc, eq, isNull } from 'drizzle-orm';
 import { ServiceError } from './errors.js';
+import { assertMonthNotClosed } from './month-close.js';
 import { checkReferences } from './references.js';
 
 const { income } = schema;
@@ -38,6 +39,7 @@ export async function listOneOffIncomes(db: Db): Promise<OneOffIncome[]> {
 /** New one-off income (RF-09): stored right away, it counts in its month as expected. */
 export async function createOneOffIncome(db: Db, input: OneOffIncomeCreate, userId: string): Promise<OneOffIncome> {
   await checkReferences(db, 'income', { categoryId: input.categoryId });
+  await assertMonthNotClosed(db, input.period);
   const [row] = await db
     .insert(income)
     .values({ ...input, incomeSourceId: null, sourceKey: null, createdBy: userId, updatedBy: userId })
@@ -48,6 +50,8 @@ export async function createOneOffIncome(db: Db, input: OneOffIncomeCreate, user
 /** Edits it while it is still expected; once received it belongs to the month's operation (E2). */
 export async function updateOneOffIncome(db: Db, id: string, input: OneOffIncomeUpdate, userId: string): Promise<OneOffIncome> {
   const current = await getRow(db, id);
+  await assertMonthNotClosed(db, current.period);
+  if (input.period) await assertMonthNotClosed(db, input.period);
   if (current.status !== 'expected') throw new ServiceError('conflict', 'not_expected');
   await checkReferences(db, 'income', { categoryId: input.categoryId });
   const period = input.period ?? current.period;
@@ -64,6 +68,7 @@ export async function updateOneOffIncome(db: Db, id: string, input: OneOffIncome
 /** A one-off income loaded by mistake can be deleted while it is still expected. */
 export async function deleteOneOffIncome(db: Db, id: string): Promise<void> {
   const current = await getRow(db, id);
+  await assertMonthNotClosed(db, current.period);
   if (current.status !== 'expected') throw new ServiceError('conflict', 'not_expected');
   await db.delete(income).where(eq(income.id, id));
 }

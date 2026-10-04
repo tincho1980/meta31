@@ -386,6 +386,7 @@ ui:
   nav_recurring_expenses: Gastos recurrentes
   nav_one_off_expenses: Gastos puntuales
   nav_settings: Configuración
+  nav_reports: Reportes
   load_intro: ¿Qué querés cargar?
   more_intro: Datos de base que usan las proyecciones.
   pending_screen: Esta pantalla todavía no está. Viene en las próximas entregas.
@@ -454,6 +455,76 @@ ui:
   optional: (opcional)
   view_all: Todo
   filter: Filtro
+  pay: Pagar
+  breakdown: Desglose
+  breakdown_check: "El desglose suma {local} de {localTotal} y {usd} de {usdTotal}."
+  negative_for_payments: Negativo para pagos y bonificaciones
+  paid_by_card: Pagado con tarjeta
+  paid_by_card_reason: Pagado con tarjeta
+  paid_by_card_help: Si este mes lo pagaste con tarjeta, se anula acá y queda como consumo del resumen (regla 2).
+  report_loans: Préstamos
+  report_loans_help: Cuántas cuotas quedan, cuándo termina cada préstamo, cuánto capital se debe y cuánto se desvió la cuota real de la teórica.
+  installments_left: Quedan
+  ends: Termina
+  report_spending: Gasto por categoría
+  report_spending_help: En qué se va la plata cada mes, en pesos. Lo comprado con tarjeta cuenta dentro del pago de la tarjeta.
+  report_future: Compromisos futuros
+  report_future_help: Cuotas, préstamos, suscripciones y gastos en cuotas que siguen corriendo, cuánto se llevan por mes y cuándo terminan.
+  future_installments: Compras en cuotas
+  future_loans: Préstamos
+  future_subscriptions: Suscripciones y débitos
+  future_one_offs: Gastos en cuotas
+  per_month: por mes
+  until_cancelled: hasta que se dé de baja
+  installments_remaining: "faltan {n}"
+  report_financial_cost: Costo financiero de tarjetas
+  report_financial_cost_help: Intereses por no pagar el total, gastos administrativos e impuestos de cada resumen, por tarjeta y por mes. Sale del desglose de los resúmenes.
+  report_financial_cost_empty: Todavía no hay intereses, gastos ni impuestos cargados en el desglose de ningún resumen.
+  card: Tarjeta
+  cost_interest: Intereses
+  cost_admin_fee: Gastos adm.
+  cost_tax: Impuestos
+  cost_total: Total
+  cost_total_ars: Total en $
+  pay_statement: Pagar resumen
+  card_local_part: "En {currency} (faltan {left})"
+  card_usd_part: "Parte en dólares, en {currency} (faltan {left})"
+  card_payment_help: Las dos partes se pagan en la moneda de la tarjeta; la de dólares, con la cotización que aplicó el banco. Si pagás menos, después podés pasar el resto al próximo resumen.
+  carry_to_next_statement: Pasar el resto al próximo resumen
+  actual_amount: Monto real
+  estimated_was: "El estimado era {amount}."
+  update_following: Usar este monto como estimado desde el mes siguiente
+  back_to_estimate: Volver al estimado
+  deviation_line: "Desvío contra la cuota teórica: {amount} ({percent} %)."
+  paid_installments: Cuotas pagadas
+  n_of_total: "{n} de {total}"
+  schedule_actual: Real
+  postpone: Postergar
+  postpone_to: ¿Para qué fecha?
+  postpone_rest_help: Ya pagaste una parte. Lo que falta pasa a esa fecha y este queda pagado por lo que pagaste.
+  moved_to: "lo pasaste al {day}"
+  cancel_commitment: Anular
+  cancel_reason_example: "Por ejemplo: cargado por error, lo pagó otro"
+  income_not_this_month: No entra este mes
+  cancelled_count: "Anulados ({n})"
+  restore: Restaurar
+  mark_received: Cobrado
+  undo: Deshacer
+  undo_received: Deshacer el cobro
+  paid_of: "pagaste {paid} de {total}"
+  rate_of_the_day: la del día
+  payment_rate_help: Si no ponés la cotización, se usa la cargada para esa fecha. La que quede guardada no cambia más, aunque después cargues otra.
+  line_not_open: Este mes todavía no está abierto. Se puede pagar o cobrar cuando llega.
+  closed_month_lead: Cerraste el mes con
+  state_paid: "Pagado: {n}"
+  state_to_pay: "Falta: {n} ({amount})"
+  state_moved: "Pasaste a otro mes: {n}"
+  moved_to_other_months: Lo que pasaste a otro mes
+  close_month: Cerrar el mes
+  close_needs: "Para cerrar el mes falta resolver {n} (pagar, postergar o anular; cobrar o anular)."
+  closed_on_by: "Cerrado el {date} por {name}"
+  reopen_month: Reabrir
+  month_is_closed: El mes está cerrado. Para cambiar algo, reabrilo.
   you_reach_31_with: Llegás al 31 con
   money_in: Entra
   money_out: Sale
@@ -511,6 +582,21 @@ ui:
   error_duplicate_statement: Esa tarjeta ya tiene cargado el resumen de ese mes.
   error_closing_after_due: El cierre tiene que ser anterior al vencimiento.
   error_statement_month: El vencimiento no puede cambiar de mes; si te equivocaste de mes, avisá.
+  error_cancelled: Está anulado.
+  error_already_paid: Ya está pagado.
+  error_not_open: Ese mes todavía no está abierto.
+  error_installment_number: Esa compra no tiene tantas cuotas.
+  error_month_closed: Ese mes está cerrado. Para cambiar algo, reabrilo.
+  error_already_closed: El mes ya está cerrado.
+  error_not_closed: El mes no está cerrado.
+  error_unsettled: Todavía hay líneas sin resolver.
+  error_not_recurring: Solo los gastos recurrentes actualizan los meses siguientes.
+  error_postpone_backwards: No se puede pasar a un mes anterior.
+  error_has_payments: Tiene pagos cargados. Deshacelos primero si querés anularlo.
+  error_not_cancelled: No está anulado.
+  error_payment_currency: No se puede pagar en esa moneda (pesos argentinos y uruguayos no tienen cotización directa).
+  error_missing_rate: Falta la cotización para esa fecha; cargala en Cotizaciones o escribila en el pago.
+  error_not_received: No figura como cobrado.
   error_card_payment_category: Esa categoría es la del pago de las tarjetas; elegí otra.
   error_system_category: Es una categoría del sistema y no se puede modificar.
   error_validation: Revisá los datos marcados.

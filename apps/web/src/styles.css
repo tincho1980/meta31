@@ -971,3 +971,113 @@ button.link.danger:hover:not(:disabled) {
   text-transform: none;
   color: var(--tinta);
 }
+
+/* a month line opens its actions (pay, receive) */
+.row.line {
+  padding: 0;
+  flex-wrap: wrap;
+}
+.line-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2) 14px;
+  width: 100%;
+  min-height: 52px;
+  padding: 13px 16px;
+  background: none;
+  border: none;
+  border-radius: var(--radius-lg);
+  font: inherit;
+  font-weight: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.line-toggle:hover {
+  background: var(--arena-hover);
+}
+.row.line .row-panel {
+  margin: 0 16px 13px;
+}
+.row.line.done .line-toggle .amount,
+.row.line.done .line-toggle .grow {
+  color: var(--tinta-suave);
+}
+
+/* panel modes (Pagar / Postergar / Anular) and the month's cancelled list */
+.panel-modes {
+  margin-bottom: var(--space-3);
+}
+.cancelled {
+  margin-top: var(--space-5);
+}
+.cancelled summary {
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--tinta-suave);
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+.cancelled .rows {
+  margin-top: var(--space-2);
+}
+
+/* checkbox with its label */
+.check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 14px;
+  min-height: 44px;
+}
+.check input {
+  width: 20px;
+  min-height: 20px;
+  height: 20px;
+  accent-color: var(--verde-casa);
+}
+
+/* state of the month: paid, to pay, moved, close */
+.month-state {
+  margin-top: var(--space-4);
+  background: var(--arena-2);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-4);
+}
+.state-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-5);
+  font-size: 14px;
+}
+.state-close {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+/* reports: share bars and the month picker outside the green header */
+.bar-row .grow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.bar {
+  display: block;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--salvia-2);
+  min-width: 2px;
+}
+.month-nav.plain .etiqueta {
+  margin: 0;
+}
+.month-nav.plain .month-arrow {
+  color: var(--tinta-suave);
+}
+.amount.negative-text {
+  color: var(--terracota-texto);
+}

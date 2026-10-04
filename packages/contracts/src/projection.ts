@@ -24,6 +24,10 @@ export const projectionLine = z.object({
   postponed: z.boolean(),
   /** `amount` in ARS with the rate in force on its date; null if a rate is missing. */
   amountArs: z.string().nullable(),
+  /** Stored commitments: allocated so far, in the line's currency; null otherwise. */
+  paid: z.string().nullable(),
+  /** Still an estimate: no real amount loaded (rule 10). */
+  estimate: z.boolean(),
 });
 export type ProjectionLine = z.infer<typeof projectionLine>;
 
@@ -68,3 +72,17 @@ export const openMonthResult = z.union([
   z.object({ status: z.literal('opened'), commitments: z.number(), incomes: z.number(), issues: z.array(projectionIssue) }),
 ]);
 export type OpenMonthResult = z.infer<typeof openMonthResult>;
+
+/** State of a month: whether it is closed (final), what is still open and what moved out (D5). */
+export const monthStatus = z.object({
+  status: z.enum(['not_open', 'open', 'closed']),
+  closedAt: z.string().nullable(),
+  closedBy: z.string().nullable(),
+  /** Commitments pending or partially paid plus incomes expected: it closes at zero. */
+  unsettled: z.number(),
+  /** Born this month and moved to a later one ("qué se postergó", D5). */
+  postponedOut: z.array(
+    z.object({ id, description: z.string(), currency, amount: z.string(), period, dueDate: isoDate.nullable() }),
+  ),
+});
+export type MonthStatus = z.infer<typeof monthStatus>;

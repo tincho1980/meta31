@@ -21,9 +21,12 @@ export function formatDecimal(value: string, minDecimals = 2): string {
  * any other dot is the decimal point.
  */
 export function parseDecimalInput(input: string): string {
-  const v = input.trim().replace(/\s/g, '');
-  if (v.includes(',')) return v.replace(/\./g, '').replace(',', '.');
-  return /^\d{1,3}(\.\d{3})+$/.test(v) ? v.replace(/\./g, '') : v;
+  const raw = input.trim().replace(/\s/g, '');
+  // a leading minus (payments and credits in a statement breakdown) is kept as is
+  const sign = raw.startsWith('-') ? '-' : '';
+  const v = raw.replace(/^-/, '');
+  if (v.includes(',')) return sign + v.replace(/\./g, '').replace(',', '.');
+  return sign + (/^\d{1,3}(\.\d{3})+$/.test(v) ? v.replace(/\./g, '') : v);
 }
 
 /** '2026-10-04' → '04/10/2026'. */
@@ -140,4 +143,27 @@ export function sumDecimals(values: readonly string[]): string {
   const total = values.reduce((acc, v) => acc + cents(v), 0n);
   const abs = total < 0n ? -total : total;
   return `${total < 0n ? '-' : ''}${abs / 100n}.${String(abs % 100n).padStart(2, '0')}`;
+}
+
+/**
+ * a × b for decimal strings, rounded half up to 2 decimals, exact (BigInt): the USD part of a card
+ * statement in pesos at a rate. Inputs with up to 6 decimals.
+ */
+export function multiplyDecimals(a: string, b: string): string {
+  const scaled = (v: string) => {
+    const [i = '0', d = ''] = v.split('.');
+    return BigInt(i) * 1_000_000n + BigInt((d + '000000').slice(0, 6));
+  };
+  const product = scaled(a) * scaled(b); // scale 10^12
+  const cents = (product + 5_000_000_000n) / 10_000_000_000n; // to scale 10^2, half up
+  return `${cents / 100n}.${String(cents % 100n).padStart(2, '0')}`;
+}
+
+/** Same day next month, clamped to its last day: '2026-10-31' → '2026-11-30'. */
+export function nextMonthSameDay(iso: string): string {
+  const [y, m, d] = iso.split('-').map(Number);
+  const target = addMonthsToMonthInput(`${y}-${String(m).padStart(2, '0')}`, 1);
+  const [ty, tm] = target.split('-').map(Number);
+  const last = new Date(Date.UTC(ty!, tm!, 0)).getUTCDate();
+  return `${target}-${String(Math.min(d!, last)).padStart(2, '0')}`;
 }

@@ -3,6 +3,7 @@ import { cors } from 'hono/cors';
 import type { AppEnv, Bindings } from './env.js';
 import { auth, type TokenVerifier } from './middleware/auth.js';
 import { installmentPurchases, subscriptions } from './routes/card-items.js';
+import { cardPayments } from './routes/card-payments.js';
 import { cardStatements } from './routes/card-statements.js';
 import { categories } from './routes/categories.js';
 import { creditCards } from './routes/credit-cards.js';
@@ -13,8 +14,10 @@ import { me } from './routes/me.js';
 import { months } from './routes/months.js';
 import { oneOffExpenses } from './routes/one-off-expenses.js';
 import { oneOffIncomes } from './routes/one-off-incomes.js';
+import { commitments, incomes } from './routes/payments.js';
 import { people } from './routes/people.js';
 import { properties } from './routes/properties.js';
+import { reports } from './routes/reports.js';
 import { recurringExpenses } from './routes/recurring-expenses.js';
 import { ServiceError } from './services/errors.js';
 
@@ -52,12 +55,16 @@ export function createApp(deps: AppDeps) {
   app.route('/api/recurring-expenses', recurringExpenses);
   app.route('/api/one-off-expenses', oneOffExpenses);
   app.route('/api/credit-cards', creditCards);
+  app.route('/api/credit-cards', cardPayments);
   app.route('/api/installment-purchases', installmentPurchases);
   app.route('/api/subscriptions', subscriptions);
   app.route('/api/loans', loans);
   app.route('/api/months', months);
   app.route('/api/one-off-incomes', oneOffIncomes);
   app.route('/api/card-statements', cardStatements);
+  app.route('/api/commitments', commitments);
+  app.route('/api/incomes', incomes);
+  app.route('/api/reports', reports);
 
   app.notFound((c) => c.json({ error: 'not_found' }, 404));
   app.onError((err, c) => {

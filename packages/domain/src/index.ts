@@ -4,6 +4,7 @@ export * from './generators.js';
 export * from './loan.js';
 export * from './merge.js';
 export * from './money.js';
+export * from './payments.js';
 export * from './period.js';
 export * from './periodicity.js';
 export * from './projection.js';
