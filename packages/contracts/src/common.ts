@@ -55,8 +55,8 @@ export const apiError = z.object({
 export type ApiError = z.infer<typeof apiError>;
 
 /** Field error codes; the PWA translates each one with the glossary (`ui.invalid_<code>`). */
-export type FieldCode = 'required' | 'decimal' | 'must_be_positive' | 'date' | 'period' | 'choice' | 'day' | 'range' | 'month_mismatch' | 'installments' | 'empty' | 'default';
-const OWN_CODES = new Set<string>(['required', 'decimal', 'must_be_positive', 'date', 'period', 'choice', 'day', 'range', 'month_mismatch', 'installments', 'empty']);
+export type FieldCode = 'required' | 'decimal' | 'must_be_positive' | 'date' | 'period' | 'choice' | 'day' | 'range' | 'month_mismatch' | 'installments' | 'uva_principal' | 'empty' | 'default';
+const OWN_CODES = new Set<string>(['required', 'decimal', 'must_be_positive', 'date', 'period', 'choice', 'day', 'range', 'month_mismatch', 'installments', 'uva_principal', 'empty']);
 
 /** Maps a zod issue to a field code: our own messages pass through, zod's built-ins are classified. */
 export function fieldCode(issue: z.core.$ZodIssue): FieldCode {

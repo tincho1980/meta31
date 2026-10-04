@@ -11,12 +11,14 @@ const { commitment } = schema;
  */
 export async function checkNothingStored(
   db: Db,
-  origin: { recurringExpenseId: string } | { oneOffExpenseId: string },
+  origin: { recurringExpenseId: string } | { oneOffExpenseId: string } | { loanId: string },
 ): Promise<void> {
   const where =
     'recurringExpenseId' in origin
       ? eq(commitment.recurringExpenseId, origin.recurringExpenseId)
-      : eq(commitment.oneOffExpenseId, origin.oneOffExpenseId);
+      : 'oneOffExpenseId' in origin
+        ? eq(commitment.oneOffExpenseId, origin.oneOffExpenseId)
+        : eq(commitment.loanId, origin.loanId);
   const [stored] = await db.select({ id: commitment.id }).from(commitment).where(where).limit(1);
   if (stored) throw new ServiceError('conflict', 'has_stored_commitments');
 }

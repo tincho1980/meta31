@@ -25,6 +25,7 @@ export function Load() {
         entries={[
           { to: '/ingresos', label: tableLabel('income_source') },
           { to: '/tarjetas', label: `${tableLabel('credit_card')} · ${t('card_items')}` },
+          { to: '/prestamos', label: tableLabel('loan') },
           { to: '/gastos-recurrentes', label: tableLabel('recurring_expense') },
           { to: '/gastos-puntuales', label: tableLabel('one_off_expense') },
           { to: '/propiedades', label: tableLabel('property') },

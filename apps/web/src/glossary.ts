@@ -4,6 +4,7 @@ import { ApiError } from './api';
 
 type Glossary = {
   ui: Record<string, string>;
+  derived: Record<string, string>;
   tables: Record<string, { label: string; plural: string; columns: Record<string, string> }>;
   enums: Record<string, Record<string, string>>;
 };
@@ -51,4 +52,9 @@ export function errorMessage(err: unknown): string {
     return (reason && glossary.ui[`error_${reason}`]) || glossary.ui[`error_${error}`] || t('error_generic');
   }
   return t('error_generic');
+}
+
+/** Label of a derived value (not a column): theoretical installment, remaining principal… */
+export function derivedLabel(key: string): string {
+  return glossary.derived[key] ?? missing(`derived.${key}`);
 }
