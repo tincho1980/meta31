@@ -1,9 +1,11 @@
 import {
+  cancelInput,
   type CommitmentDetail,
   fieldErrors,
   incomeReceive,
   paymentCreate,
   paymentMethod,
+  postponeInput,
   type ProjectionLine,
 } from '@meta31/contracts';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -34,8 +36,11 @@ export function LineActions({ line, isIncome, onClose }: { line: ProjectionLine;
   return isIncome ? <ReceiveIncome line={line} onClose={onClose} /> : <PayCommitment id={line.id} onClose={onClose} />;
 }
 
+const MODE_LABEL = { pay: 'pay', postpone: 'postpone', cancel: 'cancel_commitment' } as const;
+
 function PayCommitment({ id, onClose }: { id: string; onClose: () => void }) {
   const queryClient = useQueryClient();
+  const [mode, setMode] = useState<'pay' | 'postpone' | 'cancel'>('pay');
   const key = ['commitment', id];
   const detail = useQuery({ queryKey: key, queryFn: () => api<CommitmentDetail>('GET', `/api/commitments/${id}`) });
   const refresh = () => Promise.all([queryClient.invalidateQueries({ queryKey: key }), queryClient.invalidateQueries({ queryKey: PROJECTION_KEY })]);
@@ -77,13 +82,104 @@ function PayCommitment({ id, onClose }: { id: string; onClose: () => void }) {
       )}
       {undo.isError && <p className="warning">{errorMessage(undo.error)}</p>}
       {d.status !== 'paid' && d.status !== 'cancelled' ? (
-        <PaymentForm detail={d} remaining={remaining.startsWith('-') ? '0' : remaining} onPaid={refresh} onClose={onClose} />
+        <>
+          <div className="segmented panel-modes" role="group">
+            {(['pay', 'postpone', 'cancel'] as const).map((m) => (
+              <button key={m} type="button" aria-pressed={mode === m} className={mode === m ? 'on' : ''} onClick={() => setMode(m)}>
+                {t(MODE_LABEL[m])}
+              </button>
+            ))}
+          </div>
+          {mode === 'pay' && (
+            <PaymentForm detail={d} remaining={remaining.startsWith('-') ? '0' : remaining} onPaid={refresh} onClose={onClose} />
+          )}
+          {mode === 'postpone' && <PostponeForm detail={d} onDone={refresh} onClose={onClose} />}
+          {mode === 'cancel' && <CancelForm detail={d} onDone={refresh} onClose={onClose} />}
+        </>
       ) : (
         <button type="button" className="secondary" onClick={onClose}>
           {t('close')}
         </button>
       )}
     </div>
+  );
+}
+
+/**
+ * Postpone to a date (D5): "lo pasaste al 15". With part of it paid, the rest goes to that
+ * date as a new line and this one stays paid by what was paid.
+ */
+function PostponeForm({ detail, onDone, onClose }: { detail: CommitmentDetail; onDone: () => Promise<unknown>; onClose: () => void }) {
+  const [dueDate, setDueDate] = useState('');
+  const [error, setError] = useState<string | undefined>();
+  const postpone = useMutation({
+    mutationFn: (input: unknown) => api('POST', `/api/commitments/${detail.id}/postpone`, input),
+    onSuccess: async () => {
+      await onDone();
+      onClose();
+    },
+  });
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    postpone.reset();
+    const parsed = postponeInput.safeParse({ dueDate: dueDate || undefined });
+    if (!parsed.success) return setError(fieldErrors(parsed.error).dueDate);
+    setError(undefined);
+    postpone.mutate(parsed.data);
+  };
+  return (
+    <form className="form-grid" onSubmit={submit} noValidate>
+      <Field label={t('postpone_to')} error={error}>
+        {(p) => <input {...p} type="date" value={dueDate} min={detail.period} onChange={(e) => setDueDate(e.target.value)} />}
+      </Field>
+      {detail.status === 'partially_paid' && <p className="muted form-error">{t('postpone_rest_help')}</p>}
+      <div className="form-actions">
+        <button type="submit" className="primary" disabled={postpone.isPending}>
+          {postpone.isPending ? t('saving') : t('postpone')}
+        </button>
+        <button type="button" className="secondary" onClick={onClose}>
+          {t('close')}
+        </button>
+      </div>
+      {postpone.isError && <p className="warning form-error">{errorMessage(postpone.error)}</p>}
+    </form>
+  );
+}
+
+/** Cancel with a reason (RF-28): it stops counting; it can be restored from the month's cancelled list. */
+function CancelForm({ detail, onDone, onClose }: { detail: CommitmentDetail; onDone: () => Promise<unknown>; onClose: () => void }) {
+  const [reason, setReason] = useState('');
+  const [error, setError] = useState<string | undefined>();
+  const cancel = useMutation({
+    mutationFn: (input: unknown) => api('POST', `/api/commitments/${detail.id}/cancel`, input),
+    onSuccess: async () => {
+      await onDone();
+      onClose();
+    },
+  });
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    cancel.reset();
+    const parsed = cancelInput.safeParse({ reason });
+    if (!parsed.success) return setError(fieldErrors(parsed.error).reason);
+    setError(undefined);
+    cancel.mutate(parsed.data);
+  };
+  return (
+    <form className="form-grid" onSubmit={submit} noValidate>
+      <Field label={columnLabel('commitment', 'cancellation_reason')} error={error}>
+        {(p) => <input {...p} value={reason} placeholder={t('cancel_reason_example')} onChange={(e) => setReason(e.target.value)} />}
+      </Field>
+      <div className="form-actions">
+        <button type="submit" className="primary" disabled={cancel.isPending}>
+          {cancel.isPending ? t('saving') : t('cancel_commitment')}
+        </button>
+        <button type="button" className="secondary" onClick={onClose}>
+          {t('close')}
+        </button>
+      </div>
+      {cancel.isError && <p className="warning form-error">{errorMessage(cancel.error)}</p>}
+    </form>
   );
 }
 
@@ -190,6 +286,13 @@ function ReceiveIncome({ line, onClose }: { line: ProjectionLine; onClose: () =>
     },
   });
   const undo = useMutation({ mutationFn: () => api('DELETE', `/api/incomes/${line.id}/receive`), onSuccess: refresh });
+  const cancel = useMutation({
+    mutationFn: () => api('POST', `/api/incomes/${line.id}/cancel`, {}),
+    onSuccess: async () => {
+      await refresh();
+      onClose();
+    },
+  });
 
   if (line.status === 'received') {
     return (
@@ -232,8 +335,12 @@ function ReceiveIncome({ line, onClose }: { line: ProjectionLine; onClose: () =>
           <button type="button" className="secondary" onClick={onClose}>
             {t('close')}
           </button>
+          <button type="button" className="link danger" disabled={cancel.isPending} onClick={() => cancel.mutate()}>
+            {t('income_not_this_month')}
+          </button>
         </div>
         {receive.isError && <p className="warning form-error">{errorMessage(receive.error)}</p>}
+        {cancel.isError && <p className="warning form-error">{errorMessage(cancel.error)}</p>}
       </form>
     </div>
   );

@@ -1003,3 +1003,22 @@ button.link.danger:hover:not(:disabled) {
 .row.line.done .line-toggle .grow {
   color: var(--tinta-suave);
 }
+
+/* panel modes (Pagar / Postergar / Anular) and the month's cancelled list */
+.panel-modes {
+  margin-bottom: var(--space-3);
+}
+.cancelled {
+  margin-top: var(--space-5);
+}
+.cancelled summary {
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--tinta-suave);
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+.cancelled .rows {
+  margin-top: var(--space-2);
+}
