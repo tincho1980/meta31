@@ -1037,3 +1037,24 @@ button.link.danger:hover:not(:disabled) {
   height: 20px;
   accent-color: var(--verde-casa);
 }
+
+/* state of the month: paid, to pay, moved, close */
+.month-state {
+  margin-top: var(--space-4);
+  background: var(--arena-2);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-4);
+}
+.state-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-5);
+  font-size: 14px;
+}
+.state-close {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}

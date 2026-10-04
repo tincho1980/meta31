@@ -484,6 +484,16 @@ ui:
   rate_of_the_day: la del día
   payment_rate_help: Si no ponés la cotización, se usa la cargada para esa fecha. La que quede guardada no cambia más, aunque después cargues otra.
   line_not_open: Este mes todavía no está abierto. Se puede pagar o cobrar cuando llega.
+  closed_month_lead: Cerraste el mes con
+  state_paid: "Pagado: {n}"
+  state_to_pay: "Falta: {n} ({amount})"
+  state_moved: "Pasaste a otro mes: {n}"
+  moved_to_other_months: Lo que pasaste a otro mes
+  close_month: Cerrar el mes
+  close_needs: "Para cerrar el mes falta resolver {n} (pagar, postergar o anular; cobrar o anular)."
+  closed_on_by: "Cerrado el {date} por {name}"
+  reopen_month: Reabrir
+  month_is_closed: El mes está cerrado. Para cambiar algo, reabrilo.
   you_reach_31_with: Llegás al 31 con
   money_in: Entra
   money_out: Sale
@@ -544,6 +554,10 @@ ui:
   error_cancelled: Está anulado.
   error_already_paid: Ya está pagado.
   error_not_open: Ese mes todavía no está abierto.
+  error_month_closed: Ese mes está cerrado. Para cambiar algo, reabrilo.
+  error_already_closed: El mes ya está cerrado.
+  error_not_closed: El mes no está cerrado.
+  error_unsettled: Todavía hay líneas sin resolver.
   error_not_recurring: Solo los gastos recurrentes actualizan los meses siguientes.
   error_postpone_backwards: No se puede pasar a un mes anterior.
   error_has_payments: Tiene pagos cargados. Deshacelos primero si querés anularlo.

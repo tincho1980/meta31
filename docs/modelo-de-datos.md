@@ -417,6 +417,8 @@ Monto real (E2): cargar el monto real lo guarda en `actual_amount` y recalcula e
 
 Pago de tarjeta (E2, RF-15, reglas 3 y 4): "Pagar resumen" paga en una transacción los dos compromisos `cc:` del mes en la moneda de pago de la tarjeta: la parte local y la parte en USD pesificada con la cotización aplicada (o la vigente). Lo no pagado se pasa al resumen siguiente postergando el resto (D5): nace una hija en el mes siguiente. Cuando se carga el resumen real de ese mes, su total ya trae ese saldo como "saldo anterior", así que las hijas pendientes de esa tarjeta en ese mes se anulan solas con el motivo "Incluido en el resumen como saldo anterior" (sin doble conteo). Los intereses de financiación se registran con el desglose del resumen (RF-12), junto con el costo financiero.
 
+Cierre de mes (E2): se cierra cuando no queda nada abierto (compromisos pagados, postergados o anulados; ingresos cobrados o anulados): `status = closed`, `closed_at`, `closed_by`. Un mes cerrado es definitivo: el Worker rechaza pagos, deshacer pagos, montos reales, postergaciones (desde o hacia ese mes), anulaciones, cobros, ingresos puntuales y resúmenes de tarjeta de ese mes (`month_closed`). Se puede reabrir. "Estado del mes" = lo pagado, lo que falta (lo pendiente y el resto de los parciales) y lo que nació ese mes y se pasó a otro (`origin_period` = mes y `period` posterior, D5).
+
 ### 4.7 Carga por Claude
 
 **source_document** — comprobante: bandeja de revisión y control de duplicados (D3; RF-35)

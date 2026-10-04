@@ -3,6 +3,7 @@ import { cardPaymentCategoryId, type Db, schema } from '@meta31/db';
 import { periodOf, sourceKey, toPeriod } from '@meta31/domain';
 import { and, desc, eq, isNotNull } from 'drizzle-orm';
 import { isUniqueViolation, ServiceError } from './errors.js';
+import { assertMonthNotClosed } from './month-close.js';
 
 const { cardStatement, commitment, creditCard, month } = schema;
 
@@ -103,6 +104,7 @@ async function cardOf(db: Db | Tx, creditCardId: string) {
 export async function createCardStatement(db: Db, input: CardStatementCreate, userId: string): Promise<CardStatement> {
   const card = await cardOf(db, input.creditCardId);
   if (!card) throw new ServiceError('conflict', 'invalid_reference');
+  await assertMonthNotClosed(db, periodOf(input.dueDate));
   const localCurrency = card.localCurrency as 'ARS' | 'UYU';
   try {
     return await db.transaction(async (tx) => {
@@ -123,6 +125,7 @@ export async function createCardStatement(db: Db, input: CardStatementCreate, us
 export async function updateCardStatement(db: Db, id: string, input: CardStatementUpdate, userId: string): Promise<CardStatement> {
   const [current] = await db.select().from(cardStatement).where(eq(cardStatement.id, id));
   if (!current) throw new ServiceError('not_found');
+  await assertMonthNotClosed(db, current.period);
   const closingDate = input.closingDate ?? current.closingDate;
   const dueDate = input.dueDate ?? current.dueDate;
   if (closingDate >= dueDate) throw new ServiceError('conflict', 'closing_after_due');

@@ -13,6 +13,7 @@ import {
 } from '@meta31/domain';
 import { and, asc, eq } from 'drizzle-orm';
 import { ServiceError } from './errors.js';
+import { assertMonthNotClosed } from './month-close.js';
 
 const { commitment, commitmentPayment, exchangeRate, income } = schema;
 
@@ -108,6 +109,7 @@ async function refreshStatus(tx: Tx, c: CommitmentRow, userId: string): Promise<
 export async function addPayment(db: Db, id: string, input: PaymentCreate, userId: string): Promise<CommitmentDetail> {
   const [c] = await db.select().from(commitment).where(eq(commitment.id, id));
   if (!c) throw new ServiceError('not_found');
+  await assertMonthNotClosed(db, c.period);
   if (c.status === 'cancelled') throw new ServiceError('conflict', 'cancelled');
 
   let pair: ReturnType<typeof paymentPair>;
@@ -148,6 +150,7 @@ export async function addPayment(db: Db, id: string, input: PaymentCreate, userI
 export async function deletePayment(db: Db, id: string, paymentId: string, userId: string): Promise<CommitmentDetail> {
   const [c] = await db.select().from(commitment).where(eq(commitment.id, id));
   if (!c) throw new ServiceError('not_found');
+  await assertMonthNotClosed(db, c.period);
   if (c.status === 'cancelled') throw new ServiceError('conflict', 'cancelled');
   await db.transaction(async (tx) => {
     const deleted = await tx
@@ -180,6 +183,7 @@ const toIncomeDetail = (i: IncomeRow): IncomeDetail => ({
 export async function receiveIncome(db: Db, id: string, input: IncomeReceive, userId: string): Promise<IncomeDetail> {
   const [i] = await db.select().from(income).where(eq(income.id, id));
   if (!i) throw new ServiceError('not_found');
+  await assertMonthNotClosed(db, i.period);
   if (i.status === 'cancelled') throw new ServiceError('conflict', 'cancelled');
   let appliedRate: string | null = null;
   if (i.currency !== 'ARS') {
@@ -202,6 +206,7 @@ export async function receiveIncome(db: Db, id: string, input: IncomeReceive, us
 export async function undoReceiveIncome(db: Db, id: string, userId: string): Promise<IncomeDetail> {
   const [i] = await db.select().from(income).where(eq(income.id, id));
   if (!i) throw new ServiceError('not_found');
+  await assertMonthNotClosed(db, i.period);
   if (i.status !== 'received') throw new ServiceError('conflict', 'not_received');
   const [row] = await db
     .update(income)

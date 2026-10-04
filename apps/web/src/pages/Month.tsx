@@ -1,4 +1,4 @@
-import type { CancelledLine, Category, MonthProjection, OpenMonthResult, ProjectionLine } from '@meta31/contracts';
+import type { CancelledLine, Category, MonthProjection, MonthStatus, OpenMonthResult, ProjectionLine } from '@meta31/contracts';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
@@ -9,6 +9,7 @@ import { glyphLabel, StatusGlyph } from '../components/StatusGlyph';
 import {
   addMonthsToMonthInput,
   currentPeriodIso,
+  formatDate,
   formatMoney,
   formatMoneyShort,
   formatMonth,
@@ -46,6 +47,11 @@ export function Month() {
     if (isCurrent && open.isIdle) open.mutate();
   }, [isCurrent, open]);
 
+  const status = useQuery({
+    queryKey: [...PROJECTION_KEY, period, 'status'],
+    queryFn: () => api<MonthStatus>('GET', `/api/months/${period}/status`),
+    enabled: !isCurrent || !open.isPending,
+  });
   const month = useQuery({
     queryKey: [...PROJECTION_KEY, period, 1],
     queryFn: () => api<MonthProjection[]>('GET', `/api/months/projection?from=${period}&months=1`),
@@ -60,18 +66,26 @@ export function Month() {
 
   return (
     <section className="page month">
-      <MonthHeader period={period} isCurrent={isCurrent} month={month.data} onPrev={() => go(-1)} onNext={() => go(1)} />
+      <MonthHeader
+        period={period}
+        isCurrent={isCurrent}
+        month={month.data}
+        closed={status.data?.status === 'closed'}
+        onPrev={() => go(-1)}
+        onNext={() => go(1)}
+      />
       {month.isPending && <p className="muted">{t('loading')}</p>}
       {(month.isError || open.isError) && <p className="warning">{errorMessage(month.error ?? open.error)}</p>}
-      {month.data && <MonthBody month={month.data} />}
+      {month.data && <MonthBody month={month.data} status={status.data} />}
     </section>
   );
 }
 
-function MonthHeader({ period, isCurrent, month, onPrev, onNext }: {
+function MonthHeader({ period, isCurrent, month, closed, onPrev, onNext }: {
   period: string;
   isCurrent: boolean;
   month: MonthProjection | undefined;
+  closed: boolean;
   onPrev: () => void;
   onNext: () => void;
 }) {
@@ -91,15 +105,15 @@ function MonthHeader({ period, isCurrent, month, onPrev, onNext }: {
           ›
         </button>
       </div>
-      <p className="month-lead">{t('you_reach_31_with')}</p>
+      <p className="month-lead">{t(closed ? 'closed_month_lead' : 'you_reach_31_with')}</p>
       <p className={`month-amount${negative ? ' negative' : ''}`}>{result ? formatMoney(result, 'ARS') : '—'}</p>
-      {!isCurrent && <p className="month-note">{t('projected_month')}</p>}
+      {!isCurrent && !closed && <p className="month-note">{t('projected_month')}</p>}
       <MonthPath days={daysIn(period)} today={isCurrent ? Number(todayIso().slice(8, 10)) : null} dueDays={dueDays} />
     </header>
   );
 }
 
-function MonthBody({ month }: { month: MonthProjection }) {
+function MonthBody({ month, status }: { month: MonthProjection; status: MonthStatus | undefined }) {
   const load = month.installmentLoad;
   return (
     <>
@@ -125,7 +139,8 @@ function MonthBody({ month }: { month: MonthProjection }) {
         </div>
       </div>
 
-      <MonthLines month={month} />
+      {status && <MonthState month={month} status={status} />}
+      <MonthLines month={month} closed={status?.status === 'closed'} />
       <Cancelled period={month.period} />
       <Legend />
     </>
@@ -140,7 +155,7 @@ const VIEW_LABEL: Record<View, string> = { all: 'view_all', in: 'money_in', out:
  * The month's lines, ordered: what comes in first, then what goes out grouped by category with
  * a subtotal in ARS each (biggest first). A filter shows everything, only Entra or only Sale.
  */
-function MonthLines({ month }: { month: MonthProjection }) {
+function MonthLines({ month, closed }: { month: MonthProjection; closed: boolean }) {
   const [params, setParams] = useSearchParams();
   const view = (VIEWS as string[]).includes(params.get('ver') ?? '') ? (params.get('ver') as View) : 'all';
   const setView = (v: View) => {
@@ -189,7 +204,7 @@ function MonthLines({ month }: { month: MonthProjection }) {
           </h3>
           <ul className="rows">
             {sortByDate(month.incomes).map((l) => (
-              <LineRow key={l.sourceKey ?? l.id} line={l} isIncome />
+              <LineRow key={l.sourceKey ?? l.id} line={l} isIncome closed={closed} />
             ))}
           </ul>
         </section>
@@ -212,7 +227,7 @@ function MonthLines({ month }: { month: MonthProjection }) {
               </h4>
               <ul className="rows">
                 {g.lines.map((l) => (
-                  <LineRow key={l.sourceKey ?? l.id} line={l} isIncome={false} cardLines={cardLinesOf(month, l)} />
+                  <LineRow key={l.sourceKey ?? l.id} line={l} isIncome={false} cardLines={cardLinesOf(month, l)} closed={closed} />
                 ))}
               </ul>
             </div>
@@ -220,6 +235,83 @@ function MonthLines({ month }: { month: MonthProjection }) {
         </section>
       )}
     </>
+  );
+}
+
+/** What is still to pay of a line, in ARS: the whole line, or the unpaid part of a partial one. */
+function leftArs(l: ProjectionLine): string | null {
+  if (!l.amountArs) return null;
+  if (l.status !== 'partially_paid' || !l.paid) return l.amountArs;
+  // amountArs × (amount − paid) / amount, exact in integer cents
+  const cents = (v: string) => BigInt(sumDecimals([v]).replace('.', ''));
+  const amount = cents(l.amount);
+  if (amount === 0n) return '0.00';
+  const rest = (cents(l.amountArs) * (amount - cents(l.paid))) / amount;
+  const abs = rest < 0n ? 0n : rest;
+  return `${abs / 100n}.${String(abs % 100n).padStart(2, '0')}`;
+}
+
+/**
+ * State of the month (RF-30): paid, still to pay, what was moved to another month, and closing
+ * it once nothing is left open (its real result becomes final).
+ */
+function MonthState({ month, status }: { month: MonthProjection; status: MonthStatus }) {
+  const queryClient = useQueryClient();
+  const refresh = () => queryClient.invalidateQueries({ queryKey: PROJECTION_KEY });
+  const close = useMutation({ mutationFn: () => api('POST', `/api/months/${month.period}/close`, {}), onSuccess: refresh });
+  const reopen = useMutation({ mutationFn: () => api('POST', `/api/months/${month.period}/reopen`, {}), onSuccess: refresh });
+  if (status.status === 'not_open') return null;
+
+  const open = month.commitments.filter((l) => l.status === 'pending' || l.status === 'partially_paid');
+  const toPay = sumDecimals(open.map(leftArs).filter((v): v is string => v !== null));
+  const paidCount = month.commitments.filter((l) => l.status === 'paid').length;
+
+  return (
+    <section className="month-state">
+      <div className="state-items">
+        <span>{t('state_paid', { n: String(paidCount) })}</span>
+        <span>{t('state_to_pay', { n: String(open.length), amount: formatMoney(toPay, 'ARS') })}</span>
+        {status.postponedOut.length > 0 && <span>{t('state_moved', { n: String(status.postponedOut.length) })}</span>}
+      </div>
+      {status.postponedOut.length > 0 && (
+        <details className="cancelled">
+          <summary>{t('moved_to_other_months')}</summary>
+          <ul className="rows">
+            {status.postponedOut.map((l) => (
+              <li key={l.id} className="row">
+                <span className="grow">
+                  {l.description}
+                  <span className="note">{l.dueDate ? t('moved_to', { day: formatWeekdayDay(l.dueDate) }) : formatMonth(l.period)} · {formatMonth(l.period)}</span>
+                </span>
+                <span className="amount">{formatMoney(l.amount, l.currency)}</span>
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
+      <div className="state-close">
+        {status.status === 'closed' ? (
+          <>
+            <span className="note">
+              {t('closed_on_by', {
+                date: status.closedAt ? formatDate(status.closedAt.slice(0, 10)) : '',
+                name: status.closedBy ?? '',
+              })}
+            </span>
+            <button type="button" className="link" disabled={reopen.isPending} onClick={() => reopen.mutate()}>
+              {t('reopen_month')}
+            </button>
+          </>
+        ) : status.unsettled > 0 ? (
+          <span className="note">{t('close_needs', { n: String(status.unsettled) })}</span>
+        ) : (
+          <button type="button" className="primary" disabled={close.isPending} onClick={() => close.mutate()}>
+            {t('close_month')}
+          </button>
+        )}
+      </div>
+      {(close.isError || reopen.isError) && <p className="warning">{errorMessage(close.error ?? reopen.error)}</p>}
+    </section>
   );
 }
 
@@ -292,7 +384,12 @@ function Both({ value, income = false }: { value: string; income?: boolean }) {
 const sortByDate = (lines: ProjectionLine[]) =>
   [...lines].sort((a, b) => (a.date ?? '9999').localeCompare(b.date ?? '9999') || a.description.localeCompare(b.description));
 
-function LineRow({ line, isIncome, cardLines }: { line: ProjectionLine; isIncome: boolean; cardLines?: ProjectionLine[] }) {
+function LineRow({ line, isIncome, cardLines, closed = false }: {
+  line: ProjectionLine;
+  isIncome: boolean;
+  cardLines?: ProjectionLine[] | undefined;
+  closed?: boolean;
+}) {
   const done = line.status === 'paid' || line.status === 'received';
   // estimated until it is paid (in full or in part): manual de marca, '~' and tinta-suave
   const estimate = !isIncome && line.estimate && (line.status === null || line.status === 'pending');
@@ -317,7 +414,14 @@ function LineRow({ line, isIncome, cardLines }: { line: ProjectionLine; isIncome
           {formatMoney(line.amount, line.currency, { income: isIncome, estimate })}
         </span>
       </button>
-      {open && <LineActions line={line} isIncome={isIncome} onClose={() => setOpen(false)} cardLines={cardLines} />}
+      {open &&
+        (closed ? (
+          <div className="row-panel">
+            <p className="muted">{t('month_is_closed')}</p>
+          </div>
+        ) : (
+          <LineActions line={line} isIncome={isIncome} onClose={() => setOpen(false)} cardLines={cardLines} />
+        ))}
     </li>
   );
 }
