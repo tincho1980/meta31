@@ -452,6 +452,23 @@ ui:
   current_installment_short: "cuota {n} de {total}"
   view_schedule: Ver cuadro
   optional: (opcional)
+  you_reach_31_with: Llegás al 31 con
+  money_in: Entra
+  money_out: Sale
+  in_installments: En cuotas
+  this_month: Este mes
+  month: Mes
+  result: Queda
+  result_usd: Queda (US$)
+  to_collect: A cobrar
+  due_on: "vence el {day}"
+  comes_in_on: "entra el {day}"
+  previous_month: Mes anterior
+  next_month: Mes siguiente
+  projected_month: Proyectado con las reglas cargadas; se graba recién cuando llega el mes.
+  projection_help: "Lo que entra, lo que sale y lo que queda cada mes, con lo cargado hoy. El resultado de un mes no pasa al siguiente. «En cuotas» es la parte del ingreso que se va en cuotas de tarjeta y préstamos."
+  missing_rate: Falta una cotización para convertir algún monto; cargala en Cotizaciones.
+  projection_issues: Hay reglas sin monto vigente o préstamos UVA sin valor UVA cargado; esos montos no suman.
   one_off_expense_help: Compras o pagos que no se repiten, en un pago o en cuotas, fuera de la tarjeta. Si va con tarjeta, se carga como compra en cuotas de la tarjeta.
   one_off_edit_help: Las cuotas de los meses ya abiertos o pagados conservan su monto; el cambio vale para las que faltan.
   single_payment: Un pago
@@ -481,6 +498,7 @@ ui:
   error_granted_after_first_due: La primera cuota tiene que vencer después de la fecha de otorgamiento.
   error_uva_currency: Los préstamos UVA son en pesos argentinos.
   error_uva_principal: Los préstamos UVA llevan el capital en UVAs; los de tasa fija no.
+  error_future_month: Los meses futuros no se abren; se ven proyectados.
   error_card_payment_category: Esa categoría es la del pago de las tarjetas; elegí otra.
   error_system_category: Es una categoría del sistema y no se puede modificar.
   error_validation: Revisá los datos marcados.

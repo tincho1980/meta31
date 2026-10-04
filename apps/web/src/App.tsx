@@ -11,12 +11,13 @@ import { CardDetail } from './pages/CardDetail';
 import { Categories } from './pages/Categories';
 import { CreditCards } from './pages/CreditCards';
 import { ExchangeRates } from './pages/ExchangeRates';
-import { Home } from './pages/Home';
 import { IncomeSources } from './pages/IncomeSources';
 import { LoanDetail } from './pages/LoanDetail';
 import { Loans } from './pages/Loans';
 import { Load, More, Pending } from './pages/Menus';
+import { Month } from './pages/Month';
 import { OneOffExpenses } from './pages/OneOffExpenses';
+import { Projection } from './pages/Projection';
 import { Properties } from './pages/Properties';
 import { RecurringExpenses } from './pages/RecurringExpenses';
 import { supabase } from './supabase';
@@ -88,14 +89,14 @@ function Authenticated({ identity, onSignOut: signOut }: { identity: Identity; o
   return (
     <Layout userName={me.data.name} onSignOut={signOut}>
       <Routes>
-        <Route path="/" element={<Home name={me.data.name} />} />
+        <Route path="/" element={<Month />} />
         <Route path="/cargar" element={<Load />} />
         <Route path="/mas" element={<More onSignOut={signOut} />} />
         <Route path="/categorias" element={<Categories />} />
         <Route path="/cotizaciones" element={<ExchangeRates />} />
         <Route path="/gastos-recurrentes" element={<RecurringExpenses />} />
         <Route path="/gastos-puntuales" element={<OneOffExpenses />} />
-        <Route path="/proyeccion" element={<Pending titleKey="nav_projection" />} />
+        <Route path="/proyeccion" element={<Projection />} />
         <Route path="/bandeja" element={<Pending titleKey="nav_inbox" />} />
         <Route path="/tarjetas" element={<CreditCards />} />
         <Route path="/tarjetas/:id" element={<CardDetail />} />

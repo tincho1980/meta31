@@ -700,3 +700,205 @@ button.link.danger:hover:not(:disabled) {
 .summary .etiqueta {
   margin: 0;
 }
+
+/* ---------- month view (manual de marca: green header, path, summary cards) ---------- */
+
+.month-head {
+  background: var(--verde-casa);
+  color: var(--crema);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5);
+  margin-bottom: var(--space-4);
+}
+.month-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.month-head .etiqueta {
+  color: var(--salvia);
+  margin: 0;
+}
+.month-arrow {
+  background: none;
+  border: none;
+  color: var(--salvia);
+  font-size: 22px;
+  padding: 0 var(--space-2);
+  min-height: 44px;
+  min-width: 44px;
+}
+.month-arrow:hover {
+  color: var(--crema);
+}
+.month-lead {
+  margin: var(--space-2) 0 0;
+  color: var(--salvia);
+}
+.month-amount {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 48px;
+  line-height: 56px;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.month-note {
+  margin: var(--space-1) 0 0;
+  font-size: 13px;
+  color: var(--salvia-2);
+}
+@media (min-width: 900px) {
+  .month-head {
+    padding: var(--space-6) var(--space-7);
+  }
+  .month-amount {
+    font-size: 76px;
+    line-height: 84px;
+  }
+}
+
+.month-path {
+  margin-top: var(--space-5);
+  overflow: hidden;
+}
+.month-path-dots {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2px;
+}
+.month-path .day {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 34px;
+  flex: 1;
+}
+.month-path .dot {
+  width: 6px;
+  height: 6px;
+  margin-top: 4px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--crema) 32%, transparent);
+}
+.month-path .past .dot {
+  width: 7px;
+  height: 7px;
+  background: var(--crema);
+}
+.month-path .today .dot {
+  width: 14px;
+  height: 14px;
+  margin-top: 0;
+  background: var(--girasol);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--girasol) 30%, transparent);
+}
+.month-path .due {
+  display: none;
+  width: 2px;
+  height: 8px;
+  margin-top: 3px;
+  background: var(--girasol);
+}
+.month-path .past .due {
+  background: var(--salvia-2);
+}
+.month-path .day-label {
+  position: absolute;
+  bottom: 0;
+  font-size: 10px;
+  color: var(--salvia-2);
+}
+.month-path .flag {
+  flex: 0 0 auto;
+  margin-left: 4px;
+}
+@media (min-width: 900px) {
+  .month-path .due {
+    display: block;
+  }
+}
+
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+.summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  background: var(--arena);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-4);
+  min-width: 0;
+}
+.summary-card .etiqueta {
+  margin: 0;
+}
+.summary-card .amount {
+  font-size: 16px;
+  white-space: nowrap;
+}
+.summary-card .etiqueta {
+  letter-spacing: 0.08em;
+}
+@media (min-width: 900px) {
+  .summary-card .amount {
+    font-size: 24px;
+    line-height: 30px;
+  }
+}
+
+.row.line {
+  flex-wrap: nowrap;
+}
+.row.line .glyph {
+  flex: 0 0 auto;
+}
+.row.line.done .amount,
+.row.line.done .grow {
+  color: var(--tinta-suave);
+}
+
+.legend {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  padding: 0;
+  margin: var(--space-4) 0 0;
+  font-size: 12.5px;
+  color: var(--tinta-suave);
+}
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.legend .glyph {
+  width: 12px;
+  height: 12px;
+}
+
+.table td.income {
+  color: var(--verde-ingreso);
+}
+.table td.negative {
+  color: var(--terracota-texto);
+}
+
+/* full amount on desktop, abbreviated on the phone */
+.wide-only {
+  display: none;
+}
+@media (min-width: 900px) {
+  .wide-only {
+    display: inline;
+  }
+  .narrow-only {
+    display: none;
+  }
+}
