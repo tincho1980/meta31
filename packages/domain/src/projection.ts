@@ -71,6 +71,8 @@ export type ProjectionLine = {
   status: CommitmentStatus | IncomeStatus | null;
   /** Derived, never stored (D5): the commitment was born in an earlier month. */
   postponed: boolean;
+  /** `amount` in ARS with the rate in force on the line's date (rule 6); null if a rate is missing. */
+  amountArs: Money | null;
 };
 
 export type Totals = { incomes: Money; commitments: Money; result: Money };
@@ -129,6 +131,7 @@ function storedCommitmentLine(c: StoredCommitment): ProjectionLine {
     stored: true,
     status: c.status,
     postponed: c.originPeriod !== c.period,
+    amountArs: null,
   };
 }
 
@@ -146,6 +149,7 @@ function storedIncomeLine(i: StoredIncome): ProjectionLine {
     stored: true,
     status: i.status,
     postponed: false,
+    amountArs: null,
   };
 }
 
@@ -185,6 +189,7 @@ export function projectMonths(input: ProjectionInput): MonthProjection[] {
         stored: false,
         status: null,
         postponed: false,
+        amountArs: null,
       })),
     ];
     const incomes: ProjectionLine[] = [
@@ -202,8 +207,18 @@ export function projectMonths(input: ProjectionInput): MonthProjection[] {
         stored: false,
         status: null,
         postponed: false,
+        amountArs: null,
       })),
     ];
+
+    // each line converted on its own, so a missing rate only blanks the lines it affects
+    for (const l of [...incomes, ...commitments]) {
+      try {
+        l.amountArs = convert(l.amount, l.currency, 'ARS', input.rates, l.date ?? period);
+      } catch (err) {
+        if (!(err instanceof MissingRateError)) throw err;
+      }
+    }
 
     const byCurrency = Object.fromEntries(
       CURRENCIES.map((cur) => [

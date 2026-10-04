@@ -139,6 +139,20 @@ describe('installment load (RF-33)', () => {
   });
 });
 
+describe('lines in ARS (for subtotals by category)', () => {
+  it('converts each line on its own: UYU through USD, ARS as is', () => {
+    const [oct] = projectMonths(input());
+    // 40,000 UYU / 40 * 1450 = 1,450,000 ARS
+    expect(oct!.incomes.map((l) => show(l.amountArs))).toEqual(['2000000.00', '1450000.00']);
+    expect(show(oct!.commitments[0]!.amountArs)).toBe('213955.04');
+  });
+
+  it('a missing rate blanks only the lines that need it', () => {
+    const [oct] = projectMonths(input({ rates: [rates[0]!] }));
+    expect(oct!.incomes.map((l) => show(l.amountArs))).toEqual(['2000000.00', null]);
+  });
+});
+
 describe('missing exchange rates', () => {
   it('keeps the per-currency totals and reports the missing rate instead of failing', () => {
     const [oct] = projectMonths(input({ rates: [] }));
