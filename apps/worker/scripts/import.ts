@@ -5,6 +5,7 @@
 //   pnpm --filter @meta31/worker run initial-load <file.json> --local     load it into the local PGlite (.local-db)
 // Supabase: reads DATABASE_URL and SEED_EMAIL_MARTIN from packages/db/.env (same as the seed).
 import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { importFile } from '@meta31/contracts';
 import { createDb, type Db, findUserByEmail } from '@meta31/db';
@@ -20,7 +21,9 @@ if (!path) {
   process.exit(1);
 }
 
-const parsed = importFile.safeParse(JSON.parse(readFileSync(path, 'utf8')));
+// pnpm --filter runs the script inside apps/worker: a relative path is relative to where the command was typed
+const file = resolve(process.env.INIT_CWD ?? process.cwd(), path);
+const parsed = importFile.safeParse(JSON.parse(readFileSync(file, 'utf8')));
 if (!parsed.success) {
   console.error('The file does not match the load format:');
   for (const issue of parsed.error.issues) console.error(`  ${issue.path.join('.') || '(root)'}: ${issue.message}`);
