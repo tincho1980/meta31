@@ -27,7 +27,7 @@ Reglas sobre los documentos:
 - Infra creada por Martín: proyecto Supabase con login de Google configurado, credencial OAuth de Google, cuenta de Cloudflare.
 - **E0: cerrado el 3/10/2026.** Login con Google desde el celular → "Hola, Martín"; una cuenta no habilitada recibe 403. Producción: PWA en `https://meta31.pages.dev`, Worker en `https://meta31-api.miramallo.workers.dev`. Se publicaron a mano desde `feat/e0-esqueleto`, así que `main` todavía no refleja producción.
 - **Deploy automático:** cada merge a `main` corre `verify` y, si pasa, el job `deploy` del CI publica el Worker y la PWA (credenciales en el environment `production` de GitHub, solo para `main`). Nada de deploys a mano; detalle en `docs/setup.md` paso 10. Las migraciones contra Supabase las corre Martín antes de mergear a `main`.
-- **E1 en curso:** dominio completo (períodos, montos y cotizaciones, amortización, generadores, apertura de mes, proyección y carga de cuotas). Altas hechas: categorías, cotizaciones, propiedades, fuentes de ingreso y gastos recurrentes (los dos con historial de montos). Falta: altas de gastos puntuales, tarjetas y préstamos (RF-34), vista del mes, proyección a 12 meses con el indicador de cuotas, y la carga inicial por script (plan, decisión 3). Meta inmediata: cerrar E1 y E2; después E3 (MCP); E4 (simulador, IPC, rentabilidad) al final.
+- **E1 en curso:** dominio completo (períodos, montos y cotizaciones, amortización, generadores, apertura de mes, proyección y carga de cuotas). Altas hechas: categorías, cotizaciones, propiedades, fuentes de ingreso, gastos recurrentes (los dos con historial de montos) y gastos puntuales. Falta: altas de tarjetas y préstamos (RF-34), vista del mes, proyección a 12 meses con el indicador de cuotas, y la carga inicial por script (plan, decisión 3). Meta inmediata: cerrar E1 y E2; después E3 (MCP); E4 (simulador, IPC, rentabilidad) al final.
 
 ## Stack (cerrado, no cambiar sin hablarlo)
 
@@ -100,7 +100,7 @@ Capas dentro del Worker:
 - Columnas de auditoría en todas las tablas de dominio: `created_at`, `updated_at`, `created_by`, `updated_by`, `entry_mode` (`manual` · `claude`), `source_document_id`.
 - Nada se cambia a mano en el panel de Supabase: todo por migración de drizzle-kit.
 - RLS activado y **sin políticas** en todas las tablas (RNF-09). El Worker se conecta con un rol que lo saltea; la API pública de Supabase no ve nada.
-- Las entidades maestras no se borran: `active` o fecha de fin. Los compromisos se anulan (`cancelled`), no se borran.
+- Las entidades maestras no se borran: `active` o fecha de fin. Los compromisos se anulan (`cancelled`), no se borran. Excepción (3/10): un gasto recurrente o puntual cargado por error se puede borrar mientras no tenga compromisos grabados; si ya tiene, se anulan desde la vista del mes.
 - Las escrituras que tocan varias tablas (cargar resumen, pagar, postergar, confirmar un comprobante) van en **una transacción**.
 - En el Worker se crea un cliente `pg` por request contra Hyperdrive (Hyperdrive hace el pooling). No guardar conexiones en variables globales.
 

@@ -1,26 +1,18 @@
 import type { AmountEntry, AmountEntryCreate, AmountEntryUpdate, RecurringExpense, RecurringExpenseCreate, RecurringExpenseUpdate } from '@meta31/contracts';
-import { CARD_PAYMENT_CATEGORY, type Db, schema } from '@meta31/db';
+import { type Db, schema } from '@meta31/db';
 import { and, asc, eq, inArray, lte, ne } from 'drizzle-orm';
+import { checkNothingStored } from './deletion.js';
 import { isUniqueViolation, ServiceError } from './errors.js';
-import { checkReferences } from './references.js';
+import { checkNotCardCategory, checkReferences } from './references.js';
 
-const { category, recurringExpense, recurringExpenseAmount } = schema;
+const { recurringExpense, recurringExpenseAmount } = schema;
 
-/** Rule 1: what is paid by card lives in the statement, so a recurring expense never uses the card payment category. */
-async function checkNotCardCategory(db: Db, categoryId: string | undefined): Promise<void> {
-  if (!categoryId) return;
-  const [c] = await db.select({ name: category.name, kind: category.kind }).from(category).where(eq(category.id, categoryId));
-  if (c && c.name === CARD_PAYMENT_CATEGORY.name && c.kind === CARD_PAYMENT_CATEGORY.kind) {
-    throw new ServiceError('conflict', 'card_payment_category');
-  }
-}
-
-type SourceRow = typeof recurringExpense.$inferSelect;
+type ExpenseRow = typeof recurringExpense.$inferSelect;
 type AmountRow = typeof recurringExpenseAmount.$inferSelect;
 
 const toAmount = (row: AmountRow): AmountEntry => ({ id: row.id, fromPeriod: row.fromPeriod, amount: row.amount });
 
-const toRecurringExpense = (row: SourceRow, amounts: AmountRow[]): RecurringExpense => ({
+const toRecurringExpense = (row: ExpenseRow, amounts: AmountRow[]): RecurringExpense => ({
   id: row.id,
   name: row.name,
   categoryId: row.categoryId,
@@ -173,4 +165,18 @@ export async function updateRecurringExpenseAmount(
     throw err;
   }
   return getRecurringExpense(db, expenseId);
+}
+
+/**
+ * Deletes a recurring expense loaded by mistake, with its amount history, only if none of its
+ * commitments is stored yet. Otherwise it is ended with `validTo`.
+ */
+export async function deleteRecurringExpense(db: Db, id: string): Promise<void> {
+  const [current] = await db.select({ id: recurringExpense.id }).from(recurringExpense).where(eq(recurringExpense.id, id));
+  if (!current) throw new ServiceError('not_found');
+  await checkNothingStored(db, { recurringExpenseId: id });
+  await db.transaction(async (tx) => {
+    await tx.delete(recurringExpenseAmount).where(eq(recurringExpenseAmount.recurringExpenseId, id));
+    await tx.delete(recurringExpense).where(eq(recurringExpense.id, id));
+  });
 }

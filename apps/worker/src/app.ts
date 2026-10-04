@@ -6,6 +6,7 @@ import { categories } from './routes/categories.js';
 import { exchangeRates } from './routes/exchange-rates.js';
 import { incomeSources } from './routes/income-sources.js';
 import { me } from './routes/me.js';
+import { oneOffExpenses } from './routes/one-off-expenses.js';
 import { people } from './routes/people.js';
 import { properties } from './routes/properties.js';
 import { recurringExpenses } from './routes/recurring-expenses.js';
@@ -43,6 +44,7 @@ export function createApp(deps: AppDeps) {
   app.route('/api/properties', properties);
   app.route('/api/income-sources', incomeSources);
   app.route('/api/recurring-expenses', recurringExpenses);
+  app.route('/api/one-off-expenses', oneOffExpenses);
 
   app.notFound((c) => c.json({ error: 'not_found' }, 404));
   app.onError((err, c) => {

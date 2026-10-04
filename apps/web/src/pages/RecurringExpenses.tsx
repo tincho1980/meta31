@@ -4,6 +4,7 @@ import { useState } from 'react';
 import type { z } from 'zod';
 import { api } from '../api';
 import { AmountHistory } from '../components/AmountHistory';
+import { DeleteButton } from '../components/DeleteButton';
 import { Field } from '../components/Field';
 import {
   type Choices,
@@ -314,6 +315,7 @@ function ExpenseRow({ expense, choices }: { expense: RecurringExpense; choices: 
           <button type="button" className="link" onClick={() => setMode('amounts')}>
             {t('amounts')}
           </button>
+          <DeleteButton path={`/api/recurring-expenses/${expense.id}`} name={expense.name} queryKey={KEY} />
         </span>
       )}
       {mode === 'edit' && (

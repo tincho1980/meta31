@@ -621,3 +621,14 @@ button.link:hover:not(:disabled) {
 .amount.estimate {
   color: var(--tinta-suave);
 }
+
+/* destructive link: terracota is the signal color (manual de marca) */
+button.link.danger {
+  color: var(--terracota-texto);
+}
+button.link.danger:hover:not(:disabled) {
+  color: var(--terracota);
+}
+.actions {
+  flex-wrap: wrap;
+}

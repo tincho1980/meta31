@@ -4,13 +4,14 @@ import type { AppEnv } from '../env.js';
 import {
   addRecurringExpenseAmount,
   createRecurringExpense,
+  deleteRecurringExpense,
   listRecurringExpenses,
   updateRecurringExpense,
   updateRecurringExpenseAmount,
 } from '../services/recurring-expenses.js';
 import { amountParam, idParam, validate } from './validate.js';
 
-/** Recurring expenses (RF-17, RF-18, RF-20) and their amount history (RF-19). No delete: they end with `validTo`. */
+/** Recurring expenses (RF-17, RF-18, RF-20) and their amount history (RF-19). They end with `validTo`; delete only while nothing of them is stored. */
 export const recurringExpenses = new Hono<AppEnv>()
   .get('/', async (c) => c.json(await listRecurringExpenses(c.var.db)))
   .post('/', validate('json', recurringExpenseCreate), async (c) => {
@@ -26,4 +27,8 @@ export const recurringExpenses = new Hono<AppEnv>()
   .patch('/:id/amounts/:amountId', validate('param', amountParam), validate('json', amountEntryUpdate), async (c) => {
     const { id, amountId } = c.req.valid('param');
     return c.json(await updateRecurringExpenseAmount(c.var.db, id, amountId, c.req.valid('json'), c.var.user.id));
+  })
+  .delete('/:id', validate('param', idParam), async (c) => {
+    await deleteRecurringExpense(c.var.db, c.req.valid('param').id);
+    return c.body(null, 204);
   });
