@@ -902,3 +902,72 @@ button.link.danger:hover:not(:disabled) {
     display: none;
   }
 }
+
+/* ---------- month lines: filter, Entra / Sale, categories ---------- */
+
+.lines-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin: var(--space-6) 0 var(--space-3);
+}
+.lines-head h2 {
+  margin: 0;
+}
+.segmented {
+  display: inline-flex;
+  background: var(--arena);
+  border-radius: var(--radius-pill);
+  padding: 3px;
+}
+.segmented button {
+  background: none;
+  border: none;
+  border-radius: var(--radius-pill);
+  padding: 6px 14px;
+  min-height: 36px;
+  font-weight: 500;
+  color: var(--tinta-suave);
+}
+.segmented button.on {
+  background: var(--verde-casa);
+  color: var(--crema);
+}
+.line-group + .line-group {
+  margin-top: var(--space-5);
+}
+.group-head,
+.category-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-2);
+}
+.group-head {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 26px;
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--borde);
+}
+.category-group {
+  margin-top: var(--space-4);
+}
+.category-head {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--tinta-suave);
+}
+.category-head .amount {
+  font-size: 15px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--tinta);
+}

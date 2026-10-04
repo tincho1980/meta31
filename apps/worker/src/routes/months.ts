@@ -22,7 +22,11 @@ function toApi(m: DomainMonth): MonthProjection {
     commitments: moneyToDb(t.commitments),
     result: moneyToDb(t.result),
   });
-  const line = (l: DomainMonth['incomes'][number]) => ({ ...l, amount: moneyToDb(l.amount) });
+  const line = (l: DomainMonth['incomes'][number]) => ({
+    ...l,
+    amount: moneyToDb(l.amount),
+    amountArs: l.amountArs ? moneyToDb(l.amountArs) : null,
+  });
   return {
     period: m.period,
     incomes: m.incomes.map(line),

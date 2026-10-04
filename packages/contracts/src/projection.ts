@@ -22,6 +22,8 @@ export const projectionLine = z.object({
   status: z.enum(['pending', 'partially_paid', 'paid', 'cancelled', 'expected', 'received']).nullable(),
   /** Derived (D5): born in an earlier month. */
   postponed: z.boolean(),
+  /** `amount` in ARS with the rate in force on its date; null if a rate is missing. */
+  amountArs: z.string().nullable(),
 });
 export type ProjectionLine = z.infer<typeof projectionLine>;
 
