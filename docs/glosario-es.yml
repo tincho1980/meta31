@@ -400,7 +400,7 @@ ui:
   empty_list: Todavía no hay nada cargado.
   inactive: Inactiva
   system: Del sistema
-  system_category_help: La usa el sistema para el pago de los resúmenes de tarjeta; no se puede modificar.
+  system_category_help: "La usa el sistema y no se puede modificar: «Tarjetas de crédito» para el pago de los resúmenes, «Alquileres» para reconocer los alquileres."
   no_holder: Sin titular
   no_property: Sin propiedad
   open_ended: Sin fecha de fin

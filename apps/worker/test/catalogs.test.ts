@@ -20,10 +20,11 @@ afterEach(async () => {
 });
 
 describe('categories API (RF-06)', () => {
-  it('lists categories, flagging the system one', async () => {
+  it('lists categories, flagging the system ones (card payments and rents)', async () => {
     const res = await api.get('/api/categories');
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual([
+      expect.objectContaining({ name: 'Alquileres', kind: 'income', active: true, system: true }),
       expect.objectContaining({ name: 'Tarjetas de crédito', kind: 'expense', active: true, system: true }),
     ]);
   });
@@ -36,7 +37,7 @@ describe('categories API (RF-06)', () => {
     const [row] = await t.db.select().from(schema.category).where(eq(schema.category.id, created.id));
     expect(row!.createdBy).not.toBeNull();
     const incomes = (await (await api.get('/api/categories?kind=income')).json()) as Category[];
-    expect(incomes.map((c) => c.name)).toEqual(['Sueldos']);
+    expect(incomes.map((c) => c.name)).toEqual(['Alquileres', 'Sueldos']);
   });
 
   it('rejects a duplicate name of the same kind with 409, but allows it for the other kind', async () => {
@@ -63,10 +64,11 @@ describe('categories API (RF-06)', () => {
   });
 
   it('protects the card payment category from changes', async () => {
-    const [system] = (await (await api.get('/api/categories')).json()) as Category[];
-    const res = await api.patch(`/api/categories/${system!.id}`, { name: 'Otra' });
-    expect(res.status).toBe(409);
-    expect(await res.json()).toEqual({ error: 'conflict', reason: 'system_category' });
+    for (const system of (await (await api.get('/api/categories')).json()) as Category[]) {
+      const res = await api.patch(`/api/categories/${system.id}`, { name: 'Otra' });
+      expect(res.status).toBe(409);
+      expect(await res.json()).toEqual({ error: 'conflict', reason: 'system_category' });
+    }
   });
 
   it('404 for an unknown id, 400 for a malformed one or an empty update', async () => {

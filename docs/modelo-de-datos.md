@@ -162,7 +162,7 @@ Pesos constantes: monto × (IPC del mes de referencia / IPC del mes del monto).
 | name | text | "Sueldo docente Martín", "Alquiler Pocitos" |
 | category_id | → category | |
 | holder_id | → person, null | informativo (RF-02) |
-| property_id | → property, null | obligatorio para alquileres; alimenta rentabilidad por propiedad |
+| property_id | → property, null | opcional, también en alquileres; alimenta rentabilidad por propiedad |
 | currency | currency | |
 | every_months / anchor_month | smallint / smallint | D7 |
 | expected_day | smallint, null | día esperado de cobro |
@@ -466,6 +466,7 @@ Para cada mes M de la proyección, el Worker:
 **Precisiones de la generación** (`packages/domain/src/generators.ts`, 3/10):
 - **Tarjetas:** un compromiso por moneda (D4), local y USD. Si una moneda no tiene nada que pagar en el mes, no se genera su compromiso (una tarjeta sin consumos en USD tiene un solo compromiso). Con resumen real cargado se usan sus totales y su vencimiento; si no, cuotas que caen en el mes + suscripciones vigentes + consumo estimado. Una tarjeta inactiva sigue generando sus cuotas y suscripciones pendientes, pero no el consumo estimado. Una compra o suscripción en una moneda que la tarjeta no factura es un error de datos.
 - **Categoría del pago de tarjeta:** `credit_card` no tiene categoría y `commitment.category_id` es obligatorio, así que el pago de los resúmenes usa la categoría de gasto **"Tarjetas de crédito"**, que crea el seed (decidido por Martín el 3/10). Se busca por nombre: no renombrarla. El detalle por rubro de lo comprado con tarjeta sale de `card_transaction`.
+- **Categoría de alquileres:** es alquiler toda fuente de ingreso (o ingreso puntual) con la categoría de ingresos **"Alquileres"**, tenga o no una propiedad asignada (decidido por Martín el 3/10). La crea el seed y, como "Tarjetas de crédito", es del sistema: se busca por nombre y no se puede renombrar ni desactivar.
 - **Sin monto vigente:** si una fuente de ingreso o un gasto recurrente no tiene monto cargado para el mes, no se genera el candidato y se informa como aviso (no se descarta en silencio). Igual con un préstamo UVA sin valor UVA cargado.
 - **Gasto puntual en cuotas:** la fecha prevista se aplica a la primera cuota; las demás quedan sin vencimiento.
 

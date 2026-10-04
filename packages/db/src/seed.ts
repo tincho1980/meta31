@@ -35,11 +35,20 @@ export async function seedPeople(db: Db, emails: SeedEmails): Promise<void> {
  */
 export const CARD_PAYMENT_CATEGORY = { name: 'Tarjetas de crédito', kind: 'expense' } as const;
 
+/**
+ * Income category that marks a source as a rent (decided 3/10): every income in it is a rent,
+ * with or without a property. Looked up by name and kind, so it must not be renamed either.
+ */
+export const RENT_CATEGORY = { name: 'Alquileres', kind: 'income' } as const;
+
+/** Categories the system relies on: they cannot be renamed or deactivated. */
+export const SYSTEM_CATEGORIES = [CARD_PAYMENT_CATEGORY, RENT_CATEGORY] as const;
+
 /** System categories. Idempotent: inserts only the missing ones. */
 export async function seedCategories(db: Db): Promise<void> {
   await db
     .insert(category)
-    .values([CARD_PAYMENT_CATEGORY])
+    .values([...SYSTEM_CATEGORIES])
     .onConflictDoNothing({ target: [category.name, category.kind] });
 }
 
