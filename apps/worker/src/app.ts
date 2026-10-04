@@ -3,6 +3,7 @@ import { cors } from 'hono/cors';
 import type { AppEnv, Bindings } from './env.js';
 import { auth, type TokenVerifier } from './middleware/auth.js';
 import { categories } from './routes/categories.js';
+import { creditCards } from './routes/credit-cards.js';
 import { exchangeRates } from './routes/exchange-rates.js';
 import { incomeSources } from './routes/income-sources.js';
 import { me } from './routes/me.js';
@@ -45,6 +46,7 @@ export function createApp(deps: AppDeps) {
   app.route('/api/income-sources', incomeSources);
   app.route('/api/recurring-expenses', recurringExpenses);
   app.route('/api/one-off-expenses', oneOffExpenses);
+  app.route('/api/credit-cards', creditCards);
 
   app.notFound((c) => c.json({ error: 'not_found' }, 404));
   app.onError((err, c) => {

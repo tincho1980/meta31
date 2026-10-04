@@ -21,6 +21,7 @@ const whatWeHave = [
   { to: '/propiedades', key: 'nav_properties' },
   { to: '/ingresos', key: 'nav_incomes' },
   { to: '/gastos-recurrentes', key: 'nav_recurring_expenses' },
+  { to: '/gastos-puntuales', key: 'nav_one_off_expenses' },
 ];
 
 function PlusIcon({ size, stroke }: { size: number; stroke: number }) {

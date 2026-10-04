@@ -95,7 +95,7 @@ El motivo gráfico de la marca: 31 puntos de izquierda a derecha sobre el verde,
 
 **Desktop**
 
-- Barra lateral verde de 240 px: logotipo, botón Cargar, navegación principal, la sección "Lo que tenemos" (tarjetas, préstamos, propiedades, ingresos, gastos recurrentes; este último agregado por Martín el 3/10), las cotizaciones y quién está conectado.
+- Barra lateral verde de 240 px: logotipo, botón Cargar, navegación principal, la sección "Lo que tenemos" (tarjetas, préstamos, propiedades, ingresos, gastos recurrentes, gastos puntuales; estos dos últimos agregados por Martín el 3/10), las cotizaciones y quién está conectado.
 - Contenido de hasta 1120 px de ancho.
 - Encabezado verde con el monto de 76 px, el resumen a la derecha y el camino con sus marcas de vencimiento.
 - Abajo, la tabla de compromisos con filtros y una columna lateral: Esta semana, Por moneda, Próximos meses.
