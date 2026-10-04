@@ -33,3 +33,48 @@ export function formatDate(iso: string): string {
 export function todayIso(): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).format(new Date());
 }
+
+const SYMBOL: Record<string, string> = { ARS: '$', USD: 'US$', UYU: 'UY$' };
+
+/** Rounds a non-negative decimal string to whole units, half up, without converting to number. */
+function roundToUnits(value: string): string {
+  const [intPart = '0', decPart = ''] = value.split('.');
+  if ((decPart[0] ?? '0') < '5') return intPart;
+  const digits = intPart.split('');
+  let i = digits.length - 1;
+  while (i >= 0 && digits[i] === '9') digits[i--] = '0';
+  if (i < 0) digits.unshift('1');
+  else digits[i] = String(Number(digits[i]) + 1); // a single digit, not money
+  return digits.join('');
+}
+
+/**
+ * Amount for lists (manual de marca): '1500000.00' ARS → '$ 1.500.000', USD → 'US$ 650',
+ * UYU → 'UY$ 12.000'. Whole units, rounded half up. `income` adds the '+' of what comes in.
+ */
+export function formatMoney(value: string, currency: string, { income = false } = {}): string {
+  const negative = value.startsWith('-');
+  const units = formatDecimal(roundToUnits(value.replace(/^-/, '')), 0);
+  return `${income ? '+ ' : ''}${negative ? '-' : ''}${SYMBOL[currency] ?? currency} ${units}`;
+}
+
+/** '2026-10-01' → 'octubre 2026'. */
+export function formatMonth(period: string): string {
+  const [y, m] = period.split('-');
+  const name = new Intl.DateTimeFormat('es-AR', { month: 'long', timeZone: 'UTC' }).format(
+    new Date(Date.UTC(Number(y), Number(m) - 1, 1)),
+  );
+  return `${name} ${y}`;
+}
+
+/** Name of a month of the year (1–12): 3 → 'marzo'. */
+export function monthName(month: number): string {
+  return formatMonth(`2000-${String(month).padStart(2, '0')}-01`).replace(/ \d+$/, '');
+}
+
+/** Period ↔ value of an <input type="month">: '2026-10-01' ↔ '2026-10'. */
+export const periodToMonthInput = (period: string | null): string => (period ? period.slice(0, 7) : '');
+export const monthInputToPeriod = (value: string): string => (value ? `${value}-01` : '');
+
+/** Current month in Buenos Aires as a period. */
+export const currentPeriodIso = (): string => `${todayIso().slice(0, 7)}-01`;

@@ -566,3 +566,53 @@ button.link {
 button.link:hover:not(:disabled) {
   color: var(--verde-profundo);
 }
+
+/* ---------- larger forms and row panels ---------- */
+
+.page-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-3);
+}
+.page-head h1 {
+  margin: 0;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  gap: var(--space-3);
+  align-items: start;
+}
+.form-grid .form-actions,
+.form-grid .form-error {
+  grid-column: 1 / -1;
+}
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+/* edit form or history opened under a row */
+.row-panel {
+  flex-basis: 100%;
+  border-top: 1px solid var(--borde);
+  padding-top: var(--space-4);
+  margin-top: var(--space-1);
+}
+.row-panel h2 {
+  margin-top: 0;
+}
+.rows.nested {
+  margin-bottom: var(--space-4);
+}
+.rows.nested .row {
+  background: var(--papel);
+}
+
+.amount.income {
+  color: var(--verde-ingreso);
+}

@@ -74,8 +74,8 @@ tables:
       holder_id: Titular
       property_id: Propiedad
       currency: Moneda
-      every_months: Cada (meses)
-      anchor_month: Mes ancla
+      every_months: Frecuencia
+      anchor_month: Mes de referencia
       expected_day: Día de cobro
       valid_from: Vigente desde
       valid_to: Vigente hasta
@@ -185,8 +185,8 @@ tables:
       property_id: Propiedad
       beneficiary_id: Destinatario
       currency: Moneda
-      every_months: Cada (meses)
-      anchor_month: Mes ancla
+      every_months: Frecuencia
+      anchor_month: Mes de referencia
       due_day: Día de vencimiento
       valid_from: Vigente desde
       valid_to: Vigente hasta
@@ -401,6 +401,23 @@ ui:
   inactive: Inactiva
   system: Del sistema
   system_category_help: La usa el sistema para el pago de los resúmenes de tarjeta; no se puede modificar.
+  no_holder: Sin titular
+  no_property: Sin propiedad
+  open_ended: Sin fecha de fin
+  until_month: "hasta {month}"
+  since_month: "desde {month}"
+  every_months_1: Mensual
+  every_months_2: Bimestral
+  every_months_3: Trimestral
+  every_months_6: Semestral
+  every_months_12: Anual
+  anchor_month_help: Uno de los meses en que se cobra; los demás salen de la frecuencia.
+  valid_to_help: Último mes en que se cobra. Vacío si no tiene fin.
+  income_amount_help: El monto se mantiene hasta que cargás uno nuevo con el mes desde el que rige (aumentos, actualizaciones de alquiler).
+  first_amount: Monto inicial
+  new_amount: Nuevo monto
+  amounts: Montos
+  close: Cerrar
   exchange_rate_help: "Cuántas unidades de moneda local vale un dólar, desde la fecha indicada. Puede ser retroactiva: las proyecciones se recalculan desde esa fecha, los pagos ya hechos no."
 
   # Errores de la API (código → texto)
@@ -408,16 +425,23 @@ ui:
   error_conflict: El dato choca con uno existente.
   error_duplicate_name: Ya existe una con ese nombre.
   error_duplicate_date: Ya hay una cotización de ese par en esa fecha.
+  error_category_kind: La categoría tiene que ser de ingresos.
+  error_invalid_reference: Uno de los datos elegidos ya no existe. Recargá la pantalla.
+  error_valid_to_before_valid_from: El fin no puede ser anterior al inicio.
+  error_no_amount_at_start: El primer mes tiene que tener un monto. Corregí el historial de montos.
+  error_duplicate_period: Ya hay un monto que rige desde ese mes.
   error_system_category: Es una categoría del sistema y no se puede modificar.
   error_validation: Revisá los datos marcados.
 
   # Validación de campos (código → texto)
   invalid_required: Obligatorio.
-  invalid_decimal: Número inválido (hasta 6 decimales, con coma o punto).
+  invalid_decimal: Número inválido. Usá coma para los decimales (montos con hasta 2).
   invalid_must_be_positive: Tiene que ser mayor que cero.
   invalid_date: Fecha inválida.
   invalid_choice: Elegí una opción.
   invalid_period: Tiene que ser un mes (día 1).
+  invalid_day: Un día entre 1 y 31 (31 = último día del mes).
+  invalid_range: No puede ser anterior al inicio.
   invalid_empty: No hay cambios para guardar.
   invalid_default: Valor inválido.
 
