@@ -123,7 +123,8 @@ Tuteo rioplatense, frases cortas, fechas con el día de la semana cuando están 
 
 - Tema oscuro.
 - Íconos para la barra lateral y la navegación (por ahora es solo texto).
-- Pantallas de Proyección a 12 meses, Bandeja y alta de compromisos.
+- Pantallas de Bandeja y alta de compromisos.
+- Proyección a 12 meses: hay una primera versión (E1) armada con los tokens y componentes de este manual (tabla con Entra, Sale, Queda, Queda en US$ y En cuotas); falta su diseño de referencia.
 - Ícono de la app instalable: el 31 encerrado sobre verde.
 
 

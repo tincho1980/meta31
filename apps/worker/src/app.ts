@@ -9,6 +9,7 @@ import { exchangeRates } from './routes/exchange-rates.js';
 import { incomeSources } from './routes/income-sources.js';
 import { loans } from './routes/loans.js';
 import { me } from './routes/me.js';
+import { months } from './routes/months.js';
 import { oneOffExpenses } from './routes/one-off-expenses.js';
 import { people } from './routes/people.js';
 import { properties } from './routes/properties.js';
@@ -52,6 +53,7 @@ export function createApp(deps: AppDeps) {
   app.route('/api/installment-purchases', installmentPurchases);
   app.route('/api/subscriptions', subscriptions);
   app.route('/api/loans', loans);
+  app.route('/api/months', months);
 
   app.notFound((c) => c.json({ error: 'not_found' }, 404));
   app.onError((err, c) => {

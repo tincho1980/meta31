@@ -102,3 +102,29 @@ export const formatUva = (value: string): string => `${formatDecimal(value, 2)} 
 
 /** Rate in %: '65.000000' → '65 %', '60.500000' → '60,5 %'. */
 export const formatPercent = (value: string): string => `${formatDecimal(value, 0)} %`;
+
+/** '2026-10-05' → 'lunes 5' (voz de la casa: "Vence el lunes 5"). */
+export function formatWeekdayDay(iso: string): string {
+  const [y, m, d] = iso.split('-').map(Number);
+  const weekday = new Intl.DateTimeFormat('es-AR', { weekday: 'long', timeZone: 'UTC' }).format(new Date(Date.UTC(y!, m! - 1, d!)));
+  return `${weekday} ${d}`;
+}
+
+/**
+ * Short amount for the phone's summary cards (manual de marca): '$ 3,25 M', '$ 380 mil',
+ * '$ 950'. Integer arithmetic on the whole units, never floats.
+ */
+export function formatMoneyShort(value: string, currency: string, { income = false } = {}): string {
+  const negative = value.startsWith('-');
+  const units = BigInt(roundToUnits(value.replace(/^-/, '')));
+  let text: string;
+  if (units >= 1_000_000n) {
+    const hundredths = (units * 100n + 500_000n) / 1_000_000n;
+    text = `${hundredths / 100n},${String(hundredths % 100n).padStart(2, '0')} M`;
+  } else if (units >= 1_000n) {
+    text = `${(units + 500n) / 1_000n} mil`;
+  } else {
+    text = String(units);
+  }
+  return `${income ? '+ ' : ''}${negative ? '-' : ''}${SYMBOL[currency] ?? currency} ${text}`;
+}
