@@ -13,6 +13,7 @@ import { me } from './routes/me.js';
 import { months } from './routes/months.js';
 import { oneOffExpenses } from './routes/one-off-expenses.js';
 import { oneOffIncomes } from './routes/one-off-incomes.js';
+import { commitments, incomes } from './routes/payments.js';
 import { people } from './routes/people.js';
 import { properties } from './routes/properties.js';
 import { recurringExpenses } from './routes/recurring-expenses.js';
@@ -58,6 +59,8 @@ export function createApp(deps: AppDeps) {
   app.route('/api/months', months);
   app.route('/api/one-off-incomes', oneOffIncomes);
   app.route('/api/card-statements', cardStatements);
+  app.route('/api/commitments', commitments);
+  app.route('/api/incomes', incomes);
 
   app.notFound((c) => c.json({ error: 'not_found' }, 404));
   app.onError((err, c) => {

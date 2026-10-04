@@ -11,6 +11,7 @@ export * from './income-source.js';
 export * from './loan.js';
 export * from './one-off-expense.js';
 export * from './one-off-income.js';
+export * from './payment.js';
 export * from './person.js';
 export * from './projection.js';
 export * from './property.js';

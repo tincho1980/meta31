@@ -409,6 +409,8 @@ Monto vigente = `coalesce(actual_amount, estimated_amount) + surcharge`.
 
 Estado: suma de `allocated_amount` ≥ monto vigente → paid; > 0 → partially_paid. Lo calcula el Worker en la misma transacción del pago.
 
+Implementación (E2): `allocated_amount` sale de `amount_paid` con `applied_rate` (los dos pares son unidades locales por USD: compromiso en USD pagado en pesos = pesos / cotización; en pesos pagado en USD = USD × cotización). Solo hay conversión directa contra USD; ARS ↔ UYU no se acepta. Si no se informa la cotización, se usa la vigente a la fecha del pago, y queda guardada fija (regla 6). Un pago cargado por error se deshace (se borra) y el estado se recalcula. Solo se paga lo grabado: un compromiso virtual de un mes futuro se paga cuando se abre su mes. Cobrar un ingreso fija `actual_amount`, `received_date` y, si no es en ARS, `applied_rate` con su propio par (USD_ARS o UYU_USD) a la fecha del cobro; se puede deshacer.
+
 ### 4.7 Carga por Claude
 
 **source_document** — comprobante: bandeja de revisión y control de duplicados (D3; RF-35)

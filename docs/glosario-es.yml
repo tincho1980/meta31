@@ -454,6 +454,14 @@ ui:
   optional: (opcional)
   view_all: Todo
   filter: Filtro
+  pay: Pagar
+  mark_received: Cobrado
+  undo: Deshacer
+  undo_received: Deshacer el cobro
+  paid_of: "pagaste {paid} de {total}"
+  rate_of_the_day: la del día
+  payment_rate_help: Si no ponés la cotización, se usa la cargada para esa fecha. La que quede guardada no cambia más, aunque después cargues otra.
+  line_not_open: Este mes todavía no está abierto. Se puede pagar o cobrar cuando llega.
   you_reach_31_with: Llegás al 31 con
   money_in: Entra
   money_out: Sale
@@ -511,6 +519,10 @@ ui:
   error_duplicate_statement: Esa tarjeta ya tiene cargado el resumen de ese mes.
   error_closing_after_due: El cierre tiene que ser anterior al vencimiento.
   error_statement_month: El vencimiento no puede cambiar de mes; si te equivocaste de mes, avisá.
+  error_cancelled: Está anulado.
+  error_payment_currency: No se puede pagar en esa moneda (pesos argentinos y uruguayos no tienen cotización directa).
+  error_missing_rate: Falta la cotización para esa fecha; cargala en Cotizaciones o escribila en el pago.
+  error_not_received: No figura como cobrado.
   error_card_payment_category: Esa categoría es la del pago de las tarjetas; elegí otra.
   error_system_category: Es una categoría del sistema y no se puede modificar.
   error_validation: Revisá los datos marcados.

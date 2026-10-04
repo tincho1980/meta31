@@ -24,6 +24,8 @@ export const projectionLine = z.object({
   postponed: z.boolean(),
   /** `amount` in ARS with the rate in force on its date; null if a rate is missing. */
   amountArs: z.string().nullable(),
+  /** Stored commitments: allocated so far, in the line's currency; null otherwise. */
+  paid: z.string().nullable(),
 });
 export type ProjectionLine = z.infer<typeof projectionLine>;
 

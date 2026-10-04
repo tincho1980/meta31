@@ -8,6 +8,8 @@ import {
   toPeriod,
 } from '@meta31/domain';
 import { Hono } from 'hono';
+import { schema } from '@meta31/db';
+import { inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import type { AppEnv } from '../env.js';
 import { ServiceError } from '../services/errors.js';
@@ -16,7 +18,7 @@ import { projection } from '../services/projection.js';
 import { validate } from './validate.js';
 
 /** Domain result → API: money as strings with 2 decimals, the load percent with 1. */
-function toApi(m: DomainMonth): MonthProjection {
+function toApi(m: DomainMonth, paid: ReadonlyMap<string, string>): MonthProjection {
   const totals = (t: DomainTotals) => ({
     incomes: moneyToDb(t.incomes),
     commitments: moneyToDb(t.commitments),
@@ -26,11 +28,16 @@ function toApi(m: DomainMonth): MonthProjection {
     ...l,
     amount: moneyToDb(l.amount),
     amountArs: l.amountArs ? moneyToDb(l.amountArs) : null,
+    paid: null as string | null,
+  });
+  const commitmentLine = (l: DomainMonth['commitments'][number]) => ({
+    ...line(l),
+    paid: l.id ? (paid.get(l.id) ?? '0.00') : null,
   });
   return {
     period: m.period,
     incomes: m.incomes.map(line),
-    commitments: m.commitments.map(line),
+    commitments: m.commitments.map(commitmentLine),
     byCurrency: {
       ARS: totals(m.byCurrency.ARS),
       USD: totals(m.byCurrency.USD),
@@ -55,7 +62,17 @@ export const months = new Hono<AppEnv>()
   .get('/projection', validate('query', projectionQuery), async (c) => {
     const { from, months: count } = c.req.valid('query');
     const result = await projection(c.var.db, from ? toPeriod(from) : currentPeriod(), count ?? 12);
-    return c.json(result.map(toApi));
+    // what is paid so far of each stored commitment in the horizon
+    const ids = result.flatMap((m) => m.commitments.map((l) => l.id)).filter((id): id is string => id !== null);
+    const sums = ids.length
+      ? await c.var.db
+          .select({ id: schema.commitmentPayment.commitmentId, paid: sql<string>`sum(${schema.commitmentPayment.allocatedAmount})::text` })
+          .from(schema.commitmentPayment)
+          .where(inArray(schema.commitmentPayment.commitmentId, ids))
+          .groupBy(schema.commitmentPayment.commitmentId)
+      : [];
+    const paid = new Map(sums.map((s) => [s.id, s.paid]));
+    return c.json(result.map((m) => toApi(m, paid)));
   })
   .post('/:period/open', validate('param', periodParam), async (c) => {
     const period = toPeriod(c.req.valid('param').period);
