@@ -7,7 +7,7 @@ export const id = z.uuid();
 export const isoDate = z.iso.date();
 
 /** Period: 'YYYY-MM-01' (D6). */
-export const period = z.iso.date().refine((v) => v.endsWith('-01'), { message: 'period_day_1' });
+export const period = z.iso.date().refine((v) => v.endsWith('-01'), { message: 'period' });
 
 export const currency = z.enum(['ARS', 'USD', 'UYU']);
 export const currencyPair = z.enum(['USD_ARS', 'UYU_USD']);
@@ -20,7 +20,7 @@ export const decimalString = (integer: number, scale: number) =>
   z
     .string()
     .trim()
-    .regex(new RegExp(`^\\d{1,${integer}}(\\.\\d{1,${scale}})?$`), { message: 'invalid_decimal' });
+    .regex(new RegExp(`^\\d{1,${integer}}(\\.\\d{1,${scale}})?$`), { message: 'decimal' });
 
 /** Amount: numeric(14,2). */
 export const amount = decimalString(12, 2);
@@ -39,3 +39,32 @@ export const apiError = z.object({
   reason: z.string().optional(),
 });
 export type ApiError = z.infer<typeof apiError>;
+
+/** Field error codes; the PWA translates each one with the glossary (`ui.invalid_<code>`). */
+export type FieldCode = 'required' | 'decimal' | 'must_be_positive' | 'date' | 'period' | 'choice' | 'empty' | 'default';
+const OWN_CODES = new Set<string>(['required', 'decimal', 'must_be_positive', 'date', 'period', 'choice', 'empty']);
+
+/** Maps a zod issue to a field code: our own messages pass through, zod's built-ins are classified. */
+export function fieldCode(issue: z.core.$ZodIssue): FieldCode {
+  if (OWN_CODES.has(issue.message)) return issue.message as FieldCode;
+  switch (issue.code) {
+    case 'invalid_value':
+      return 'choice';
+    case 'invalid_format':
+      return issue.format === 'date' ? 'date' : 'default';
+    case 'invalid_type':
+      // zod 4 does not include the input in the issue; its message says what was received
+      return /received undefined/.test(issue.message) ? 'required' : 'default';
+    case 'too_small':
+      return 'required';
+    default:
+      return 'default';
+  }
+}
+
+/** All field errors of a failed parse, first error per field ('_' for the whole object). */
+export function fieldErrors(error: { issues: readonly z.core.$ZodIssue[] }): Record<string, FieldCode> {
+  const fields: Record<string, FieldCode> = {};
+  for (const issue of error.issues) fields[issue.path.join('.') || '_'] ??= fieldCode(issue);
+  return fields;
+}

@@ -11,7 +11,9 @@
     "test:watch": "vitest",
     "typecheck": "pnpm -r typecheck",
     "dev:web": "pnpm --filter @meta31/web dev",
-    "dev:worker": "pnpm --filter @meta31/worker dev"
+    "dev:worker": "pnpm --filter @meta31/worker dev",
+    "dev:local": "pnpm --filter @meta31/worker dev:local",
+    "dev:local:web": "pnpm --filter @meta31/web dev:localapi"
   },
   "devDependencies": {
     "@types/node": "^26.6.4",

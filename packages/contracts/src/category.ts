@@ -20,7 +20,7 @@ export type CategoryCreate = z.infer<typeof categoryCreate>;
 export const categoryUpdate = z
   .object({ name: text(80), active: z.boolean() })
   .partial()
-  .refine((v) => Object.keys(v).length > 0, { message: 'empty_update' });
+  .refine((v) => Object.keys(v).length > 0, { message: 'empty' });
 export type CategoryUpdate = z.infer<typeof categoryUpdate>;
 
 export const categoryListQuery = z.object({ kind: categoryKind.optional() });

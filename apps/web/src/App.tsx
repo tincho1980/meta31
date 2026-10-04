@@ -1,16 +1,23 @@
 import type { Session } from '@supabase/supabase-js';
+import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
-import { ApiError, getMe, type Me } from './api';
+import { Navigate, Route, Routes } from 'react-router';
+import { ApiError, getMe } from './api';
+import { localAuth } from './auth';
+import { Layout } from './components/Layout';
 import { t } from './glossary';
+import { Categories } from './pages/Categories';
+import { ExchangeRates } from './pages/ExchangeRates';
+import { Home } from './pages/Home';
+import { Settings } from './pages/Settings';
 import { supabase } from './supabase';
 
-type MeState =
-  | { kind: 'loading' }
-  | { kind: 'ok'; me: Me }
-  | { kind: 'forbidden' }
-  | { kind: 'error' };
-
 export function App() {
+  if (localAuth) return <Authenticated identity={{ key: 'local', email: 'local' }} onSignOut={() => {}} />;
+  return <WithSupabase />;
+}
+
+function WithSupabase() {
   const [session, setSession] = useState<Session | null | undefined>(undefined);
 
   useEffect(() => {
@@ -19,14 +26,19 @@ export function App() {
     return () => data.subscription.unsubscribe();
   }, []);
 
-  if (session === undefined) return <Shell>{t('loading')}</Shell>;
+  if (session === undefined) return <Centered>{t('loading')}</Centered>;
   if (session === null) return <SignIn />;
-  return <Home session={session} />;
+  return (
+    <Authenticated
+      identity={{ key: session.user.id, email: session.user.email ?? '' }}
+      onSignOut={() => supabase.auth.signOut()}
+    />
+  );
 }
 
-function Shell({ children }: { children: React.ReactNode }) {
+function Centered({ children }: { children: React.ReactNode }) {
   return (
-    <main className="shell">
+    <main className="centered">
       <h1 className="brand">{t('app_name')}</h1>
       {children}
     </main>
@@ -35,48 +47,43 @@ function Shell({ children }: { children: React.ReactNode }) {
 
 function SignIn() {
   const signIn = () =>
-    supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: window.location.origin },
-    });
+    supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } });
   return (
-    <Shell>
+    <Centered>
       <button type="button" className="primary" onClick={signIn}>
         {t('sign_in_with_google')}
       </button>
-    </Shell>
+    </Centered>
   );
 }
 
-function Home({ session }: { session: Session }) {
-  const [state, setState] = useState<MeState>({ kind: 'loading' });
+type Identity = { key: string; email: string };
 
-  useEffect(() => {
-    let cancelled = false;
-    getMe()
-      .then((me) => !cancelled && setState({ kind: 'ok', me }))
-      .catch((err: unknown) => {
-        if (cancelled) return;
-        setState({ kind: err instanceof ApiError && err.status === 403 ? 'forbidden' : 'error' });
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [session.access_token]);
+function Authenticated({ identity, onSignOut: signOut }: { identity: Identity; onSignOut: () => void }) {
+  const me = useQuery({ queryKey: ['me', identity.key], queryFn: getMe });
 
-  const signOut = () => supabase.auth.signOut();
+  if (me.isPending) return <Centered>{t('loading')}</Centered>;
+  if (me.isError) {
+    const forbidden = me.error instanceof ApiError && me.error.status === 403;
+    return (
+      <Centered>
+        <p className="warning">{forbidden ? t('not_authorized', { email: identity.email }) : t('error_generic')}</p>
+        <button type="button" className="secondary" onClick={signOut}>
+          {t('sign_out')}
+        </button>
+      </Centered>
+    );
+  }
 
   return (
-    <Shell>
-      {state.kind === 'loading' && <p>{t('loading')}</p>}
-      {state.kind === 'ok' && <p className="greeting">{t('greeting', { name: state.me.name })}</p>}
-      {state.kind === 'forbidden' && (
-        <p className="warning">{t('not_authorized', { email: session.user.email ?? '' })}</p>
-      )}
-      {state.kind === 'error' && <p className="warning">{t('error_generic')}</p>}
-      <button type="button" className="secondary" onClick={signOut}>
-        {t('sign_out')}
-      </button>
-    </Shell>
+    <Layout userName={me.data.name} onSignOut={signOut}>
+      <Routes>
+        <Route path="/" element={<Home name={me.data.name} />} />
+        <Route path="/configuracion" element={<Settings />} />
+        <Route path="/configuracion/categorias" element={<Categories />} />
+        <Route path="/configuracion/cotizaciones" element={<ExchangeRates />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Layout>
   );
 }

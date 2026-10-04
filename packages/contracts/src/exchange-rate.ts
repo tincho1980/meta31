@@ -22,7 +22,7 @@ export type ExchangeRateCreate = z.infer<typeof exchangeRateCreate>;
 export const exchangeRateUpdate = z
   .object({ validFrom: isoDate, rate: positiveRate })
   .partial()
-  .refine((v) => Object.keys(v).length > 0, { message: 'empty_update' });
+  .refine((v) => Object.keys(v).length > 0, { message: 'empty' });
 export type ExchangeRateUpdate = z.infer<typeof exchangeRateUpdate>;
 
 export const exchangeRateListQuery = z.object({ pair: currencyPair.optional() });

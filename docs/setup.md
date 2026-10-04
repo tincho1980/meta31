@@ -138,6 +138,18 @@ Si el proyecto usa HS256 legado, copiar `apps/worker/.dev.vars.example` a `apps/
 pnpm dev:web
 ```
 
+**Modo local, sin Supabase ni login de Google** (recomendado para probar pantallas sin tocar datos reales): dos terminales desde la raíz.
+
+```powershell
+pnpm dev:local
+```
+
+```powershell
+pnpm dev:local:web
+```
+
+El primero levanta la API real (Hono) sobre un Postgres en memoria persistido en `.local-db/` (PGlite, mismas migraciones), con Martín y Rosalía de prueba, las categorías del sistema y dos cotizaciones. El segundo levanta la PWA en `http://localhost:5173` sin pedir login. Para empezar de cero, borrar la carpeta `.local-db/`. Nada de esto llega a producción: el servidor local no lo importa el Worker y el salteo del login solo existe en `vite dev`.
+
 Tests (no necesitan credenciales, usan PGlite en memoria): `pnpm test`. Tipos: `pnpm typecheck`.
 
 ## 8. Backup semanal (RNF-12)

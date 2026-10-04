@@ -370,6 +370,43 @@ ui:
   not_authorized: "La cuenta {email} no está habilitada."
   error_generic: No se pudo conectar con el servidor.
 
+  # Navegación
+  nav_home: Inicio
+  nav_settings: Configuración
+  settings_intro: Datos de base que usan las proyecciones.
+
+  # Acciones
+  add: Agregar
+  save: Guardar
+  cancel: Cancelar
+  edit: Editar
+  deactivate: Desactivar
+  activate: Activar
+  saving: Guardando…
+  empty_list: Todavía no hay nada cargado.
+  inactive: Inactiva
+  system: Del sistema
+  system_category_help: La usa el sistema para el pago de los resúmenes de tarjeta; no se puede modificar.
+  exchange_rate_help: "Cuántas unidades de moneda local vale un dólar, desde la fecha indicada. Puede ser retroactiva: las proyecciones se recalculan desde esa fecha, los pagos ya hechos no."
+
+  # Errores de la API (código → texto)
+  error_not_found: No se encontró el registro.
+  error_conflict: El dato choca con uno existente.
+  error_duplicate_name: Ya existe una con ese nombre.
+  error_duplicate_date: Ya hay una cotización de ese par en esa fecha.
+  error_system_category: Es una categoría del sistema y no se puede modificar.
+  error_validation: Revisá los datos marcados.
+
+  # Validación de campos (código → texto)
+  invalid_required: Obligatorio.
+  invalid_decimal: Número inválido (hasta 6 decimales, con coma o punto).
+  invalid_must_be_positive: Tiene que ser mayor que cero.
+  invalid_date: Fecha inválida.
+  invalid_choice: Elegí una opción.
+  invalid_period: Tiene que ser un mes (día 1).
+  invalid_empty: No hay cambios para guardar.
+  invalid_default: Valor inválido.
+
 # Derivados (no son columnas ni enums, pero aparecen en pantalla)
 derived:
   postponed: Postergado

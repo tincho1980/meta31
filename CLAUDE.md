@@ -39,6 +39,8 @@ Reglas sobre los documentos:
 | Auth | Supabase Auth con Google. La PWA manda `Authorization: Bearer <jwt>`; un middleware único del Worker lo verifica |
 | Dinero | `decimal.js`. Prohibido `number` para importes |
 | Tests | Vitest |
+| Validación de la API | zod (esquemas compartidos en `packages/contracts`) |
+| PWA | react-router, TanStack Query |
 | Gestor de paquetes | pnpm (workspaces) |
 
 Todo en planes gratuitos. Límites a vigilar (RNF-13): Worker 3 MB comprimido, 10 ms de CPU por request, 100.000 requests/día; Supabase 500 MB y pausa a los 7 días sin uso. Descartados y por qué: Prisma (peso y límites del plan free), Render (demora al despertar).
@@ -53,10 +55,13 @@ packages/
   domain/     Lógica pura: períodos, periodicidad, montos vigentes, cotizaciones, amortización,
               generadores de compromisos, proyección. Sin I/O, sin Drizzle, sin Hono
   db/         Schema Drizzle, migraciones, fábrica de cliente
+  contracts/  Esquemas zod de la API (entrada y salida de cada endpoint) y códigos de error de campo
 docs/         Documentos del proyecto
 ```
 
-Dependencias permitidas: `worker → domain, db` · `web → (tipos compartidos)` · `domain → nada` (solo `decimal.js`). Si `domain` necesita un dato, se lo pasan como argumento.
+Dependencias permitidas: `worker → domain, db, contracts` · `web → contracts` · `contracts → nada` (solo `zod`) · `domain → nada` (solo `decimal.js`). Si `domain` necesita un dato, se lo pasan como argumento.
+
+Patrón de cada alta (RF-34): esquema en `contracts` → servicio en `apps/worker/src/services` (errores de negocio con `ServiceError`) → ruta que valida con `validate()` → pantalla en `apps/web/src/pages` que valida con el mismo esquema antes de enviar y traduce los códigos de error con el glosario (`ui.invalid_*`, `ui.error_*`). Errores de la API: `{ error, reason?, fields? }`. Para probar pantallas sin datos reales: `pnpm dev:local` + `pnpm dev:local:web` (ver `docs/setup.md`).
 
 Capas dentro del Worker:
 1. **Rutas** (REST y MCP): validan la entrada (zod) y llaman a un caso de uso. No tienen lógica.
