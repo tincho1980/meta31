@@ -1,21 +1,15 @@
-import type {
-  IncomeSource,
-  IncomeSourceAmount,
-  IncomeSourceAmountCreate,
-  IncomeSourceAmountUpdate,
-  IncomeSourceCreate,
-  IncomeSourceUpdate,
-} from '@meta31/contracts';
+import type { AmountEntry, AmountEntryCreate, AmountEntryUpdate, IncomeSource, IncomeSourceCreate, IncomeSourceUpdate } from '@meta31/contracts';
 import { type Db, schema } from '@meta31/db';
 import { and, asc, eq, inArray, lte, ne } from 'drizzle-orm';
 import { isUniqueViolation, ServiceError } from './errors.js';
+import { checkReferences } from './references.js';
 
-const { category, incomeSource, incomeSourceAmount, person, property } = schema;
+const { incomeSource, incomeSourceAmount } = schema;
 
 type SourceRow = typeof incomeSource.$inferSelect;
 type AmountRow = typeof incomeSourceAmount.$inferSelect;
 
-const toAmount = (row: AmountRow): IncomeSourceAmount => ({ id: row.id, fromPeriod: row.fromPeriod, amount: row.amount });
+const toAmount = (row: AmountRow): AmountEntry => ({ id: row.id, fromPeriod: row.fromPeriod, amount: row.amount });
 
 const toIncomeSource = (row: SourceRow, amounts: AmountRow[]): IncomeSource => ({
   id: row.id,
@@ -57,26 +51,6 @@ async function getIncomeSource(db: Db, id: string): Promise<IncomeSource> {
   return toIncomeSource(row, await amountsOf(db, [id]));
 }
 
-/** The category must be an income one; holder and property must exist. */
-async function checkReferences(
-  db: Db,
-  refs: { categoryId?: string | undefined; holderId?: string | null | undefined; propertyId?: string | null | undefined },
-): Promise<void> {
-  if (refs.categoryId) {
-    const [c] = await db.select({ kind: category.kind }).from(category).where(eq(category.id, refs.categoryId));
-    if (!c) throw new ServiceError('conflict', 'invalid_reference');
-    if (c.kind !== 'income') throw new ServiceError('conflict', 'category_kind');
-  }
-  if (refs.holderId) {
-    const [p] = await db.select({ id: person.id }).from(person).where(eq(person.id, refs.holderId));
-    if (!p) throw new ServiceError('conflict', 'invalid_reference');
-  }
-  if (refs.propertyId) {
-    const [p] = await db.select({ id: property.id }).from(property).where(eq(property.id, refs.propertyId));
-    if (!p) throw new ServiceError('conflict', 'invalid_reference');
-  }
-}
-
 /** Some amount must be in force from the first month of the source, or that month has no amount. */
 async function checkAmountAtStart(db: Db, sourceId: string, validFrom: string): Promise<void> {
   const [first] = await db
@@ -89,7 +63,7 @@ async function checkAmountAtStart(db: Db, sourceId: string, validFrom: string): 
 
 /** New source and its first amount, in force from `validFrom`, in one transaction (RF-07). */
 export async function createIncomeSource(db: Db, input: IncomeSourceCreate, userId: string): Promise<IncomeSource> {
-  await checkReferences(db, input);
+  await checkReferences(db, 'income', { categoryId: input.categoryId, personIds: [input.holderId], propertyId: input.propertyId });
   const { amount, ...fields } = input;
   const id = await db.transaction(async (tx) => {
     const [row] = await tx
@@ -115,7 +89,7 @@ export async function createIncomeSource(db: Db, input: IncomeSourceCreate, user
 export async function updateIncomeSource(db: Db, id: string, input: IncomeSourceUpdate, userId: string): Promise<IncomeSource> {
   const [current] = await db.select().from(incomeSource).where(eq(incomeSource.id, id));
   if (!current) throw new ServiceError('not_found');
-  await checkReferences(db, input);
+  await checkReferences(db, 'income', { categoryId: input.categoryId, personIds: [input.holderId], propertyId: input.propertyId });
   const validFrom = input.validFrom ?? current.validFrom;
   const validTo = input.validTo === undefined ? current.validTo : input.validTo;
   if (validTo && validTo < validFrom) throw new ServiceError('conflict', 'valid_to_before_valid_from');
@@ -131,7 +105,7 @@ export async function updateIncomeSource(db: Db, id: string, input: IncomeSource
 export async function addIncomeSourceAmount(
   db: Db,
   sourceId: string,
-  input: IncomeSourceAmountCreate,
+  input: AmountEntryCreate,
   userId: string,
 ): Promise<IncomeSource> {
   const source = await getIncomeSource(db, sourceId);
@@ -151,7 +125,7 @@ export async function updateIncomeSourceAmount(
   db: Db,
   sourceId: string,
   amountId: string,
-  input: IncomeSourceAmountUpdate,
+  input: AmountEntryUpdate,
   userId: string,
 ): Promise<IncomeSource> {
   const [source] = await db.select().from(incomeSource).where(eq(incomeSource.id, sourceId));

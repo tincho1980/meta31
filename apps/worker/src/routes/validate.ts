@@ -17,3 +17,6 @@ export function validate<T extends z.ZodType, Target extends keyof ValidationTar
 
 /** `:id` path parameter. */
 export const idParam = z.object({ id: z.uuid() });
+
+/** `:id/amounts/:amountId` path parameters of an amount history. */
+export const amountParam = z.object({ id: z.uuid(), amountId: z.uuid() });

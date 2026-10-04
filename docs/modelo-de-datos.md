@@ -298,6 +298,8 @@ Costo financiero de tarjetas = suma de `interest + admin_fee + tax` por tarjeta 
 
 Cargar la factura real de un servicio actualiza el compromiso del mes y, si se elige, agrega una fila acá desde el mes siguiente (RF-19).
 
+Reglas de carga (E1): las mismas que `income_source` (alta con el primer monto estimado desde `valid_from`, siempre un monto vigente en el primer mes, baja con `valid_to`). La categoría tiene que ser de gastos y no puede ser "Tarjetas de crédito": lo que se paga con tarjeta vive en el resumen (regla 1).
+
 **one_off_expense** — gasto puntual (RF-21)
 
 | Campo | Tipo | Notas |
