@@ -462,6 +462,21 @@ ui:
   paid_by_card: Pagado con tarjeta
   paid_by_card_reason: Pagado con tarjeta
   paid_by_card_help: Si este mes lo pagaste con tarjeta, se anula acá y queda como consumo del resumen (regla 2).
+  report_loans: Préstamos
+  report_loans_help: Cuántas cuotas quedan, cuándo termina cada préstamo, cuánto capital se debe y cuánto se desvió la cuota real de la teórica.
+  installments_left: Quedan
+  ends: Termina
+  report_spending: Gasto por categoría
+  report_spending_help: En qué se va la plata cada mes, en pesos. Lo comprado con tarjeta cuenta dentro del pago de la tarjeta.
+  report_future: Compromisos futuros
+  report_future_help: Cuotas, préstamos, suscripciones y gastos en cuotas que siguen corriendo, cuánto se llevan por mes y cuándo terminan.
+  future_installments: Compras en cuotas
+  future_loans: Préstamos
+  future_subscriptions: Suscripciones y débitos
+  future_one_offs: Gastos en cuotas
+  per_month: por mes
+  until_cancelled: hasta que se dé de baja
+  installments_remaining: "faltan {n}"
   report_financial_cost: Costo financiero de tarjetas
   report_financial_cost_help: Intereses por no pagar el total, gastos administrativos e impuestos de cada resumen, por tarjeta y por mes. Sale del desglose de los resúmenes.
   report_financial_cost_empty: Todavía no hay intereses, gastos ni impuestos cargados en el desglose de ningún resumen.

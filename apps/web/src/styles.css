@@ -1058,3 +1058,26 @@ button.link.danger:hover:not(:disabled) {
   gap: var(--space-3);
   margin-top: var(--space-3);
 }
+
+/* reports: share bars and the month picker outside the green header */
+.bar-row .grow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.bar {
+  display: block;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--salvia-2);
+  min-width: 2px;
+}
+.month-nav.plain .etiqueta {
+  margin: 0;
+}
+.month-nav.plain .month-arrow {
+  color: var(--tinta-suave);
+}
+.amount.negative-text {
+  color: var(--terracota-texto);
+}

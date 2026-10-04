@@ -17,6 +17,7 @@ export * from './person.js';
 export * from './projection.js';
 export * from './property.js';
 export * from './recurring-expense.js';
+export * from './reports.js';
 
 import { z } from 'zod';
 
