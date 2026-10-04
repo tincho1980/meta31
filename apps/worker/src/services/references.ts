@@ -1,4 +1,4 @@
-import { type Db, schema } from '@meta31/db';
+import { CARD_PAYMENT_CATEGORY, type Db, schema } from '@meta31/db';
 import { eq } from 'drizzle-orm';
 import { ServiceError } from './errors.js';
 
@@ -30,5 +30,14 @@ export async function checkReferences(
   if (refs.propertyId) {
     const [p] = await db.select({ id: property.id }).from(property).where(eq(property.id, refs.propertyId));
     if (!p) throw new ServiceError('conflict', 'invalid_reference');
+  }
+}
+
+/** Rule 1: what is paid by card lives in the statement, so expenses outside the card never use the card payment category. */
+export async function checkNotCardCategory(db: Db, categoryId: string | undefined): Promise<void> {
+  if (!categoryId) return;
+  const [c] = await db.select({ name: category.name, kind: category.kind }).from(category).where(eq(category.id, categoryId));
+  if (c && c.name === CARD_PAYMENT_CATEGORY.name && c.kind === CARD_PAYMENT_CATEGORY.kind) {
+    throw new ServiceError('conflict', 'card_payment_category');
   }
 }

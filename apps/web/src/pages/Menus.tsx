@@ -25,6 +25,7 @@ export function Load() {
         entries={[
           { to: '/ingresos', label: tableLabel('income_source') },
           { to: '/gastos-recurrentes', label: tableLabel('recurring_expense') },
+          { to: '/gastos-puntuales', label: tableLabel('one_off_expense') },
           { to: '/propiedades', label: tableLabel('property') },
           { to: '/cotizaciones', label: tableLabel('exchange_rate') },
           { to: '/categorias', label: tableLabel('category') },

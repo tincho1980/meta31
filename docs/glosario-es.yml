@@ -419,6 +419,11 @@ ui:
   due_on_day: "vence el {day}"
   recurring_expense_help: Servicios, impuestos, expensas y lo que se paga todos los meses fuera de la tarjeta. Lo que se paga con tarjeta va en el resumen, no acá.
   expense_amount_help: El monto estimado se mantiene hasta que cargás uno nuevo con el mes desde el que rige (aumentos de tarifa, revalúos).
+  one_off_expense_help: Compras o pagos que no se repiten, en un pago o en cuotas, fuera de la tarjeta. Si va con tarjeta, se carga como compra en cuotas de la tarjeta.
+  one_off_edit_help: Las cuotas de los meses ya abiertos o pagados conservan su monto; el cambio vale para las que faltan.
+  single_payment: Un pago
+  installments_of: "{n} cuotas de {amount}"
+  period_range: "{from} a {to}"
   income_amount_help: El monto se mantiene hasta que cargás uno nuevo con el mes desde el que rige (aumentos, actualizaciones de alquiler).
   first_amount: Monto inicial
   new_amount: Nuevo monto
@@ -436,6 +441,7 @@ ui:
   error_valid_to_before_valid_from: El fin no puede ser anterior al inicio.
   error_no_amount_at_start: El primer mes tiene que tener un monto. Corregí el historial de montos.
   error_duplicate_period: Ya hay un monto que rige desde ese mes.
+  error_planned_date_month: La fecha prevista tiene que caer en el mes del primer pago.
   error_card_payment_category: Esa categoría es la del pago de las tarjetas; elegí otra.
   error_system_category: Es una categoría del sistema y no se puede modificar.
   error_validation: Revisá los datos marcados.
@@ -449,6 +455,8 @@ ui:
   invalid_period: Tiene que ser un mes (día 1).
   invalid_day: Un día entre 1 y 31 (31 = último día del mes).
   invalid_range: No puede ser anterior al inicio.
+  invalid_month_mismatch: Tiene que caer en el mes del primer pago.
+  invalid_installments: Entre 1 y 120 cuotas.
   invalid_empty: No hay cambios para guardar.
   invalid_default: Valor inválido.
 

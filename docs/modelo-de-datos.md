@@ -315,6 +315,8 @@ Reglas de carga (E1): las mismas que `income_source` (alta con el primer monto e
 
 Cuota = total / cuotas; la última absorbe el redondeo.
 
+Reglas de carga (E1): hasta 120 cuotas; la fecha prevista es la del primer pago y cae en `first_period`. Categoría de gastos, nunca "Tarjetas de crédito": si se paga con tarjeta es una `installment_purchase` (regla 1). Editar cambia las cuotas que todavía son virtuales; las ya grabadas conservan su monto (D1). No se borra.
+
 ### 4.5 Préstamos
 
 Al dar de alta el préstamo se cargan sus condiciones y el sistema calcula el cuadro de amortización teórico (no se graba: se recalcula). Mes a mes solo se carga el importe real de la cuota, en `commitment.actual_amount`.

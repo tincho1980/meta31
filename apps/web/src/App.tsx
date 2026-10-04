@@ -12,6 +12,7 @@ import { ExchangeRates } from './pages/ExchangeRates';
 import { Home } from './pages/Home';
 import { IncomeSources } from './pages/IncomeSources';
 import { Load, More, Pending } from './pages/Menus';
+import { OneOffExpenses } from './pages/OneOffExpenses';
 import { Properties } from './pages/Properties';
 import { RecurringExpenses } from './pages/RecurringExpenses';
 import { supabase } from './supabase';
@@ -89,6 +90,7 @@ function Authenticated({ identity, onSignOut: signOut }: { identity: Identity; o
         <Route path="/categorias" element={<Categories />} />
         <Route path="/cotizaciones" element={<ExchangeRates />} />
         <Route path="/gastos-recurrentes" element={<RecurringExpenses />} />
+        <Route path="/gastos-puntuales" element={<OneOffExpenses />} />
         <Route path="/proyeccion" element={<Pending titleKey="nav_projection" />} />
         <Route path="/bandeja" element={<Pending titleKey="nav_inbox" />} />
         <Route path="/tarjetas" element={<Pending titleKey="nav_cards" />} />
