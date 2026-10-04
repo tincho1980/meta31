@@ -22,14 +22,14 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
       manifest: {
-        name: 'meta31 · Economía familiar',
-        short_name: 'meta31',
-        description: 'Planificación económica familiar',
+        name: 'Meta31',
+        short_name: 'Meta31',
+        description: 'Llegar al 31 con lo que queda.',
         lang: 'es-AR',
         start_url: '/',
         display: 'standalone',
-        background_color: '#f8fafc',
-        theme_color: '#0f766e',
+        background_color: '#FFFDF8', // papel
+        theme_color: '#234236', // verde-casa
         icons: [
           { src: 'pwa-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'pwa-512.png', sizes: '512x512', type: 'image/png' },
@@ -39,6 +39,14 @@ export default defineConfig({
       workbox: {
         // The API lives on another origin (workers.dev): never cached, always network.
         navigateFallbackDenylist: [/^\/api\//],
+        // brand fonts from Google Fonts, cached for offline use
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/,
+            handler: 'StaleWhileRevalidate',
+            options: { cacheName: 'google-fonts' },
+          },
+        ],
       },
     }),
   ],

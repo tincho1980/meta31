@@ -12,6 +12,7 @@ Proyecto personal. Lo programa Claude con supervisión de Martín. Hablale a Mar
 | `docs/modelo-de-datos.md` | 21 tablas, columnas, enums, decisiones D1–D8, cómo se calcula un mes |
 | `docs/plan-de-entregas.md` | Entregas E0–E4: alcance, tests y criterio de cierre de cada una |
 | `docs/glosario-es.yml` | Traducción al castellano de cada tabla, columna y valor de enum; fuente de etiquetas de la PWA |
+| `docs/manual-de-marca.md` | Marca Meta31: concepto, colores, tipografía, montos, estados, navegación, voz. Tokens exactos y componentes en el sistema de diseño enlazado al final |
 
 Reglas sobre los documentos:
 - Antes de implementar algo, leé la sección que corresponde. Si el código y el documento no coinciden, **el documento manda** salvo que Martín decida otra cosa.
@@ -39,6 +40,8 @@ Reglas sobre los documentos:
 | Auth | Supabase Auth con Google. La PWA manda `Authorization: Bearer <jwt>`; un middleware único del Worker lo verifica |
 | Dinero | `decimal.js`. Prohibido `number` para importes |
 | Tests | Vitest |
+| Validación de la API | zod (esquemas compartidos en `packages/contracts`) |
+| PWA | react-router, TanStack Query |
 | Gestor de paquetes | pnpm (workspaces) |
 
 Todo en planes gratuitos. Límites a vigilar (RNF-13): Worker 3 MB comprimido, 10 ms de CPU por request, 100.000 requests/día; Supabase 500 MB y pausa a los 7 días sin uso. Descartados y por qué: Prisma (peso y límites del plan free), Render (demora al despertar).
@@ -53,10 +56,13 @@ packages/
   domain/     Lógica pura: períodos, periodicidad, montos vigentes, cotizaciones, amortización,
               generadores de compromisos, proyección. Sin I/O, sin Drizzle, sin Hono
   db/         Schema Drizzle, migraciones, fábrica de cliente
+  contracts/  Esquemas zod de la API (entrada y salida de cada endpoint) y códigos de error de campo
 docs/         Documentos del proyecto
 ```
 
-Dependencias permitidas: `worker → domain, db` · `web → (tipos compartidos)` · `domain → nada` (solo `decimal.js`). Si `domain` necesita un dato, se lo pasan como argumento.
+Dependencias permitidas: `worker → domain, db, contracts` · `web → contracts` · `contracts → nada` (solo `zod`) · `domain → nada` (solo `decimal.js`). Si `domain` necesita un dato, se lo pasan como argumento.
+
+Patrón de cada alta (RF-34): esquema en `contracts` → servicio en `apps/worker/src/services` (errores de negocio con `ServiceError`) → ruta que valida con `validate()` → pantalla en `apps/web/src/pages` que valida con el mismo esquema antes de enviar y traduce los códigos de error con el glosario (`ui.invalid_*`, `ui.error_*`). Errores de la API: `{ error, reason?, fields? }`. Para probar pantallas sin datos reales: `pnpm dev:local` + `pnpm dev:local:web` (ver `docs/setup.md`).
 
 Capas dentro del Worker:
 1. **Rutas** (REST y MCP): validan la entrada (zod) y llaman a un caso de uso. No tienen lógica.
@@ -85,6 +91,7 @@ Capas dentro del Worker:
 **Nombres**
 - Base, código y herramientas MCP **en inglés**. Base en `snake_case`; TS en `camelCase` (Drizzle con `casing: 'snake_case'`). Tablas en singular.
 - Textos de la interfaz **en castellano**, tomados de `docs/glosario-es.yml` (se importa en el build de la PWA). No hardcodear etiquetas en los componentes.
+- **Pantallas según `docs/manual-de-marca.md`** (diseño aprobado: versión D). Tokens en `apps/web/src/styles.css` (mismos nombres que el sistema de diseño: `verde-casa`, `girasol`, `papel`, `arena`, `tinta`…). Solo tema claro. Girasol únicamente para la meta y el botón Cargar; las acciones principales de un formulario van en `verde-casa`. Fraunces para títulos y montos (con `tabular-nums`), Instrument Sans para el resto. El logotipo es el componente `Logo` (nunca "META31" ni "meta31" en un texto). Navegación: barra lateral en desktop (≥ 900 px) y barra inferior con Cargar al centro en el celular. Voz de la casa: "Entra / Sale", "Llegás al 31 con", "lo pasaste al 15".
 - Valores de enum en minúscula, salvo códigos ISO (`ARS`, `AR`…).
 - **Idioma (decisión del 3/10):** en castellano solo lo que ve el usuario de la app (textos de la PWA, vía el glosario) y los documentos (`docs/` y este `CLAUDE.md`). Todo lo demás **en inglés**: comentarios, nombres de tests, mensajes de error y de log, scripts, archivos de configuración, mensajes de commit y descripciones de PR.
 

@@ -8,12 +8,17 @@
     "build": "tsc -p tsconfig.json && vite build",
     "preview": "vite preview",
     "typecheck": "tsc -p tsconfig.json",
-    "icons": "node scripts/icons.mjs"
+    "icons": "node scripts/icons.mjs",
+    "dev:localapi": "vite --mode localapi"
   },
   "dependencies": {
+    "@meta31/contracts": "workspace:*",
     "@supabase/supabase-js": "^2.117.2",
+    "@tanstack/react-query": "^5.104.1",
     "react": "^19.3.0",
-    "react-dom": "^19.3.0"
+    "react-dom": "^19.3.0",
+    "react-router": "^8.4.0",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@types/react": "^19.3.0",

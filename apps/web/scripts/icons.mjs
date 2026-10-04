@@ -1,9 +1,10 @@
-// Generates the PWA PNG icons without dependencies: green background and three rising bars.
+// Generates the PWA PNG icons without dependencies: verde-casa background and three rising bars.
+// Placeholder: the brand icon (the 31 circled on green) is pending in docs/manual-de-marca.md.
 // Usage: pnpm --filter @meta31/web icons  (the PNGs are committed in public/)
 import { writeFileSync } from 'node:fs';
 import { deflateSync } from 'node:zlib';
 
-const BG = [0x0f, 0x76, 0x6e];
+const BG = [0x23, 0x42, 0x36]; // verde-casa
 const FG = [0xff, 0xff, 0xff];
 
 const crcTable = Array.from({ length: 256 }, (_, n) => {
