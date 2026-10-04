@@ -28,6 +28,10 @@ export const commitmentDetail = z.object({
   /** Sum of the allocated amounts. */
   paid: z.string(),
   status: z.enum(['pending', 'partially_paid', 'paid', 'cancelled']),
+  /** Month it was born for (D5); different from `period` once postponed. */
+  originPeriod: isoDate,
+  dueDate: isoDate.nullable(),
+  cancellationReason: z.string().nullable(),
   payments: z.array(commitmentPayment),
 });
 export type CommitmentDetail = z.infer<typeof commitmentDetail>;
@@ -60,3 +64,26 @@ export const incomeDetail = z.object({
   status: z.enum(['expected', 'received', 'cancelled']),
 });
 export type IncomeDetail = z.infer<typeof incomeDetail>;
+
+/**
+ * Postpone to a date (D5): the commitment moves to that date's month ("lo pasaste al 15").
+ * If part of it is paid, it splits: the original stays paid by what was paid and a child
+ * with the rest is born in the new month.
+ */
+export const postponeInput = z.object({ dueDate: isoDate });
+export type PostponeInput = z.infer<typeof postponeInput>;
+
+/** Cancel with a reason (RF-28): it stops counting but is kept. */
+export const cancelInput = z.object({ reason: z.string().trim().min(1, { message: 'required' }).max(200) });
+export type CancelInput = z.infer<typeof cancelInput>;
+
+/** What was cancelled in a month, to restore it if it was a mistake. */
+export const cancelledLine = z.object({
+  id,
+  kind: z.enum(['commitment', 'income']),
+  description: z.string(),
+  currency,
+  amount: z.string(),
+  reason: z.string().nullable(),
+});
+export type CancelledLine = z.infer<typeof cancelledLine>;

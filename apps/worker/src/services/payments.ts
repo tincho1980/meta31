@@ -18,7 +18,7 @@ const { commitment, commitmentPayment, exchangeRate, income } = schema;
 type CommitmentRow = typeof commitment.$inferSelect;
 
 /** Monto vigente = coalesce(actual, estimated) + surcharge (modelo-de-datos 4.6). */
-const amountInForce = (c: CommitmentRow) => toMoney(c.actualAmount ?? c.estimatedAmount).plus(toMoney(c.surcharge));
+export const amountInForce = (c: CommitmentRow) => toMoney(c.actualAmount ?? c.estimatedAmount).plus(toMoney(c.surcharge));
 
 async function loadRates(db: Db): Promise<ExchangeRate[]> {
   const rows = await db.select().from(exchangeRate);
@@ -42,6 +42,9 @@ export async function getCommitmentDetail(db: Db, id: string): Promise<Commitmen
     amountInForce: moneyToDb(amountInForce(c)),
     paid: moneyToDb(paid),
     status: c.status,
+    originPeriod: c.originPeriod,
+    dueDate: c.dueDate,
+    cancellationReason: c.cancellationReason,
     payments: payments.map((p) => ({
       id: p.id,
       commitmentId: p.commitmentId,

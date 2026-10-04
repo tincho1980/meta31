@@ -455,6 +455,15 @@ ui:
   view_all: Todo
   filter: Filtro
   pay: Pagar
+  postpone: Postergar
+  postpone_to: ¿Para qué fecha?
+  postpone_rest_help: Ya pagaste una parte. Lo que falta pasa a esa fecha y este queda pagado por lo que pagaste.
+  moved_to: "lo pasaste al {day}"
+  cancel_commitment: Anular
+  cancel_reason_example: "Por ejemplo: cargado por error, lo pagó otro"
+  income_not_this_month: No entra este mes
+  cancelled_count: "Anulados ({n})"
+  restore: Restaurar
   mark_received: Cobrado
   undo: Deshacer
   undo_received: Deshacer el cobro
@@ -520,6 +529,10 @@ ui:
   error_closing_after_due: El cierre tiene que ser anterior al vencimiento.
   error_statement_month: El vencimiento no puede cambiar de mes; si te equivocaste de mes, avisá.
   error_cancelled: Está anulado.
+  error_already_paid: Ya está pagado.
+  error_postpone_backwards: No se puede pasar a un mes anterior.
+  error_has_payments: Tiene pagos cargados. Deshacelos primero si querés anularlo.
+  error_not_cancelled: No está anulado.
   error_payment_currency: No se puede pagar en esa moneda (pesos argentinos y uruguayos no tienen cotización directa).
   error_missing_rate: Falta la cotización para esa fecha; cargala en Cotizaciones o escribila en el pago.
   error_not_received: No figura como cobrado.

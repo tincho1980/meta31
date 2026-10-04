@@ -13,6 +13,7 @@ import { inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import type { AppEnv } from '../env.js';
 import { ServiceError } from '../services/errors.js';
+import { listCancelled } from '../services/commitment-actions.js';
 import { openMonth } from '../services/open-month.js';
 import { projection } from '../services/projection.js';
 import { validate } from './validate.js';
@@ -79,4 +80,7 @@ export const months = new Hono<AppEnv>()
     // only the current month (or a past one left unopened) is materialized; the future stays virtual (D1)
     if (comparePeriods(period, currentPeriod()) > 0) throw new ServiceError('conflict', 'future_month');
     return c.json(await openMonth(c.var.db, period, c.var.user.id));
+  })
+  .get('/:period/cancelled', validate('param', periodParam), async (c) => {
+    return c.json(await listCancelled(c.var.db, c.req.valid('param').period));
   });

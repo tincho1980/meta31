@@ -1,4 +1,4 @@
-import type { Category, MonthProjection, OpenMonthResult, ProjectionLine } from '@meta31/contracts';
+import type { CancelledLine, Category, MonthProjection, OpenMonthResult, ProjectionLine } from '@meta31/contracts';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
@@ -126,6 +126,7 @@ function MonthBody({ month }: { month: MonthProjection }) {
       </div>
 
       <MonthLines month={month} />
+      <Cancelled period={month.period} />
       <Legend />
     </>
   );
@@ -222,6 +223,40 @@ function MonthLines({ month }: { month: MonthProjection }) {
   );
 }
 
+/** What was cancelled this month, to restore it if it was a mistake. */
+function Cancelled({ period }: { period: string }) {
+  const queryClient = useQueryClient();
+  const key = [...PROJECTION_KEY, period, 'cancelled'];
+  const list = useQuery({ queryKey: key, queryFn: () => api<CancelledLine[]>('GET', `/api/months/${period}/cancelled`) });
+  const restore = useMutation({
+    mutationFn: (l: CancelledLine) => api('POST', `/api/${l.kind === 'income' ? 'incomes' : 'commitments'}/${l.id}/restore`, {}),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: PROJECTION_KEY }),
+  });
+  if (!list.data || list.data.length === 0) return null;
+  return (
+    <details className="cancelled">
+      <summary>{t('cancelled_count', { n: String(list.data.length) })}</summary>
+      <ul className="rows">
+        {list.data.map((l) => (
+          <li key={l.id} className="row inactive">
+            <span className="grow">
+              {l.description}
+              {l.reason && <span className="note">{l.reason}</span>}
+            </span>
+            <span className="amount">{formatMoney(l.amount, l.currency, { income: l.kind === 'income' })}</span>
+            <span className="actions">
+              <button type="button" className="link" disabled={restore.isPending} onClick={() => restore.mutate(l)}>
+                {t('restore')}
+              </button>
+            </span>
+          </li>
+        ))}
+      </ul>
+      {restore.isError && <p className="warning">{errorMessage(restore.error)}</p>}
+    </details>
+  );
+}
+
 /** Sum of the lines in ARS; `partial` when some line could not be converted (missing rate). */
 function subtotalArs(lines: ProjectionLine[]): { value: string; partial: boolean } {
   const known = lines.map((l) => l.amountArs).filter((v): v is string => v !== null);
@@ -253,7 +288,9 @@ function LineRow({ line, isIncome }: { line: ProjectionLine; isIncome: boolean }
   // estimated until it is paid (in full or in part): manual de marca, '~' and tinta-suave
   const estimate = !isIncome && (line.status === null || line.status === 'pending');
   const [open, setOpen] = useState(false);
-  const when = line.date ? t(isIncome ? 'comes_in_on' : 'due_on', { day: formatWeekdayDay(line.date) }) : null;
+  const when = line.date
+    ? t(line.postponed ? 'moved_to' : isIncome ? 'comes_in_on' : 'due_on', { day: formatWeekdayDay(line.date) })
+    : null;
   // manual de marca: "Parcial · pagaste $ 300.000 de $ 624.300"
   const partial =
     line.status === 'partially_paid' && line.paid
