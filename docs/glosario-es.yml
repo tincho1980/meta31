@@ -544,6 +544,8 @@ ui:
   missing_rate: Falta una cotización para convertir algún monto; cargala en Cotizaciones.
   projection_issues: Hay reglas sin monto vigente o préstamos UVA sin valor UVA cargado; esos montos no suman.
   one_off_incomes: Ingresos puntuales
+  one_off_income: Ingreso puntual
+  add_one_off_income: + Ingreso puntual
   one_off_income_help: Extras, proyectos, suplencias. Cuentan en su mes como esperados hasta que se cobran.
   card_statement_help: El resumen real reemplaza la estimación de su mes. Se carga con los totales; si el mes ya está abierto, actualiza lo que falta pagar de la tarjeta.
   closed_on: "cerró el {date}"

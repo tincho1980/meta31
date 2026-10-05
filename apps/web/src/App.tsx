@@ -18,6 +18,7 @@ import { LoanDetail } from './pages/LoanDetail';
 import { Loans } from './pages/Loans';
 import { Load, More, Pending } from './pages/Menus';
 import { Month } from './pages/Month';
+import { NewOneOffIncome } from './pages/NewOneOffIncome';
 import { OneOffExpenses } from './pages/OneOffExpenses';
 import { Projection } from './pages/Projection';
 import { Properties } from './pages/Properties';
@@ -98,6 +99,7 @@ function Authenticated({ identity, onSignOut: signOut }: { identity: Identity; o
         <Route path="/cotizaciones" element={<ExchangeRates />} />
         <Route path="/gastos-recurrentes" element={<RecurringExpenses />} />
         <Route path="/gastos-puntuales" element={<OneOffExpenses />} />
+        <Route path="/ingreso-puntual" element={<NewOneOffIncome />} />
         <Route path="/reportes/costo-financiero" element={<FinancialCost />} />
         <Route path="/reportes/prestamos" element={<LoansReport />} />
         <Route path="/reportes/gasto-por-categoria" element={<SpendingReport />} />
