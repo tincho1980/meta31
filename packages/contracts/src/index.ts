@@ -18,6 +18,7 @@ export * from './projection.js';
 export * from './property.js';
 export * from './recurring-expense.js';
 export * from './reports.js';
+export * from './source-document.js';
 
 import { z } from 'zod';
 

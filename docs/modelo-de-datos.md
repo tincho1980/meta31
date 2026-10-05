@@ -437,7 +437,24 @@ Cierre de mes (E2): se cierra cuando no queda nada abierto (compromisos pagados,
 | uploaded_by | → person | usuario cuyo Claude lo subió |
 | reviewed_by / reviewed_at | → person / timestamptz, null | |
 
-Bandeja = `pending_review` y `unrecognized`. Confirmar ejecuta `operation(payload)` en una transacción y deja `source_document_id` en todo lo que creó o modificó. Un comprobante de pago se resuelve como `register_payment` sobre el compromiso existente, nunca como gasto nuevo.
+Bandeja = `pending_review` y `unrecognized`. Confirmar ejecuta `operation(payload)` en una transacción y deja `source_document_id` (y `entry_mode = claude`) en todo lo que creó o modificó. Un comprobante de pago se resuelve como `register_payment` sobre el compromiso existente, nunca como gasto nuevo.
+
+Operaciones (E3; esquemas en `packages/contracts/src/source-document.ts`, ejecución en `services/source-documents.ts`):
+
+| operation | kind | payload | qué hace al confirmar |
+| --- | --- | --- | --- |
+| `load_card_statement` | card_statement | `statement` (como el alta del resumen) + `transactions` (desglose, opcional) | carga el resumen real y sus movimientos |
+| `record_utility_bill` · `record_tax` · `record_condo_fee` | utility_bill · tax · condo_fee | `recurringExpenseId`, `period` (mes de origen), `actualAmount`, `updateFollowing` | monto real del compromiso de ese mes. La clase tiene que coincidir: servicio (o recurrente/rubro), impuesto, expensas |
+| `record_loan_installment` | loan_notice | `loanId`, `period`, `actualAmount` | monto real de la cuota que vence ese mes |
+| `register_payment` | payment_receipt | `recurringExpenseId` o `loanId`, `period`, `payment` (como un pago) | paga el compromiso de ese mes |
+| `register_card_payment` | payment_receipt | `creditCardId`, `payment` (como el pago de resumen) | paga el resumen de ese mes en sus dos monedas |
+
+Precisiones:
+- Si el compromiso del mes todavía es virtual (un mes futuro), confirmar lo graba (D1: algo lo toca). Un mes cerrado no acepta nada.
+- Al proponer, la operación se **prueba y se deshace**: si no se podría aplicar (entidad inexistente, clase equivocada, mes cerrado, resumen ya cargado) se rechaza con el mismo motivo que recibiría la PWA. Al confirmar se vuelve a validar; si falla, no se aplica nada y el comprobante sigue en la bandeja.
+- Duplicados: el mismo `file_hash` se rechaza, salvo que el anterior esté descartado (se reutiliza la fila). Dos comprobantes a revisar con la misma clave natural (misma tarjeta y mes, mismo gasto y mes, mismo préstamo y mes; en pagos, además, fecha e importe) también. Un resumen ya cargado lo frena el unique de `card_statement`.
+- Qué queda marcado: lo creado (resumen, movimientos, pagos, monto del historial) y el compromiso cuyo monto real salió del comprobante. Un comprobante de pago marca solo el pago: el compromiso conserva el documento de la factura.
+- Corregir cambia `operation` y `payload` (un `unrecognized` pasa a `pending_review`). Descartar no toca el dominio.
 
 ## 5. Enums
 

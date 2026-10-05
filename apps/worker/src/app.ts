@@ -7,6 +7,7 @@ import { cardPayments } from './routes/card-payments.js';
 import { cardStatements } from './routes/card-statements.js';
 import { categories } from './routes/categories.js';
 import { creditCards } from './routes/credit-cards.js';
+import { documents } from './routes/documents.js';
 import { exchangeRates } from './routes/exchange-rates.js';
 import { incomeSources } from './routes/income-sources.js';
 import { loans } from './routes/loans.js';
@@ -65,6 +66,7 @@ export function createApp(deps: AppDeps) {
   app.route('/api/commitments', commitments);
   app.route('/api/incomes', incomes);
   app.route('/api/reports', reports);
+  app.route('/api/documents', documents);
 
   app.notFound((c) => c.json({ error: 'not_found' }, 404));
   app.onError((err, c) => {

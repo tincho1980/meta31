@@ -8,6 +8,8 @@ import {
   type Period,
 } from '@meta31/domain';
 import { eq } from 'drizzle-orm';
+import { ServiceError } from './errors.js';
+import { assertMonthNotClosed } from './month-close.js';
 import { loadRules } from './rules.js';
 
 const { commitment, income, month } = schema;
@@ -97,4 +99,32 @@ export async function openMonth(db: Db, period: Period, userId: string): Promise
       issues: generated.issues,
     };
   });
+}
+
+/**
+ * The stored commitment for one candidate of a month, materializing it if it is still virtual
+ * (D1: something touches it — a bill, a payment). `match` is its `source_key` or a test on the
+ * month's candidates (a loan installment, whose key carries its number). The month must not be
+ * closed; opening it later skips this row by its `source_key`.
+ */
+export async function ensureCommitment(
+  db: Db,
+  period: Period,
+  match: string | ((c: CommitmentCandidate) => boolean),
+  userId: string,
+): Promise<typeof commitment.$inferSelect> {
+  if (typeof match === 'string') {
+    const [stored] = await db.select().from(commitment).where(eq(commitment.sourceKey, match));
+    if (stored) return stored;
+  }
+  const candidate = generateForPeriod(await loadRules(db), period).commitments.find((c) =>
+    typeof match === 'string' ? c.sourceKey === match : match(c),
+  );
+  if (!candidate) throw new ServiceError('conflict', 'no_commitment');
+  const [stored] = await db.select().from(commitment).where(eq(commitment.sourceKey, candidate.sourceKey));
+  if (stored) return stored;
+  await assertMonthNotClosed(db, period);
+  await db.insert(commitment).values(commitmentValues(candidate, userId)).onConflictDoNothing({ target: commitment.sourceKey });
+  const [row] = await db.select().from(commitment).where(eq(commitment.sourceKey, candidate.sourceKey));
+  return row!;
 }
