@@ -443,7 +443,7 @@ Operaciones (E3; esquemas en `packages/contracts/src/source-document.ts`, ejecuc
 
 | operation | kind | payload | qué hace al confirmar |
 | --- | --- | --- | --- |
-| `load_card_statement` | card_statement | `statement` (como el alta del resumen) + `transactions` (desglose, opcional) | carga el resumen real y sus movimientos |
+| `load_card_statement` | card_statement | `statement` (como el alta del resumen) + `transactions` (desglose, opcional) + `newInstallmentPurchases` y `newSubscriptions` (opcionales) | carga el resumen real y sus movimientos, y crea las compras en cuotas y suscripciones que aparecen por primera vez |
 | `record_utility_bill` · `record_tax` · `record_condo_fee` | utility_bill · tax · condo_fee | `recurringExpenseId`, `period` (mes de origen), `actualAmount`, `updateFollowing` | monto real del compromiso de ese mes. La clase tiene que coincidir: servicio (o recurrente/rubro), impuesto, expensas |
 | `record_loan_installment` | loan_notice | `loanId`, `period`, `actualAmount` | monto real de la cuota que vence ese mes |
 | `register_payment` | payment_receipt | `recurringExpenseId` o `loanId`, `period`, `payment` (como un pago) | paga el compromiso de ese mes |
@@ -453,6 +453,7 @@ Precisiones:
 - Si el compromiso del mes todavía es virtual (un mes futuro), confirmar lo graba (D1: algo lo toca). Un mes cerrado no acepta nada.
 - Al proponer, la operación se **prueba y se deshace**: si no se podría aplicar (entidad inexistente, clase equivocada, mes cerrado, resumen ya cargado) se rechaza con el mismo motivo que recibiría la PWA. Al confirmar se vuelve a validar; si falla, no se aplica nada y el comprobante sigue en la bandeja.
 - Duplicados: el mismo `file_hash` se rechaza, salvo que el anterior esté descartado (se reutiliza la fila). Dos comprobantes a revisar con la misma clave natural (misma tarjeta y mes, mismo gasto y mes, mismo préstamo y mes; en pagos, además, fecha e importe) también. Un resumen ya cargado lo frena el unique de `card_statement`.
+- Compras en cuotas y suscripciones nuevas (decisión del 5/10): un resumen puede traer las que todavía no están cargadas, cada una con un `ref` corto; sus líneas apuntan a ellas con `installmentPurchaseRef` / `subscriptionRef` en vez del id. Se crean al confirmar, en la misma transacción. El primer mes de una compra sale de su línea: mes del resumen − (número de cuota − 1); por eso toda compra nueva necesita una línea que la nombre. Se rechaza (`duplicate_purchase`) una compra "nueva" que ya existe en esa tarjeta con la misma cuota, cantidad y primer mes. En la Bandeja, sacar la última línea de una compra o suscripción nueva la descarta.
 - Qué queda marcado: lo creado (resumen, movimientos, pagos, monto del historial) y el compromiso cuyo monto real salió del comprobante. Un comprobante de pago marca solo el pago: el compromiso conserva el documento de la factura.
 - Corregir cambia `operation` y `payload` (un `unrecognized` pasa a `pending_review`). Descartar no toca el dominio.
 

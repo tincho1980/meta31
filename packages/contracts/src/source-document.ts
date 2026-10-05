@@ -1,7 +1,8 @@
 import { z } from 'zod';
 import { cardStatementCreate } from './card-statement.js';
-import { cardTransactionCreate } from './card-transaction.js';
-import { id, period, positiveAmount } from './common.js';
+import { MAX_INSTALLMENTS } from './one-off-expense.js';
+import { cardTransactionFields } from './card-transaction.js';
+import { currency, id, isoDate, period, positiveAmount, text } from './common.js';
 import { cardPaymentInput, paymentCreate } from './payment.js';
 
 export const documentKind = z.enum(['card_statement', 'utility_bill', 'loan_notice', 'tax', 'condo_fee', 'payment_receipt', 'other']);
@@ -20,16 +21,88 @@ const recurringBill = z.object({
   updateFollowing: z.boolean().default(false),
 });
 
+/** A short label Claude gives to a new item, so the statement's lines can point to it before it exists. */
+const ref = z.string().trim().min(1, { message: 'required' }).max(40);
+
+/**
+ * An installment purchase that shows up for the first time in a statement (decision of 5/10):
+ * created when the statement is confirmed. Its first month comes from the line that points to it
+ * (the statement's month minus the installment number − 1).
+ */
+export const newInstallmentPurchase = z.object({
+  ref,
+  description: text(160),
+  categoryId: id,
+  purchaseDate: isoDate,
+  currency,
+  installmentAmount: positiveAmount,
+  installmentsTotal: z.number().int({ message: 'installments' }).min(1, { message: 'installments' }).max(MAX_INSTALLMENTS, { message: 'installments' }),
+});
+export type NewInstallmentPurchase = z.infer<typeof newInstallmentPurchase>;
+
+/** A subscription or automatic debit that shows up for the first time in a statement: created on confirmation. */
+export const newSubscription = z.object({ ref, description: text(160), categoryId: id, currency, amount: positiveAmount, validFrom: isoDate });
+export type NewSubscription = z.infer<typeof newSubscription>;
+
+/** A line read from a statement: like a breakdown line, or pointing to a new item by its `ref`. */
+export const statementLine = z
+  .object({
+    ...cardTransactionFields,
+    installmentPurchaseId: id.nullable().default(null),
+    installmentNumber: cardTransactionFields.installmentNumber.default(null),
+    subscriptionId: id.nullable().default(null),
+    installmentPurchaseRef: ref.nullable().default(null),
+    subscriptionRef: ref.nullable().default(null),
+  })
+  .refine((v) => !(v.installmentPurchaseId && v.installmentPurchaseRef) && !(v.subscriptionId && v.subscriptionRef), {
+    message: 'choice',
+    path: ['installmentPurchaseRef'],
+  })
+  // an installment line points to its purchase (existing or new) and says which installment it is
+  .refine((v) => (v.installmentPurchaseId === null && v.installmentPurchaseRef === null) === (v.installmentNumber === null), {
+    message: 'required',
+    path: ['installmentNumber'],
+  });
+export type StatementLine = z.infer<typeof statementLine>;
+
+/** Refs are unique, every line's ref exists, and every new purchase has a line that says its installment. */
+function checkNewItems(
+  v: { newInstallmentPurchases: { ref: string }[]; newSubscriptions: { ref: string }[]; transactions: { installmentPurchaseRef: string | null; subscriptionRef: string | null }[] },
+  ctx: z.RefinementCtx,
+) {
+  const purchases = v.newInstallmentPurchases.map((p) => p.ref);
+  const subscriptions = v.newSubscriptions.map((s) => s.ref);
+  const all = [...purchases, ...subscriptions];
+  all.forEach((r, i) => {
+    if (all.indexOf(r) !== i) ctx.addIssue({ code: 'custom', message: 'duplicate', path: [i < purchases.length ? 'newInstallmentPurchases' : 'newSubscriptions'] });
+  });
+  v.transactions.forEach((t, i) => {
+    if (t.installmentPurchaseRef !== null && !purchases.includes(t.installmentPurchaseRef))
+      ctx.addIssue({ code: 'custom', message: 'invalid_reference', path: ['transactions', i, 'installmentPurchaseRef'] });
+    if (t.subscriptionRef !== null && !subscriptions.includes(t.subscriptionRef))
+      ctx.addIssue({ code: 'custom', message: 'invalid_reference', path: ['transactions', i, 'subscriptionRef'] });
+  });
+  v.newInstallmentPurchases.forEach((p, i) => {
+    if (!v.transactions.some((t) => t.installmentPurchaseRef === p.ref))
+      ctx.addIssue({ code: 'custom', message: 'required', path: ['newInstallmentPurchases', i, 'ref'] });
+  });
+}
+
 /**
  * The domain operations Claude can propose (RF-35, D3), each with the input it takes. Confirming
  * a document runs its operation through the same use cases as the PWA.
  */
 export const operationPayloads = {
   /** A real card statement with its totals and, optionally, every line of its breakdown (RF-11, RF-12). */
-  load_card_statement: z.object({
-    statement: cardStatementCreate,
-    transactions: z.array(cardTransactionCreate).max(400).default([]),
-  }),
+  load_card_statement: z
+    .object({
+      statement: cardStatementCreate,
+      /** Installment purchases and subscriptions first seen in this statement, created with it. */
+      newInstallmentPurchases: z.array(newInstallmentPurchase).max(50).default([]),
+      newSubscriptions: z.array(newSubscription).max(50).default([]),
+      transactions: z.array(statementLine).max(400).default([]),
+    })
+    .superRefine(checkNewItems),
   record_utility_bill: recurringBill,
   record_tax: recurringBill,
   record_condo_fee: recurringBill,

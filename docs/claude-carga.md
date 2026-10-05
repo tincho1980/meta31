@@ -18,7 +18,7 @@ El archivo no se guarda en Meta31: queda en `procesados/`. Meta31 guarda su nomb
 
 | Comprobante | Herramienta |
 | --- | --- |
-| Resumen de tarjeta (totales y cada movimiento) | `load_card_statement` |
+| Resumen de tarjeta (totales, cada movimiento y las cuotas o suscripciones nuevas) | `load_card_statement` |
 | Factura de servicio (luz, gas, agua, celular) | `record_utility_bill` |
 | Impuesto (ARBA, municipal) | `record_tax` |
 | Expensas | `record_condo_fee` |
@@ -36,7 +36,7 @@ Para pegar en las instrucciones de un proyecto de Claude (o al empezar la conver
 > Cargá en Meta31 los comprobantes de la carpeta `Meta31/entrada`. Para cada archivo:
 > 1. Calculá su SHA-256 y fijate con `find_document` si ya se cargó. Si ya está, movelo a `procesados` y seguí.
 > 2. Leelo e identificá de qué es con las herramientas `list_*` (tarjeta, gasto recurrente, préstamo, propiedad). Usá siempre los ids que te devuelven; nunca inventes uno.
-> 3. Llamá a la herramienta de carga que corresponde. El mes (`period`) es el del vencimiento, con día 1. Los montos van con punto decimal y en su moneda, sin convertir. En un resumen de tarjeta cargá todos los movimientos que puedas; las cuotas "n de N" apuntan a la compra en cuotas de esa tarjeta (`list_card_items`).
+> 3. Llamá a la herramienta de carga que corresponde. El mes (`period`) es el del vencimiento, con día 1. Los montos van con punto decimal y en su moneda, sin convertir. En un resumen de tarjeta cargá todos los movimientos que puedas; las cuotas "n de N" apuntan a la compra en cuotas de esa tarjeta y las suscripciones a la suya (`list_card_items`). Si una compra en cuotas o una suscripción todavía no está cargada, agregala como nueva en el mismo resumen (`newInstallmentPurchases` / `newSubscriptions`, con categoría) y apuntá su línea a ella.
 > 4. Si no reconocés la entidad o no podés leer el archivo, usá `report_unrecognized` con el motivo. No adivines.
 > 5. Si la herramienta rechaza el comprobante, seguí lo que dice el `hint`.
 > 6. Mové el archivo a `Meta31/procesados`.
@@ -45,5 +45,6 @@ Para pegar en las instrucciones de un proyecto de Claude (o al empezar la conver
 ## Qué revisar en la Bandeja
 
 - Que la tarjeta, el servicio o el préstamo sean los correctos.
+- Las compras en cuotas y suscripciones nuevas que trae un resumen: se crean al confirmar. Si una no corresponde, sacá su línea y se descarta.
 - Mes y monto. En un resumen, los totales; los movimientos mal leídos se pueden sacar antes de confirmar y corregir después desde el resumen.
 - Los "No reconocido": **Completar** elige la operación y los datos a mano. Si falta la entidad (por ejemplo, una tarjeta nueva), cargala primero desde Cargar.

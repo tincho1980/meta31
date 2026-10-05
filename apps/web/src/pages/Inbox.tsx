@@ -92,10 +92,11 @@ function describe(doc: SourceDocument, e: Entities): { title: string; detail: st
       const card = e.cards.find((c) => c.id === str(p, 'statement.creditCardId'));
       const local = card?.localCurrency ?? 'ARS';
       const lines = (get(p, 'transactions') as unknown[] | undefined)?.length ?? 0;
+      const fresh = ((get(p, 'newInstallmentPurchases') as unknown[] | undefined)?.length ?? 0) + ((get(p, 'newSubscriptions') as unknown[] | undefined)?.length ?? 0);
       const usd = str(p, 'statement.totalUsd');
       return {
         title: `${tableLabel('card_statement')} · ${cardName(e, str(p, 'statement.creditCardId'))}`,
-        detail: [t('inbox_due_on', { date: formatDate(str(p, 'statement.dueDate')) }), lines ? t('inbox_lines', { n: String(lines) }) : ''].filter(Boolean).join(' · '),
+        detail: [t('inbox_due_on', { date: formatDate(str(p, 'statement.dueDate')) }), lines ? t('inbox_lines', { n: String(lines) }) : '', fresh ? t('inbox_new_items', { n: String(fresh) }) : ''].filter(Boolean).join(' · '),
         amount: [formatMoney(str(p, 'statement.totalLocal'), local), usd && /[1-9]/.test(usd) ? formatMoney(usd, 'USD') : ''].filter(Boolean).join(' + '),
       };
     }
@@ -344,7 +345,11 @@ function payloadOf(op: DocumentOperation, values: FormValues, original: unknown)
     else if (f.kind === 'amount' || f.kind === 'rate') setPath(payload, f.path, v.trim() ? parseDecimalInput(v) : f.optional ? null : '');
     else setPath(payload, f.path, v);
   }
-  if (op === 'load_card_statement') payload.transactions = get(original, 'transactions') ?? [];
+  if (op === 'load_card_statement') {
+    payload.transactions = get(original, 'transactions') ?? [];
+    payload.newInstallmentPurchases = get(original, 'newInstallmentPurchases') ?? [];
+    payload.newSubscriptions = get(original, 'newSubscriptions') ?? [];
+  }
   return payload;
 }
 
@@ -368,7 +373,11 @@ function CorrectForm({ doc, entities, onDone, onClose }: { doc: SourceDocument; 
   const submit = (andConfirm: boolean) => {
     if (!op) return;
     save.reset();
-    const payload = payloadOf(op, values, { transactions: lines });
+    // a new item no line points to any more is dropped with its last line
+    const used = (key: string) => new Set(lines.map((l) => str(l, key)).filter(Boolean));
+    const purchases = (get(doc.payload, 'newInstallmentPurchases') as unknown[] | undefined)?.filter((n) => used('installmentPurchaseRef').has(str(n, 'ref'))) ?? [];
+    const subscriptions = (get(doc.payload, 'newSubscriptions') as unknown[] | undefined)?.filter((n) => used('subscriptionRef').has(str(n, 'ref'))) ?? [];
+    const payload = payloadOf(op, values, { transactions: lines, newInstallmentPurchases: purchases, newSubscriptions: subscriptions });
     const parsed = operationPayloads[op].safeParse(payload);
     if (!parsed.success) return setErrors(fieldErrors(parsed.error));
     setErrors({});
@@ -413,6 +422,7 @@ function CorrectForm({ doc, entities, onDone, onClose }: { doc: SourceDocument; 
         fieldsOf(op).map((f) => (
           <FieldInput key={f.path} def={f} op={op} value={values[f.path] ?? ''} error={errors[f.kind === 'target' ? 'recurringExpenseId' : f.path]} onChange={set(f.path)} entities={entities} />
         ))}
+      {op === 'load_card_statement' && <NewItems payload={doc.payload} lines={lines} />}
       {op === 'load_card_statement' && lines.length > 0 && <StatementLines lines={lines} onRemove={(i) => setLines(lines.filter((_, j) => j !== i))} />}
       <div className="form-actions">
         <button type="submit" className="primary" disabled={!op || save.isPending}>
@@ -512,6 +522,7 @@ function StatementLines({ lines, onRemove }: { lines: unknown[]; onRemove: (i: n
               <td>
                 {str(l, 'description')}
                 {get(l, 'installmentNumber') ? ` (${String(get(l, 'installmentNumber'))})` : ''}
+                {(str(l, 'installmentPurchaseRef') || str(l, 'subscriptionRef')) && <span className="note"> · {t('inbox_new_tag')}</span>}
               </td>
               <td>{enumLabel('card_transaction_kind', str(l, 'kind'))}</td>
               <td>{formatMoney(str(l, 'amount'), str(l, 'currency') || 'ARS')}</td>
@@ -524,6 +535,46 @@ function StatementLines({ lines, onRemove }: { lines: unknown[]; onRemove: (i: n
           ))}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+/** Installment purchases and subscriptions first seen in the statement: created with it on confirmation. */
+function NewItems({ payload, lines }: { payload: unknown; lines: unknown[] }) {
+  const refs = new Set(lines.flatMap((l) => [str(l, 'installmentPurchaseRef'), str(l, 'subscriptionRef')]).filter(Boolean));
+  const purchases = ((get(payload, 'newInstallmentPurchases') as unknown[] | undefined) ?? []).filter((n) => refs.has(str(n, 'ref')));
+  const subscriptions = ((get(payload, 'newSubscriptions') as unknown[] | undefined) ?? []).filter((n) => refs.has(str(n, 'ref')));
+  if (purchases.length === 0 && subscriptions.length === 0) return null;
+  return (
+    <div className="form-error">
+      {purchases.length > 0 && (
+        <>
+          <p className="muted">{t('inbox_new_purchases')}</p>
+          <ul className="rows nested">
+            {purchases.map((n) => (
+              <li key={str(n, 'ref')} className="row">
+                <span className="grow">{str(n, 'description')}</span>
+                <span className="amount">
+                  {String(get(n, 'installmentsTotal'))} × {formatMoney(str(n, 'installmentAmount'), str(n, 'currency') || 'ARS')}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+      {subscriptions.length > 0 && (
+        <>
+          <p className="muted">{t('inbox_new_subscriptions')}</p>
+          <ul className="rows nested">
+            {subscriptions.map((n) => (
+              <li key={str(n, 'ref')} className="row">
+                <span className="grow">{str(n, 'description')}</span>
+                <span className="amount">{formatMoney(str(n, 'amount'), str(n, 'currency') || 'ARS')}</span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
     </div>
   );
 }

@@ -224,6 +224,84 @@ describe('confirming a document (D3, rule 12)', () => {
   });
 });
 
+describe('a statement with installment purchases and subscriptions first seen in it (decision of 5/10)', () => {
+  const statement = () => ({
+    creditCardId: f.ids.card,
+    closingDate: '2026-10-25',
+    dueDate: '2026-11-08',
+    previousBalanceLocal: '0',
+    previousBalanceUsd: '0',
+    totalLocal: '416891.24',
+    totalUsd: '20.24',
+    minimumPaymentLocal: '40000.00',
+  });
+  const line = { date: '2026-10-10', categoryId: null, currency: 'ARS' };
+  const payload = (categoryId: string) => ({
+    statement: statement(),
+    newInstallmentPurchases: [
+      { ref: 'ml', description: 'MercadoLibre', categoryId, purchaseDate: '2026-10-10', currency: 'ARS', installmentAmount: '16891.24', installmentsTotal: 3 },
+    ],
+    newSubscriptions: [{ ref: 'claude', description: 'Anthropic Claude', categoryId, currency: 'USD', amount: '20.24', validFrom: '2026-10-12' }],
+    transactions: [
+      { ...line, kind: 'purchase', description: 'Supermercado', amount: '400000.00' },
+      { ...line, kind: 'installment', description: 'MercadoLibre 01/03', amount: '16891.24', installmentPurchaseRef: 'ml', installmentNumber: 1 },
+      { ...line, kind: 'subscription', description: 'Anthropic Claude', currency: 'USD', amount: '20.24', subscriptionRef: 'claude' },
+    ],
+  });
+  const categoryId = async () => (await f.t.db.select().from(schema.category).where(eq(schema.category.name, 'Casa')))[0]!.id;
+
+  it('creates them on confirmation, linked to their lines, and projects the installments left', async () => {
+    const cat = await categoryId();
+    const { status, body } = await propose({ fileName: 'visa.pdf', fileHash: hash(11), kind: 'card_statement', operation: 'load_card_statement', payload: payload(cat) });
+    expect(status).toBe(201);
+    // nothing created until it is confirmed (rule 12)
+    expect(await f.t.db.select().from(schema.subscription)).toEqual([]);
+    await confirm(body.id);
+
+    const purchases = await f.t.db.select().from(schema.installmentPurchase).where(eq(schema.installmentPurchase.description, 'MercadoLibre'));
+    // the statement is November's and the line is installment 1: it starts in November
+    expect(purchases).toEqual([expect.objectContaining({ firstPeriod: '2026-11-01', installmentsTotal: 3, creditCardId: f.ids.card, sourceDocumentId: body.id })]);
+    const [sub] = await f.t.db.select().from(schema.subscription);
+    expect(sub).toMatchObject({ description: 'Anthropic Claude', currency: 'USD', sourceDocumentId: body.id });
+    const lines = await f.t.db.select().from(cardTransaction);
+    expect(lines.find((l) => l.kind === 'installment')).toMatchObject({ installmentPurchaseId: purchases[0]!.id, installmentNumber: 1 });
+    expect(lines.find((l) => l.kind === 'subscription')).toMatchObject({ subscriptionId: sub!.id });
+
+    // December has no statement: its card estimate counts installment 2 and the subscription
+    const months = (await (await api.get('/api/months/projection?from=2026-12-01&months=1')).json()) as { commitments: { origin: string; currency: string; amount: string }[] }[];
+    const usd = months[0]!.commitments.find((c) => c.origin === 'credit_card' && c.currency === 'USD');
+    expect(usd?.amount).toBe('20.24');
+  });
+
+  it('a purchase that started earlier takes its first month from the installment number', async () => {
+    const cat = await categoryId();
+    const p = payload(cat);
+    p.transactions[1] = { ...p.transactions[1]!, description: 'MercadoLibre 03/03', installmentNumber: 3 } as never;
+    const { body } = await propose({ fileName: 'visa.pdf', fileHash: hash(12), kind: 'card_statement', operation: 'load_card_statement', payload: p });
+    await confirm(body.id);
+    const [purchase] = await f.t.db.select().from(schema.installmentPurchase).where(eq(schema.installmentPurchase.description, 'MercadoLibre'));
+    expect(purchase!.firstPeriod).toBe('2026-09-01');
+  });
+
+  it('refuses a "new" purchase already loaded on the card, and lines pointing to refs that do not exist', async () => {
+    const cat = await categoryId();
+    const p = payload(cat);
+    // Heladera (fixtures): 100,000 x 6 from September; installment 3 in November
+    p.newInstallmentPurchases = [{ ref: 'h', description: 'Heladera', categoryId: cat, purchaseDate: '2026-08-15', currency: 'ARS', installmentAmount: '100000.00', installmentsTotal: 6 }];
+    p.transactions[1] = { ...line, kind: 'installment', description: 'Heladera 03/06', amount: '100000.00', installmentPurchaseRef: 'h', installmentNumber: 3 } as never;
+    expect(await propose({ fileName: 'visa.pdf', fileHash: hash(13), kind: 'card_statement', operation: 'load_card_statement', payload: p })).toMatchObject({
+      status: 409,
+      body: { reason: 'duplicate_purchase' },
+    });
+
+    const broken = payload(cat);
+    broken.transactions[1] = { ...broken.transactions[1]!, installmentPurchaseRef: 'other' } as never;
+    const bad = await propose({ fileName: 'visa.pdf', fileHash: hash(14), kind: 'card_statement', operation: 'load_card_statement', payload: broken });
+    expect(bad.status).toBe(400);
+    expect(Object.keys(bad.body.fields!)).toContain('payload.transactions.1.installmentPurchaseRef');
+  });
+});
+
 describe('discarding a document', () => {
   it('leaves nothing behind, and the same file can be proposed again', async () => {
     const { body } = await propose(powerBill());

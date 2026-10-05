@@ -29,18 +29,21 @@ export const cardTransaction = z.object({
 });
 export type CardTransaction = z.infer<typeof cardTransaction>;
 
+/** Fields of a breakdown line (also the base of the lines Claude reads from a statement). */
+export const cardTransactionFields = {
+  kind: cardTransactionKind,
+  date: isoDate.nullable(),
+  description: text(160),
+  categoryId: id.nullable(),
+  currency,
+  amount: signedAmount,
+  installmentPurchaseId: id.nullable(),
+  installmentNumber: z.number().int().min(1, { message: 'installments' }).nullable(),
+  subscriptionId: id.nullable(),
+};
+
 export const cardTransactionCreate = z
-  .object({
-    kind: cardTransactionKind,
-    date: isoDate.nullable(),
-    description: text(160),
-    categoryId: id.nullable(),
-    currency,
-    amount: signedAmount,
-    installmentPurchaseId: id.nullable(),
-    installmentNumber: z.number().int().min(1, { message: 'installments' }).nullable(),
-    subscriptionId: id.nullable(),
-  })
+  .object(cardTransactionFields)
   .refine((v) => (v.installmentPurchaseId === null) === (v.installmentNumber === null), {
     message: 'required',
     path: ['installmentNumber'],
