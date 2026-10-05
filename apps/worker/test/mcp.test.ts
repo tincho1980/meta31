@@ -119,3 +119,34 @@ describe('MCP server', () => {
     expect(inbox.map((d) => d.fileName)).toEqual(['amex.pdf']);
   });
 });
+
+describe('MCP authorization discovery (Supabase as OAuth 2.1 server)', () => {
+  it('publishes the protected resource metadata pointing to Supabase Auth', async () => {
+    const { createApp } = await import('../src/app.js');
+    const { testEnv } = await import('./http.js');
+    const app = createApp({ db: async (_c, next) => next(), verifier: () => async () => ({}) });
+    for (const path of ['/.well-known/oauth-protected-resource', '/.well-known/oauth-protected-resource/mcp']) {
+      const res = await app.request(`https://api.example.com${path}`, {}, testEnv);
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual({
+        resource: 'https://api.example.com/mcp',
+        authorization_servers: ['https://test-project.supabase.co/auth/v1'],
+        bearer_methods_supported: ['header'],
+        resource_name: 'Meta31',
+      });
+    }
+  });
+
+  it('answers 401 without a token, with the challenge that leads to the metadata', async () => {
+    const { createApp } = await import('../src/app.js');
+    const { testEnv } = await import('./http.js');
+    const app = createApp({ db: async (_c, next) => next(), verifier: () => async () => ({}) });
+    const res = await app.request('https://api.example.com/mcp', { method: 'POST', body: '{}' }, testEnv);
+    expect(res.status).toBe(401);
+    expect(res.headers.get('WWW-Authenticate')).toBe('Bearer resource_metadata="https://api.example.com/.well-known/oauth-protected-resource/mcp"');
+    // the API keeps its plain 401
+    const api = await app.request('https://api.example.com/api/me', {}, testEnv);
+    expect(api.status).toBe(401);
+    expect(api.headers.get('WWW-Authenticate')).toBeNull();
+  });
+});
