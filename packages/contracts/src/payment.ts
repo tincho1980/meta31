@@ -35,8 +35,13 @@ export const commitmentDetail = z.object({
   actualAmount: z.string().nullable(),
   surcharge: z.string(),
   origin: z.enum(['credit_card', 'recurring_expense', 'one_off_expense', 'loan']),
-  /** Loans (RF-23): actual − theoretical installment, in amount and %; null without an actual amount. */
+  /**
+   * Loans (RF-23): real − theoretical for the whole installment (all its parts, D5); null until
+   * the real installment is known.
+   */
   deviation: z.object({ amount: z.string(), percent: z.string() }).nullable(),
+  /** The original of a split (D5): closed by what was paid; its rest lives in another row. */
+  splitPart: z.boolean(),
   dueDate: isoDate.nullable(),
   cancellationReason: z.string().nullable(),
   payments: z.array(commitmentPayment),

@@ -114,17 +114,20 @@ function PayCommitment({ id, onClose, cardLines }: { id: string; onClose: () => 
         </div>
       )}
       {carry.isError && <p className="warning">{errorMessage(carry.error)}</p>}
+      {d.splitPart && <p className="muted">{t('split_part_help')}</p>}
       {d.status === 'paid' && mode !== 'actual' && (
         <div className="form-actions">
-          <button type="button" className="link" onClick={() => setMode('actual')}>
-            {t('actual_amount')}
-          </button>
+          {!d.splitPart && (
+            <button type="button" className="link" onClick={() => setMode('actual')}>
+              {t('actual_amount')}
+            </button>
+          )}
           <button type="button" className="secondary" onClick={onClose}>
             {t('close')}
           </button>
         </div>
       )}
-      {d.status === 'paid' && mode === 'actual' && <ActualForm detail={d} onDone={refresh} onClose={onClose} />}
+      {d.status === 'paid' && mode === 'actual' && !d.splitPart && <ActualForm detail={d} onDone={refresh} onClose={onClose} />}
       {d.status !== 'paid' && d.status !== 'cancelled' ? (
         <>
           <div className="segmented panel-modes" role="group">

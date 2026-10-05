@@ -1081,3 +1081,13 @@ button.link.danger:hover:not(:disabled) {
 .amount.negative-text {
   color: var(--terracota-texto);
 }
+
+/* a link that adds something, next to a section title */
+.add-link {
+  font-weight: 600;
+  text-decoration: none;
+  margin-right: auto;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}

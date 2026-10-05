@@ -7,12 +7,13 @@ import {
   moneyToDb,
   type Period,
 } from '@meta31/domain';
+import { eq } from 'drizzle-orm';
 import { loadRules } from './rules.js';
 
 const { commitment, income, month } = schema;
 
 export type OpenMonthResult =
-  | { status: 'already_open' }
+  | { status: 'already_open'; commitments: number; incomes: number; issues: GenerationIssue[] }
   | { status: 'opened'; commitments: number; incomes: number; issues: GenerationIssue[] };
 
 /** Commitment row for a candidate: the origin goes to its own foreign key (exactly one, by check). */
@@ -53,10 +54,11 @@ function incomeValues(i: IncomeCandidate, userId: string): typeof income.$inferI
 
 /**
  * Opens a month (RF-27, D1): materializes every commitment and income the rules generate for it.
- * Idempotent on two levels, in a single transaction:
- * - the `month` row (PK = period): if it already exists, nothing else happens;
- * - `source_key` unique: a candidate already stored (touched earlier, postponed or cancelled)
- *   is skipped by ON CONFLICT DO NOTHING, so two users opening at once never duplicate rows.
+ * Opening it again stores what is new since — a rule loaded after the month was opened (an
+ * income source, a card, a loan) — so it can be paid or received like the rest. A closed month
+ * is final and gets nothing. Idempotent through `source_key` unique: a candidate already stored
+ * (touched earlier, postponed or cancelled) is skipped by ON CONFLICT DO NOTHING, so nothing is
+ * duplicated or brought back, and two users opening at once never duplicate rows.
  */
 export async function openMonth(db: Db, period: Period, userId: string): Promise<OpenMonthResult> {
   return db.transaction(async (tx) => {
@@ -65,7 +67,11 @@ export async function openMonth(db: Db, period: Period, userId: string): Promise
       .values({ period, openedBy: userId, createdBy: userId, updatedBy: userId })
       .onConflictDoNothing({ target: month.period })
       .returning({ period: month.period });
-    if (opened.length === 0) return { status: 'already_open' };
+    const status = opened.length > 0 ? ('opened' as const) : ('already_open' as const);
+    if (status === 'already_open') {
+      const [existing] = await tx.select({ status: month.status }).from(month).where(eq(month.period, period));
+      if (existing?.status === 'closed') return { status, commitments: 0, incomes: 0, issues: [] };
+    }
 
     const generated = generateForPeriod(await loadRules(tx as unknown as Db), period);
 
@@ -85,7 +91,7 @@ export async function openMonth(db: Db, period: Period, userId: string): Promise
       : [];
 
     return {
-      status: 'opened',
+      status,
       commitments: insertedCommitments.length,
       incomes: insertedIncomes.length,
       issues: generated.issues,

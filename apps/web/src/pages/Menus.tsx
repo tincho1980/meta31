@@ -24,6 +24,7 @@ export function Load() {
       <Menu
         entries={[
           { to: '/ingresos', label: tableLabel('income_source') },
+          { to: '/ingreso-puntual', label: t('one_off_income') },
           { to: '/tarjetas', label: `${tableLabel('credit_card')} · ${t('card_items')}` },
           { to: '/prestamos', label: tableLabel('loan') },
           { to: '/gastos-recurrentes', label: tableLabel('recurring_expense') },

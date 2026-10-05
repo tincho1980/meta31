@@ -22,14 +22,47 @@ const KEY = ['one-off-incomes'];
 
 type FormState = { description: string; categoryId: string; currency: string; estimatedAmount: string; expectedDate: string; period: string };
 
-const emptyForm = (): FormState => ({
+/** Empty form, for the current month or a given one ('YYYY-MM-01'). */
+const emptyForm = (period = currentPeriodIso()): FormState => ({
   description: '',
   categoryId: '',
   currency: 'ARS',
   estimatedAmount: '',
   expectedDate: '',
-  period: periodToMonthInput(currentPeriodIso()),
+  period: periodToMonthInput(period),
 });
+
+/**
+ * Just the form to add a one-off income (RF-09), for Cargar and the month view: it opens on the
+ * given month and calls `onDone` once it is saved (or cancelled).
+ */
+export function CreateOneOffIncome({ choices, period, onDone }: { choices: Choices; period?: string | undefined; onDone: (saved: boolean) => void }) {
+  const queryClient = useQueryClient();
+  const create = useMutation({
+    mutationFn: (input: unknown) => api('POST', '/api/one-off-incomes', input),
+    onSuccess: async () => {
+      // it is stored right away and counts in its month: reload the lists and the month
+      await Promise.all([queryClient.invalidateQueries({ queryKey: KEY }), queryClient.invalidateQueries({ queryKey: ['projection'] })]);
+      onDone(true);
+    },
+  });
+  return (
+    <div className="card">
+      <IncomeForm
+        choices={choices}
+        initial={emptyForm(period)}
+        schema={oneOffIncomeCreate}
+        pending={create.isPending}
+        error={create.error}
+        onSubmit={(input) => {
+          create.reset();
+          create.mutate(input);
+        }}
+        onCancel={() => onDone(false)}
+      />
+    </div>
+  );
+}
 
 const formOf = (i: OneOffIncome): FormState => ({
   description: i.description,

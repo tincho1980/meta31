@@ -1,7 +1,7 @@
 import type { CancelledLine, Category, MonthProjection, MonthStatus, OpenMonthResult, ProjectionLine } from '@meta31/contracts';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import { api } from '../api';
 import { LineActions } from '../components/LineActions';
 import { MonthPath } from '../components/MonthPath';
@@ -41,7 +41,8 @@ export function Month() {
 
   const open = useMutation({
     mutationFn: () => api<OpenMonthResult>('POST', `/api/months/${now}/open`, {}),
-    onSuccess: (r) => (r.status === 'opened' ? queryClient.invalidateQueries({ queryKey: PROJECTION_KEY }) : undefined),
+    // a first opening, or rules loaded since it was opened, store new lines: reload the month
+    onSuccess: (r) => (r.commitments + r.incomes > 0 ? queryClient.invalidateQueries({ queryKey: PROJECTION_KEY }) : undefined),
   });
   useEffect(() => {
     if (isCurrent && open.isIdle) open.mutate();
@@ -187,6 +188,11 @@ function MonthLines({ month, closed }: { month: MonthProjection; closed: boolean
     <>
       <div className="lines-head">
         <h2>{t('this_month')}</h2>
+        {!closed && (
+          <Link to={`/ingreso-puntual?mes=${month.period.slice(0, 7)}`} className="link add-link">
+            {t('add_one_off_income')}
+          </Link>
+        )}
         <div className="segmented" role="group" aria-label={t('filter')}>
           {VIEWS.map((v) => (
             <button key={v} type="button" aria-pressed={view === v} className={view === v ? 'on' : ''} onClick={() => setView(v)}>
