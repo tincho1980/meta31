@@ -392,6 +392,10 @@ ui:
   inbox_unknown_entity: (no está cargado)
   inbox_due_on: "vence el {date}"
   inbox_lines: "{n} movimientos"
+  inbox_new_items: "{n} nuevas (cuotas o suscripciones)"
+  inbox_new_purchases: Compras en cuotas nuevas (se crean al confirmar)
+  inbox_new_subscriptions: Suscripciones nuevas (se crean al confirmar)
+  inbox_new_tag: nueva
   inbox_paid_on: "pagado el {date}"
   inbox_uploaded_by: "subido por {name} el {date}"
   inbox_reviewed_by: "revisado por {name} el {date}"
@@ -638,6 +642,7 @@ ui:
   error_wrong_class: La operación no corresponde a ese tipo de gasto (servicio, impuesto o expensas).
   error_no_commitment: Ese mes no tiene un compromiso de eso para cargar o pagar.
   error_not_pending: Ese comprobante ya se confirmó o se descartó.
+  error_duplicate_purchase: Una de las compras en cuotas nuevas ya está cargada en esa tarjeta. Vinculá la línea a la existente.
   error_payment_currency: No se puede pagar en esa moneda (pesos argentinos y uruguayos no tienen cotización directa).
   error_missing_rate: Falta la cotización para esa fecha; cargala en Cotizaciones o escribila en el pago.
   error_not_received: No figura como cobrado.

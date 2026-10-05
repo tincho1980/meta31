@@ -1,6 +1,7 @@
 import {
   type DocumentCorrection,
   type DocumentOperation,
+  type NewInstallmentPurchase,
   type documentDiscard,
   type documentProposal,
   operationPayloads,
@@ -10,6 +11,7 @@ import { type Db, schema } from '@meta31/db';
 import { addMonths, periodOf, sourceKey, toPeriod } from '@meta31/domain';
 import { and, desc, eq, inArray } from 'drizzle-orm';
 import type { z } from 'zod';
+import { createInstallmentPurchase, createSubscription } from './card-items.js';
 import { payCardStatement } from './card-payments.js';
 import { createCardStatement } from './card-statements.js';
 import { addCardTransaction } from './card-transactions.js';
@@ -18,8 +20,20 @@ import { isUniqueViolation, ServiceError } from './errors.js';
 import { ensureCommitment } from './open-month.js';
 import { addPayment } from './payments.js';
 
-const { cardStatement, cardTransaction, commitment, commitmentPayment, creditCard, loan, person, recurringExpense, recurringExpenseAmount, sourceDocument } =
-  schema;
+const {
+  cardStatement,
+  cardTransaction,
+  commitment,
+  commitmentPayment,
+  creditCard,
+  installmentPurchase,
+  loan,
+  person,
+  recurringExpense,
+  recurringExpenseAmount,
+  sourceDocument,
+  subscription,
+} = schema;
 
 type Row = typeof sourceDocument.$inferSelect;
 type Proposal = z.output<typeof documentProposal>;
@@ -37,7 +51,17 @@ const INBOX = ['pending_review', 'unrecognized'] as const;
 class DryRun extends Error {}
 
 /** Marks rows as loaded by Claude from this document (RF-35: every record keeps its origin). */
-async function stamp(db: Db, table: typeof commitment | typeof commitmentPayment | typeof cardStatement | typeof cardTransaction | typeof recurringExpenseAmount, ids: string[], documentId: string) {
+async function stamp(
+  db: Db,
+  table:
+    | typeof commitment
+    | typeof commitmentPayment
+    | typeof cardStatement
+    | typeof cardTransaction
+    | typeof recurringExpenseAmount
+    | typeof installmentPurchase
+    | typeof subscription,
+  ids: string[], documentId: string) {
   if (ids.length === 0) return;
   await db.update(table).set({ entryMode: 'claude', sourceDocumentId: documentId }).where(inArray(table.id, ids));
 }
@@ -73,10 +97,33 @@ async function runOperation(db: Db, operation: DocumentOperation, raw: unknown, 
     case 'load_card_statement': {
       const p = operationPayloads.load_card_statement.parse(raw);
       const s = await createCardStatement(db, p.statement, userId);
+      // purchases and subscriptions first seen in this statement are born with it (decision of 5/10)
+      const purchaseIds = new Map<string, string>();
+      for (const np of p.newInstallmentPurchases) {
+        const line = p.transactions.find((t) => t.installmentPurchaseRef === np.ref)!;
+        const firstPeriod = addMonths(toPeriod(s.period), -(line.installmentNumber! - 1));
+        await assertNotLoadedPurchase(db, p.statement.creditCardId, np, firstPeriod);
+        const { ref: _ref, ...fields } = np;
+        purchaseIds.set(np.ref, (await createInstallmentPurchase(db, { ...fields, creditCardId: p.statement.creditCardId, firstPeriod }, userId)).id);
+      }
+      const subscriptionIds = new Map<string, string>();
+      for (const ns of p.newSubscriptions) {
+        const { ref: _ref, ...fields } = ns;
+        subscriptionIds.set(ns.ref, (await createSubscription(db, { ...fields, creditCardId: p.statement.creditCardId, validTo: null }, userId)).id);
+      }
       const lines: string[] = [];
-      for (const t of p.transactions) lines.push((await addCardTransaction(db, s.id, t, userId)).id);
+      for (const { installmentPurchaseRef, subscriptionRef, ...t } of p.transactions) {
+        const line = {
+          ...t,
+          installmentPurchaseId: installmentPurchaseRef ? purchaseIds.get(installmentPurchaseRef)! : t.installmentPurchaseId,
+          subscriptionId: subscriptionRef ? subscriptionIds.get(subscriptionRef)! : t.subscriptionId,
+        };
+        lines.push((await addCardTransaction(db, s.id, line, userId)).id);
+      }
       await stamp(db, cardStatement, [s.id], documentId);
       await stamp(db, cardTransaction, lines, documentId);
+      await stamp(db, installmentPurchase, [...purchaseIds.values()], documentId);
+      await stamp(db, subscription, [...subscriptionIds.values()], documentId);
       return;
     }
     case 'record_utility_bill':
@@ -133,6 +180,24 @@ async function runOperation(db: Db, operation: DocumentOperation, raw: unknown, 
       return;
     }
   }
+}
+
+/** A "new" purchase already loaded on that card (same installment, count and first month) would be counted twice. */
+async function assertNotLoadedPurchase(db: Db, creditCardId: string, p: NewInstallmentPurchase, firstPeriod: string) {
+  const [twin] = await db
+    .select({ id: installmentPurchase.id })
+    .from(installmentPurchase)
+    .where(
+      and(
+        eq(installmentPurchase.creditCardId, creditCardId),
+        eq(installmentPurchase.firstPeriod, firstPeriod),
+        eq(installmentPurchase.installmentsTotal, p.installmentsTotal),
+        eq(installmentPurchase.installmentAmount, p.installmentAmount),
+        eq(installmentPurchase.currency, p.currency),
+      ),
+    )
+    .limit(1);
+  if (twin) throw new ServiceError('conflict', 'duplicate_purchase');
 }
 
 async function assertLoan(db: Db, id: string) {
