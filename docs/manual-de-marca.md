@@ -123,7 +123,7 @@ Tuteo rioplatense, frases cortas, fechas con el día de la semana cuando están 
 
 - Tema oscuro.
 - Íconos para la barra lateral y la navegación (por ahora es solo texto).
-- Pantallas de Bandeja y alta de compromisos.
+- Pantalla de alta de compromisos y diseño de referencia de la Bandeja (hay una primera versión, E3, con las filas en tarjetas de arena, el filtro segmentado y un contador junto a «Bandeja» en la navegación).
 - Proyección a 12 meses: hay una primera versión (E1) armada con los tokens y componentes de este manual (tabla con Entra, Sale, Queda, Queda en US$ y En cuotas); falta su diseño de referencia.
 - Ícono de la app instalable: el 31 encerrado sobre verde.
 

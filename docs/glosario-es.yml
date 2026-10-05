@@ -377,6 +377,35 @@ ui:
   nav_projection: Proyección
   nav_load: Cargar
   nav_inbox: Bandeja
+  inbox_count: "{n} comprobantes a revisar"
+  inbox_help: Lo que Claude leyó de cada comprobante espera acá. Nada llega al mes hasta que lo confirmás.
+  inbox_pending: A revisar
+  inbox_confirmed: Confirmados
+  inbox_discarded: Descartados
+  inbox_empty: No hay comprobantes a revisar.
+  inbox_unknown_entity: (no está cargado)
+  inbox_due_on: "vence el {date}"
+  inbox_lines: "{n} movimientos"
+  inbox_paid_on: "pagado el {date}"
+  inbox_uploaded_by: "subido por {name} el {date}"
+  inbox_reviewed_by: "revisado por {name} el {date}"
+  inbox_confirm: Confirmar
+  inbox_correct: Corregir
+  inbox_complete: Completar
+  inbox_discard: Descartar
+  inbox_discard_example: "Por ejemplo: es de otro mes, ya estaba cargado"
+  inbox_discard_help: Descartar no toca nada del mes. El mismo archivo se puede volver a cargar.
+  inbox_local_part: Parte en moneda local
+  inbox_usd_part: Parte en USD (pagada en moneda local)
+  inbox_save_and_confirm: Guardar y confirmar
+  inbox_breakdown: "Movimientos leídos ({n}). Los que saques no se cargan; después de confirmar se corrigen desde el resumen."
+  operation_load_card_statement: Cargar resumen de tarjeta
+  operation_record_utility_bill: Monto real de un servicio
+  operation_record_tax: Monto real de un impuesto
+  operation_record_condo_fee: Monto real de expensas
+  operation_record_loan_installment: Monto real de una cuota de préstamo
+  operation_register_payment: Registrar un pago
+  operation_register_card_payment: Registrar el pago de un resumen
   nav_more: Más
   nav_what_we_have: Lo que tenemos
   nav_cards: Tarjetas

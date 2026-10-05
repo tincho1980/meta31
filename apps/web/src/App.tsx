@@ -13,10 +13,11 @@ import { CreditCards } from './pages/CreditCards';
 import { ExchangeRates } from './pages/ExchangeRates';
 import { FinancialCost } from './pages/FinancialCost';
 import { FutureCommitmentsReport, LoansReport, SpendingReport } from './pages/Reports';
+import { Inbox } from './pages/Inbox';
 import { IncomeSources } from './pages/IncomeSources';
 import { LoanDetail } from './pages/LoanDetail';
 import { Loans } from './pages/Loans';
-import { Load, More, Pending } from './pages/Menus';
+import { Load, More } from './pages/Menus';
 import { Month } from './pages/Month';
 import { NewOneOffIncome } from './pages/NewOneOffIncome';
 import { OneOffExpenses } from './pages/OneOffExpenses';
@@ -105,7 +106,7 @@ function Authenticated({ identity, onSignOut: signOut }: { identity: Identity; o
         <Route path="/reportes/gasto-por-categoria" element={<SpendingReport />} />
         <Route path="/reportes/compromisos-futuros" element={<FutureCommitmentsReport />} />
         <Route path="/proyeccion" element={<Projection />} />
-        <Route path="/bandeja" element={<Pending titleKey="nav_inbox" />} />
+        <Route path="/bandeja" element={<Inbox />} />
         <Route path="/tarjetas" element={<CreditCards />} />
         <Route path="/tarjetas/:id" element={<CardDetail />} />
         <Route path="/prestamos" element={<Loans />} />
