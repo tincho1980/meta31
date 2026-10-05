@@ -14,7 +14,7 @@ import {
 import { and, asc, eq, inArray, isNotNull, ne } from 'drizzle-orm';
 import { checkNothingStored } from './deletion.js';
 import { ServiceError } from './errors.js';
-import { deviationOf } from './payments.js';
+import { installmentAmounts, installmentStatus } from './installments.js';
 import { checkNotCardCategory, checkReferences } from './references.js';
 import { loanRuleOf } from './rules.js';
 
@@ -178,23 +178,15 @@ export async function getLoanSchedule(db: Db, id: string): Promise<LoanSchedule>
   return {
     unit: uva ? 'UVA' : row.currency,
     rows: amortizationSchedule(loanRuleOf(row)).map((r) => {
-      const stored = byNumber.get(r.number);
-      // the original row carries the real amount; a split one is paid when all its parts are
-      const original = stored?.find((c) => c.parentCommitmentId === null) ?? stored?.[0];
+      const parts = byNumber.get(r.number);
+      // the whole installment, all its parts (D5)
+      const amounts = parts ? installmentAmounts(parts) : null;
       return {
         ...rowToApi(r, uva),
-        stored: original
-          ? {
-              // a split installment has no single real amount: its original only records what was paid
-              actualAmount: stored!.length > 1 ? null : original.actualAmount,
-              deviation: deviationOf(original, stored!.length > 1),
-              status: stored!.every((c) => c.status === 'paid')
-                ? ('paid' as const)
-                : stored!.some((c) => c.status === 'paid' || c.status === 'partially_paid')
-                  ? ('partially_paid' as const)
-                  : original.status,
-            }
-          : null,
+        stored:
+          parts && amounts
+            ? { actualAmount: amounts.real, deviation: amounts.deviation, status: installmentStatus(parts) }
+            : null,
       };
     }),
   };

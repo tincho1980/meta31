@@ -3,6 +3,7 @@ import { type Db, schema } from '@meta31/db';
 import { addMonths, comparePeriods, moneyToDb, paymentStatus, periodOf, toMoney, toPeriod } from '@meta31/domain';
 import { and, eq } from 'drizzle-orm';
 import { ServiceError } from './errors.js';
+import { hasSplitChild } from './installments.js';
 import { assertMonthNotClosed } from './month-close.js';
 import { amountInForce, getCommitmentDetail } from './payments.js';
 
@@ -160,6 +161,8 @@ export async function setActualAmount(db: Db, id: string, input: ActualAmountInp
   const c = await load(db, id);
   if (c.status === 'cancelled') throw new ServiceError('conflict', 'cancelled');
   if (input.updateFollowing && !c.recurringExpenseId) throw new ServiceError('conflict', 'not_recurring');
+  // the original of a split records what was paid; the real amount goes on the part still open (D5)
+  if (await hasSplitChild(db, id)) throw new ServiceError('conflict', 'split_part');
   const allocated = await allocatedOf(db, id);
   const status = paymentStatus(toMoney(input.actualAmount).plus(toMoney(c.surcharge)), allocated);
   await db.transaction(async (tx) => {
@@ -182,6 +185,8 @@ export async function setActualAmount(db: Db, id: string, input: ActualAmountInp
 export async function clearActualAmount(db: Db, id: string, userId: string): Promise<CommitmentDetail> {
   const c = await load(db, id);
   if (c.status === 'cancelled') throw new ServiceError('conflict', 'cancelled');
+  // clearing it would bring back the full installment while its rest lives in a child: counted twice
+  if (await hasSplitChild(db, id)) throw new ServiceError('conflict', 'split_part');
   const status = paymentStatus(toMoney(c.estimatedAmount).plus(toMoney(c.surcharge)), await allocatedOf(db, id));
   await db.update(commitment).set({ actualAmount: null, status, updatedBy: userId }).where(eq(commitment.id, id));
   return getCommitmentDetail(db, id);

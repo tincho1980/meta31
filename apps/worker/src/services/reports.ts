@@ -1,45 +1,42 @@
 import type { FutureCommitment, LoanReport, SpendingByCategory } from '@meta31/contracts';
 import { type Db, schema } from '@meta31/db';
-import { comparePeriods, currentPeriod, installmentDeviation, moneyToDb, monthsBetween, type Period, toMoney, toPeriod } from '@meta31/domain';
-import { and, eq, isNotNull, ne } from 'drizzle-orm';
+import { comparePeriods, currentPeriod, moneyToDb, monthsBetween, type Period, toMoney, toPeriod } from '@meta31/domain';
 import { listInstallmentPurchases, listSubscriptions } from './card-items.js';
+import { installmentAmounts, loanInstallmentParts } from './installments.js';
 import { listLoans } from './loans.js';
 import { listOneOffExpenses } from './one-off-expenses.js';
 import { projection } from './projection.js';
 
-const { commitment, creditCard } = schema;
+const { creditCard } = schema;
 
 /**
  * Loans report (RF-23, RF-25): installments paid and left, end month and debt come with each
- * loan; the deviations are its installments with a real amount (a split installment has none).
+ * loan; the deviations are its installments whose real amount is known, each counted whole
+ * (all its parts, D5).
  */
 export async function loansReport(db: Db): Promise<LoanReport[]> {
   const loans = await listLoans(db);
-  const stored = await db
-    .select()
-    .from(commitment)
-    .where(and(isNotNull(commitment.loanId), isNotNull(commitment.actualAmount), ne(commitment.status, 'cancelled')));
-  // a split installment (D5) has no single real amount: skip originals that have a child
-  const childRows = await db
-    .select({ parent: commitment.parentCommitmentId })
-    .from(commitment)
-    .where(and(isNotNull(commitment.loanId), isNotNull(commitment.parentCommitmentId)));
-  const children = new Set(childRows.map((c) => c.parent));
+  const groups = await loanInstallmentParts(
+    db,
+    loans.map((l) => l.id),
+  );
   return loans.map((loan) => {
-    const deviations = stored
-      .filter((c) => c.loanId === loan.id && c.parentCommitmentId === null && !children.has(c.id))
-      .sort((a, b) => (a.installmentNumber ?? 0) - (b.installmentNumber ?? 0))
-      .map((c) => {
-        const d = installmentDeviation(toMoney(c.estimatedAmount), toMoney(c.actualAmount!));
+    const deviations = [...groups.entries()]
+      .filter(([key]) => key.startsWith(`${loan.id}|`))
+      .map(([, parts]) => ({ parts, amounts: installmentAmounts(parts) }))
+      .filter((g) => g.amounts?.deviation)
+      .map(({ parts, amounts }) => {
+        const root = parts.find((p) => p.parentCommitmentId === null) ?? parts[0]!;
         return {
-          number: c.installmentNumber ?? 0,
-          dueDate: c.dueDate ?? c.period,
-          theoretical: c.estimatedAmount,
-          actual: c.actualAmount!,
-          amount: moneyToDb(d.amount),
-          percent: d.percent.toDecimalPlaces(1, 4).toFixed(1),
+          number: root.installmentNumber ?? 0,
+          dueDate: root.dueDate ?? root.period,
+          theoretical: amounts!.theoretical,
+          actual: amounts!.real!,
+          amount: amounts!.deviation!.amount,
+          percent: amounts!.deviation!.percent,
         };
-      });
+      })
+      .sort((a, b) => a.number - b.number);
     const total = deviations.reduce((acc, d) => acc.plus(toMoney(d.amount)), toMoney('0'));
     return { loan, deviations, deviationTotal: moneyToDb(total) };
   });
