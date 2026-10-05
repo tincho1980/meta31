@@ -21,6 +21,8 @@ export type Client = {
   patch: (path: string, body: unknown) => Promise<Response>;
   delete: (path: string) => Promise<Response>;
   put: (path: string, body: unknown) => Promise<Response>;
+  /** A fetch into the app with the token (e.g. for the MCP client transport). */
+  fetch: (input: string | URL | Request, init?: RequestInit) => Promise<Response>;
 };
 
 /** App wired to `t.db`, plus a client that sends a valid token for `email`. */
@@ -55,5 +57,10 @@ export async function createHttpClient(t: TestDb, email = 'martin@example.com'):
     patch: (path, body) => send('PATCH', path, body),
     delete: (path) => send('DELETE', path),
     put: (path, body) => send('PUT', path, body),
+    fetch: async (input, init) => {
+      const req = new Request(input, init);
+      req.headers.set('Authorization', `Bearer ${token}`);
+      return app.request(req, undefined, testEnv);
+    },
   };
 }

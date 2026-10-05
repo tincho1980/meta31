@@ -231,6 +231,12 @@ export async function getDocument(db: Db, id: string): Promise<SourceDocument> {
   return toApi(await load(db, id), await names(db));
 }
 
+/** The document loaded from a file, by its SHA-256 (D3: duplicates), if any. */
+export async function findDocumentByHash(db: Db, fileHash: string): Promise<SourceDocument | null> {
+  const [row] = await db.select().from(sourceDocument).where(eq(sourceDocument.fileHash, fileHash));
+  return row ? toApi(row, await names(db)) : null;
+}
+
 /** The inbox (pending review and unrecognized, D3) or the documents already reviewed. */
 export async function listDocuments(db: Db, status: 'inbox' | 'confirmed' | 'discarded' = 'inbox'): Promise<SourceDocument[]> {
   const statuses = status === 'inbox' ? [...INBOX] : [status];
