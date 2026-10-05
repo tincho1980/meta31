@@ -41,7 +41,8 @@ export function Month() {
 
   const open = useMutation({
     mutationFn: () => api<OpenMonthResult>('POST', `/api/months/${now}/open`, {}),
-    onSuccess: (r) => (r.status === 'opened' ? queryClient.invalidateQueries({ queryKey: PROJECTION_KEY }) : undefined),
+    // a first opening, or rules loaded since it was opened, store new lines: reload the month
+    onSuccess: (r) => (r.commitments + r.incomes > 0 ? queryClient.invalidateQueries({ queryKey: PROJECTION_KEY }) : undefined),
   });
   useEffect(() => {
     if (isCurrent && open.isIdle) open.mutate();
