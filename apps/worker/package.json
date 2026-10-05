@@ -16,6 +16,7 @@
     "@meta31/contracts": "workspace:*",
     "@meta31/db": "workspace:*",
     "@meta31/domain": "workspace:*",
+    "@modelcontextprotocol/sdk": "1.32.1",
     "drizzle-orm": "^0.45.3",
     "hono": "^4.13.12",
     "jose": "^6.2.12",

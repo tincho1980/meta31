@@ -456,6 +456,10 @@ Precisiones:
 - Qué queda marcado: lo creado (resumen, movimientos, pagos, monto del historial) y el compromiso cuyo monto real salió del comprobante. Un comprobante de pago marca solo el pago: el compromiso conserva el documento de la factura.
 - Corregir cambia `operation` y `payload` (un `unrecognized` pasa a `pending_review`). Descartar no toca el dominio.
 
+Servidor MCP (`/mcp`, en el mismo Worker; `apps/worker/src/mcp/server.ts`): HTTP sin sesión, misma autenticación que la API (token de Supabase y lista blanca). Herramientas, todas operaciones del dominio:
+- Lectura: `list_credit_cards` (con los meses de resumen ya cargados), `list_card_items` (compras en cuotas y suscripciones de una tarjeta), `list_recurring_expenses`, `list_loans`, `list_properties`, `list_categories`, `get_month`, `find_document` (por hash), `list_inbox`.
+- Carga: una herramienta por operación de la tabla de arriba, con `fileName`, `fileHash` y `payload`; más `report_unrecognized` (sin operación, con el motivo). Todas **solo proponen** un comprobante: llaman al mismo caso de uso que `POST /api/documents`. Un rechazo vuelve como error de la herramienta con el motivo y qué hacer.
+
 ## 5. Enums
 
 | Enum | Valores |
