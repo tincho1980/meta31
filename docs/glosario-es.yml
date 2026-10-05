@@ -598,6 +598,11 @@ ui:
   error_postpone_backwards: No se puede pasar a un mes anterior.
   error_has_payments: Tiene pagos cargados. Deshacelos primero si querés anularlo.
   error_not_cancelled: No está anulado.
+  error_duplicate_file: Ese archivo ya se cargó.
+  error_duplicate_document: Ya hay otro comprobante a revisar con lo mismo (misma tarjeta, servicio o préstamo y mes).
+  error_wrong_class: La operación no corresponde a ese tipo de gasto (servicio, impuesto o expensas).
+  error_no_commitment: Ese mes no tiene un compromiso de eso para cargar o pagar.
+  error_not_pending: Ese comprobante ya se confirmó o se descartó.
   error_payment_currency: No se puede pagar en esa moneda (pesos argentinos y uruguayos no tienen cotización directa).
   error_missing_rate: Falta la cotización para esa fecha; cargala en Cotizaciones o escribila en el pago.
   error_not_received: No figura como cobrado.
