@@ -1091,3 +1091,48 @@ button.link.danger:hover:not(:disabled) {
   display: inline-flex;
   align-items: center;
 }
+
+/* Bandeja: count next to the nav item */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  margin-left: var(--space-2);
+  border-radius: 10px;
+  background: var(--papel);
+  color: var(--verde-casa);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.inbox .etiqueta,
+.inbox .row-link,
+.inbox .note {
+  display: block;
+}
+.inbox {
+  margin-top: var(--space-4);
+}
+.inbox .etiqueta {
+  margin: 0 0 var(--space-1);
+}
+/* the actions go on their own line, below what the document says */
+.inbox .actions {
+  flex-basis: 100%;
+}
+.bottombar .badge {
+  background: var(--verde-casa);
+  color: var(--papel);
+  margin-left: 4px;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

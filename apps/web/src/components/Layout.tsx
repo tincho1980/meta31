@@ -1,4 +1,4 @@
-import type { ExchangeRate } from '@meta31/contracts';
+import type { ExchangeRate, SourceDocument } from '@meta31/contracts';
 import { useQuery } from '@tanstack/react-query';
 import { Link, NavLink } from 'react-router';
 import { api } from '../api';
@@ -52,6 +52,18 @@ function LatestRates() {
   );
 }
 
+/** Documents waiting in the inbox (D3), next to "Bandeja": shares the inbox screen's cache. */
+function InboxCount() {
+  const inbox = useQuery({ queryKey: ['documents', 'inbox'], queryFn: () => api<SourceDocument[]>('GET', '/api/documents?status=inbox') });
+  const n = inbox.data?.length ?? 0;
+  if (n === 0) return null;
+  return (
+    <span className="badge" aria-label={t('inbox_count', { n: String(n) })}>
+      {n}
+    </span>
+  );
+}
+
 export function Layout({ userName, onSignOut, children }: Props) {
   const initial = userName.slice(0, 1).toUpperCase();
   return (
@@ -68,6 +80,7 @@ export function Layout({ userName, onSignOut, children }: Props) {
           {main.map((item) => (
             <NavLink key={item.to} to={item.to} end={item.end ?? false}>
               {t(item.key)}
+              {item.to === '/bandeja' && <InboxCount />}
             </NavLink>
           ))}
         </div>
@@ -112,7 +125,10 @@ export function Layout({ userName, onSignOut, children }: Props) {
         <NavLink to="/cargar" className="load" aria-label={t('nav_load')}>
           <PlusIcon size={22} stroke={2.6} />
         </NavLink>
-        <NavLink to="/bandeja">{t('nav_inbox')}</NavLink>
+        <NavLink to="/bandeja">
+          {t('nav_inbox')}
+          <InboxCount />
+        </NavLink>
         <NavLink to="/mas">{t('nav_more')}</NavLink>
       </nav>
     </div>
