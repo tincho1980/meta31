@@ -3,7 +3,7 @@ import type { ExchangeRate } from '../src/exchange.js';
 import type { CreditCardRule, IncomeSourceRule, LoanRule, Rules } from '../src/generators.js';
 import { type Money, moneyToDb, toMoney } from '../src/money.js';
 import { toPeriod } from '../src/period.js';
-import { type ProjectionInput, projectMonths, type StoredCommitment, type StoredIncome } from '../src/projection.js';
+import { type ProjectionInput, type ProjectionLine, projectMonths, type StoredCommitment, type StoredIncome } from '../src/projection.js';
 
 const m = (s: string) => toMoney(s);
 const p = (s: string) => toPeriod(s);
@@ -167,5 +167,33 @@ describe('missing exchange rates', () => {
     const arsOnly = { ...rules, incomeSources: [salary] };
     const [oct] = projectMonths(input({ rules: arsOnly, rates: [rates[0]!] }));
     expect(show(oct!.ars!.incomes)).toBe('2000000.00');
+  });
+});
+
+describe('card payments with a real statement (RF-16, rule 10)', () => {
+  const withStatement: Rules = {
+    ...rules,
+    creditCards: [{ ...card, statements: [{ period: '2026-11-01', dueDate: '2026-11-04', totalLocal: m('599940.55'), totalUsd: m('23.99') }] }],
+  };
+
+  it('a virtual card line of a month with its statement loaded is real, not estimated', () => {
+    const [oct, nov] = projectMonths(input({ rules: withStatement, months: 2 }));
+    const cardLines = (lines: ProjectionLine[]) => lines.filter((l) => l.origin === 'credit_card').map((l) => [l.currency, show(l.amount), l.estimate]);
+    expect(cardLines(oct!.commitments)).toEqual([['ARS', '400000.00', true]]);
+    expect(cardLines(nov!.commitments)).toEqual([
+      ['ARS', '599940.55', false],
+      ['USD', '23.99', false],
+    ]);
+  });
+
+  it('a stored card line is real once its statement is loaded, also the rest postponed to the next month', () => {
+    const line = stored({ id: 'cc', sourceKey: 'cc:visa:2026-11-01:ARS', origin: { kind: 'credit_card', id: 'visa' }, originPeriod: '2026-11-01', period: '2026-11-01', estimatedAmount: m('599940.55') });
+    const rest = stored({ id: 'rest', origin: { kind: 'credit_card', id: 'visa' }, originPeriod: '2026-11-01', period: '2026-12-01', estimatedAmount: m('99940.55') });
+    const [nov, dec] = projectMonths(input({ rules: withStatement, from: p('2026-11-01'), months: 2, commitments: [line, rest], storedKeys: new Set([line.sourceKey!]) }));
+    expect(nov!.commitments.find((l) => l.id === 'cc')!.estimate).toBe(false);
+    expect(dec!.commitments.find((l) => l.id === 'rest')!.estimate).toBe(false);
+    // without the statement, the same stored line is an estimate
+    const [plain] = projectMonths(input({ from: p('2026-11-01'), months: 1, commitments: [line], storedKeys: new Set([line.sourceKey!]) }));
+    expect(plain!.commitments.find((l) => l.id === 'cc')!.estimate).toBe(true);
   });
 });

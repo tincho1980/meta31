@@ -5,3 +5,6 @@ packages:
 allowBuilds:
   esbuild: true
   workerd: true
+
+minimumReleaseAgeExclude:
+  - '@modelcontextprotocol/sdk@1.32.1'

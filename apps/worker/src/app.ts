@@ -7,9 +7,12 @@ import { cardPayments } from './routes/card-payments.js';
 import { cardStatements } from './routes/card-statements.js';
 import { categories } from './routes/categories.js';
 import { creditCards } from './routes/credit-cards.js';
+import { documents } from './routes/documents.js';
 import { exchangeRates } from './routes/exchange-rates.js';
 import { incomeSources } from './routes/income-sources.js';
 import { loans } from './routes/loans.js';
+import { mcp } from './routes/mcp.js';
+import { mcpChallenge, protectedResourceMetadata } from './routes/oauth-metadata.js';
 import { me } from './routes/me.js';
 import { months } from './routes/months.js';
 import { oneOffExpenses } from './routes/one-off-expenses.js';
@@ -45,6 +48,13 @@ export function createApp(deps: AppDeps) {
   );
   app.use('/api/*', deps.db);
   app.use('/api/*', auth(deps.verifier));
+  // MCP: public discovery metadata, then the same auth as the API (a 401 points to the metadata)
+  app.use('/.well-known/*', cors({ origin: '*', allowMethods: ['GET', 'OPTIONS'] }));
+  app.get('/.well-known/oauth-protected-resource', protectedResourceMetadata);
+  app.get('/.well-known/oauth-protected-resource/mcp', protectedResourceMetadata);
+  app.use('/mcp', mcpChallenge);
+  app.use('/mcp', deps.db);
+  app.use('/mcp', auth(deps.verifier));
 
   app.route('/api/me', me);
   app.route('/api/categories', categories);
@@ -65,6 +75,8 @@ export function createApp(deps: AppDeps) {
   app.route('/api/commitments', commitments);
   app.route('/api/incomes', incomes);
   app.route('/api/reports', reports);
+  app.route('/api/documents', documents);
+  app.route('/mcp', mcp);
 
   app.notFound((c) => c.json({ error: 'not_found' }, 404));
   app.onError((err, c) => {

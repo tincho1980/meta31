@@ -238,3 +238,31 @@ pnpm --filter @meta31/worker run initial-load C:\ruta\carga.load.json
 ```
 
 Corre en una sola transacción, por los mismos casos de uso que la PWA: o se carga todo o nada. Se niega si la base ya tiene reglas cargadas (corre una sola vez). Para probar antes en local: `--local` usa la base PGlite de `.local-db/` (tiene que estar vacía de reglas: borrá esa carpeta para empezar de cero).
+
+## 12. Conectar Claude por MCP (E3)
+
+Claude carga comprobantes a través del servidor MCP del Worker (`/mcp`). Para loguearse usa **Supabase como servidor OAuth 2.1** (decisión del 4/10): claude.ai descubre a Supabase desde el Worker, se registra solo y te pide entrar con Google y autorizar. Lo que Claude carga queda en la Bandeja hasta que lo confirmás.
+
+**12.1 · Supabase (una sola vez, en el panel)**
+
+1. *Authentication → JWT Keys*: confirmá que el proyecto firma con una clave **asimétrica** (ES256 o RS256). El servidor OAuth la necesita, y el Worker ya valida contra el JWKS. Si todavía usa el secreto HS256 legado, migrá a claves asimétricas desde esa pantalla antes de seguir.
+2. *Authentication → OAuth Server*: activalo y completá:
+   - **Authorization path:** `/oauth/consent` (se arma sobre el *Site URL*, que tiene que ser `https://meta31.pages.dev`).
+   - **Dynamic client registration:** activado (claude.ai se registra solo).
+3. *Authentication → URL Configuration → Redirect URLs*: agregá `https://meta31.pages.dev/oauth/consent**`, para que el login con Google vuelva a la pantalla de autorización sin perder el pedido.
+
+Ningún secreto nuevo: el Worker no guarda nada de OAuth.
+
+**12.2 · Probar el descubrimiento (después del deploy)**
+
+```bash
+curl -s https://meta31-api.miramallo.workers.dev/.well-known/oauth-protected-resource/mcp
+```
+
+Tiene que devolver `authorization_servers` con `https://<ref>.supabase.co/auth/v1`. Y sin token, `/mcp` responde 401 con el encabezado `WWW-Authenticate` que apunta a esa dirección.
+
+**12.3 · Conectar el Claude de cada uno**
+
+En claude.ai: *Configuración → Conectores → Agregar conector personalizado*, con la URL `https://meta31-api.miramallo.workers.dev/mcp`. Claude abre la pantalla de Meta31: entrás con Google (con tu cuenta habilitada) y tocás **Autorizar**. Cada uno lo hace con su propia cuenta, así queda registrado quién subió cada comprobante.
+
+Cómo trabajar con los comprobantes: `docs/claude-carga.md`.

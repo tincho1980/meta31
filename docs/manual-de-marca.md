@@ -53,7 +53,7 @@ Por ahora solo hay tema claro. El tema oscuro queda pendiente: el encabezado ver
 - Pesos: `$ 186.400`, con espacio después del signo, punto de miles y sin decimales en las listas.
 - Dólares: `US$ 650`, sin decimales desde 100; por debajo de 100 se muestran siempre los centavos: `US$ 40,00`, `US$ 12,99` (decidido por Martín el 3/10). Pesos uruguayos: `UY$ 12.000`. En los totales, lo de Uruguay se muestra en dólares.
 - Lo que entra lleva `+` y va en `verde-ingreso`. Lo que sale no lleva signo: el contexto ya dice que es un gasto.
-- Los montos estimados llevan `~` y van en `tinta-suave`: `~ $ 58.000`.
+- Los montos estimados llevan `~` y van en `tinta-suave`: `~ $ 58.000`. Un monto es estimado mientras no tiene su monto real; el pago de una tarjeta deja de serlo cuando se carga el resumen real de ese mes (también la parte que se pasó al mes siguiente).
 - En los resúmenes del celular se abrevia con coma decimal: `$ 3,25 M`, `$ 380 mil`.
 - Los compromisos pagados pasan a `tinta-suave`: siguen visibles, pero dejan de pedir atención.
 
@@ -123,7 +123,7 @@ Tuteo rioplatense, frases cortas, fechas con el día de la semana cuando están 
 
 - Tema oscuro.
 - Íconos para la barra lateral y la navegación (por ahora es solo texto).
-- Pantallas de Bandeja y alta de compromisos.
+- Pantalla de alta de compromisos y diseño de referencia de la Bandeja (hay una primera versión, E3, con las filas en tarjetas de arena, el filtro segmentado y un contador junto a «Bandeja» en la navegación).
 - Proyección a 12 meses: hay una primera versión (E1) armada con los tokens y componentes de este manual (tabla con Entra, Sale, Queda, Queda en US$ y En cuotas); falta su diseño de referencia.
 - Ícono de la app instalable: el 31 encerrado sobre verde.
 
