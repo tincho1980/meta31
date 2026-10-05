@@ -73,7 +73,10 @@ export type ProjectionLine = {
   postponed: boolean;
   /** `amount` in ARS with the rate in force on the line's date (rule 6); null if a rate is missing. */
   amountArs: Money | null;
-  /** The amount is still an estimate: no real amount loaded yet (rule 10). */
+  /**
+   * The amount is still an estimate: no real amount loaded yet (rule 10). A card payment whose
+   * month has its real statement loaded is not: its amount is the statement's total.
+   */
   estimate: boolean;
 };
 
@@ -119,7 +122,15 @@ function totals(incomes: readonly ProjectionLine[], commitments: readonly Projec
   return { incomes: inc, commitments: com, result: inc.minus(com) };
 }
 
-function storedCommitmentLine(c: StoredCommitment): ProjectionLine {
+/** Card and month with a real statement loaded (RF-16): those card amounts are real, not estimated. */
+type HasStatement = (cardId: string, period: string) => boolean;
+
+function statementLookup(rules: Rules): HasStatement {
+  const loaded = new Set(rules.creditCards.flatMap((card) => card.statements.map((s) => `${card.id}|${s.period}`)));
+  return (cardId, period) => loaded.has(`${cardId}|${period}`);
+}
+
+function storedCommitmentLine(c: StoredCommitment, hasStatement: HasStatement): ProjectionLine {
   return {
     id: c.id,
     sourceKey: c.sourceKey,
@@ -134,7 +145,8 @@ function storedCommitmentLine(c: StoredCommitment): ProjectionLine {
     status: c.status,
     postponed: c.originPeriod !== c.period,
     amountArs: null,
-    estimate: c.actualAmount === null,
+    // a card payment born in a month with its statement loaded (or the rest of it, postponed) is real
+    estimate: c.actualAmount === null && !(c.origin.kind === 'credit_card' && hasStatement(c.origin.id, c.originPeriod)),
   };
 }
 
@@ -173,13 +185,14 @@ function cardInstallments(rules: Rules, period: Period): { amount: Money; curren
  */
 export function projectMonths(input: ProjectionInput): MonthProjection[] {
   const result: MonthProjection[] = [];
+  const hasStatement = statementLookup(input.rules);
   for (let k = 0; k < input.months; k++) {
     const period = addMonths(input.from, k);
     const generated = generateForPeriod(input.rules, period);
     const issues: ProjectionIssue[] = [...generated.issues];
 
     const commitments: ProjectionLine[] = [
-      ...input.commitments.filter((c) => c.period === period && c.status !== 'cancelled').map(storedCommitmentLine),
+      ...input.commitments.filter((c) => c.period === period && c.status !== 'cancelled').map((c) => storedCommitmentLine(c, hasStatement)),
       ...unstoredCandidates(generated.commitments, input.storedKeys).map((c) => ({
         id: null,
         sourceKey: c.sourceKey,
@@ -194,7 +207,7 @@ export function projectMonths(input: ProjectionInput): MonthProjection[] {
         status: null,
         postponed: false,
         amountArs: null,
-        estimate: true,
+        estimate: !(c.origin.kind === 'credit_card' && hasStatement(c.origin.id, period)),
       })),
     ];
     const incomes: ProjectionLine[] = [
