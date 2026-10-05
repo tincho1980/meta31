@@ -492,6 +492,7 @@ ui:
   card_payment_help: Las dos partes se pagan en la moneda de la tarjeta; la de dólares, con la cotización que aplicó el banco. Si pagás menos, después podés pasar el resto al próximo resumen.
   carry_to_next_statement: Pasar el resto al próximo resumen
   actual_amount: Monto real
+  split_part_help: Pagaste una parte y el resto lo pasaste a otro mes. El monto real de la cuota se carga en la parte que quedó pendiente.
   estimated_was: "El estimado era {amount}."
   update_following: Usar este monto como estimado desde el mes siguiente
   back_to_estimate: Volver al estimado
@@ -590,6 +591,7 @@ ui:
   error_already_closed: El mes ya está cerrado.
   error_not_closed: El mes no está cerrado.
   error_unsettled: Todavía hay líneas sin resolver.
+  error_split_part: Es la parte ya pagada de una cuota dividida; el monto real se carga en la parte pendiente.
   error_not_recurring: Solo los gastos recurrentes actualizan los meses siguientes.
   error_postpone_backwards: No se puede pasar a un mes anterior.
   error_has_payments: Tiene pagos cargados. Deshacelos primero si querés anularlo.
