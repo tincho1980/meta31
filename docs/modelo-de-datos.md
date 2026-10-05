@@ -495,7 +495,7 @@ Para cada mes M de la proyección, el Worker:
 
 Con ~50 reglas y 12 meses son unas 600 operaciones en memoria: entra cómodo en los 10 ms de CPU del Worker. Las consultas son 6–8 por proyección, no una por mes.
 
-Abrir un mes es idempotente gracias al unique de `source_key`: si dos usuarios entran a la vez, el segundo no duplica.
+Abrir un mes es idempotente gracias al unique de `source_key`: si dos usuarios entran a la vez, el segundo no duplica. Abrir de nuevo un mes ya abierto (la vista del mes lo hace al entrar) graba lo que apareció desde entonces, por ejemplo una fuente de ingreso o una tarjeta cargada después: así se puede pagar o cobrar. Nada grabado se pisa ni vuelve (lo postergado o anulado tiene su clave grabada). Un mes cerrado no recibe nada.
 
 **Proyección** (`packages/domain/src/projection.ts`, servicio `apps/worker/src/services/projection.ts`, 3/10):
 - Cada mes = compromisos e ingresos grabados con `period` en el mes (no anulados) + candidatos virtuales cuya `source_key` no está grabada. Monto vigente del compromiso = `coalesce(actual_amount, estimated_amount) + surcharge`; del ingreso, `coalesce(actual_amount, estimated_amount)`. "Postergado" se deriva de `origin_period ≠ period`.

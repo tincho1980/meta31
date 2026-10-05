@@ -43,7 +43,7 @@ describe('months API (RF-30, RF-31, RF-33)', () => {
     const first = (await (await api.post(`/api/months/${now}/open`, {})).json()) as OpenMonthResult;
     expect(first.status).toBe('opened');
     const again = (await (await api.post(`/api/months/${now}/open`, {})).json()) as OpenMonthResult;
-    expect(again).toEqual({ status: 'already_open' });
+    expect(again).toMatchObject({ status: 'already_open', commitments: 0, incomes: 0 });
 
     const [opened] = (await (await api.get(`/api/months/projection?from=${now}&months=1`)).json()) as MonthProjection[];
     expect(opened!.incomes.every((l) => l.stored)).toBe(true);

@@ -128,7 +128,7 @@ Las 12 reglas de negocio (`docs/requisitos-funcionales.md`) son invariantes. Las
 
 ## Decisiones de diseño (D1–D8)
 
-- **D1 · Lo futuro se calcula, no se guarda.** Los compromisos e ingresos futuros son virtuales: los genera `domain` desde las reglas. Se graban (materializan) solo al abrir el mes en curso o cuando algo los toca (pago, postergación, monto real). Lo grabado y lo virtual se unen por `source_key` única: un candidato virtual cuya `source_key` ya existe se descarta. Abrir un mes es idempotente.
+- **D1 · Lo futuro se calcula, no se guarda.** Los compromisos e ingresos futuros son virtuales: los genera `domain` desde las reglas. Se graban (materializan) solo al abrir el mes en curso o cuando algo los toca (pago, postergación, monto real). Lo grabado y lo virtual se unen por `source_key` única: un candidato virtual cuya `source_key` ya existe se descarta. Abrir un mes es idempotente; abrirlo de nuevo graba solo lo nuevo (una regla cargada después), salvo que esté cerrado.
 - **D2 · Una sola tabla para servicios, impuestos, expensas, recurrentes y rubros estimados**: `recurring_expense` con `class` (`utility`, `tax`, `condo_fee`, `recurring`, `budget`).
 - **D3 · Claude propone, el usuario confirma.** Claude graba en `source_document` la operación propuesta (`operation` + `payload`). Confirmar ejecuta esa operación en una transacción, por el mismo caso de uso que usa la PWA. Duplicados: `file_hash` único + claves naturales (p. ej. `card_statement` unique por tarjeta y período).
 - **D4 · Una tarjeta genera dos compromisos por mes**: moneda local y USD. Cada compromiso tiene una sola moneda.

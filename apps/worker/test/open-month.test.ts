@@ -52,8 +52,38 @@ describe('open month (RF-27, D1)', () => {
 
   it('opening twice does not duplicate anything', async () => {
     await openMonth(t.db, OCT, userId);
-    expect(await openMonth(t.db, OCT, userId)).toEqual({ status: 'already_open' });
+    expect(await openMonth(t.db, OCT, userId)).toEqual({ status: 'already_open', commitments: 0, incomes: 0, issues: [] });
     expect(await storedCommitments()).toHaveLength(3);
+    expect(await t.db.select().from(income)).toHaveLength(1);
+  });
+
+  it('opening again stores a rule loaded after the month was opened, and only that', async () => {
+    await openMonth(t.db, OCT, userId);
+    const [cat] = await t.db.select().from(category).where(eq(category.name, 'Sueldos'));
+    const [school] = await t.db
+      .insert(schema.incomeSource)
+      .values({ name: 'Liceo', categoryId: cat!.id, currency: 'ARS', validFrom: '2026-10-01' })
+      .returning();
+    await t.db.insert(incomeSourceAmount).values({ incomeSourceId: school!.id, fromPeriod: '2026-10-01', amount: '400000' });
+
+    expect(await openMonth(t.db, OCT, userId)).toMatchObject({ status: 'already_open', commitments: 0, incomes: 1 });
+    const incomes = await t.db.select().from(income).orderBy(income.description);
+    expect(incomes.map((i) => [i.description, i.estimatedAmount])).toEqual([
+      ['Liceo', '400000.00'],
+      ['Sueldo', '1500000.00'],
+    ]);
+  });
+
+  it('a closed month gets nothing new', async () => {
+    await openMonth(t.db, OCT, userId);
+    await t.db.update(month).set({ status: 'closed' }).where(eq(month.period, OCT));
+    const [cat] = await t.db.select().from(category).where(eq(category.name, 'Sueldos'));
+    const [school] = await t.db
+      .insert(schema.incomeSource)
+      .values({ name: 'Liceo', categoryId: cat!.id, currency: 'ARS', validFrom: '2026-10-01' })
+      .returning();
+    await t.db.insert(incomeSourceAmount).values({ incomeSourceId: school!.id, fromPeriod: '2026-10-01', amount: '400000' });
+    expect(await openMonth(t.db, OCT, userId)).toMatchObject({ commitments: 0, incomes: 0 });
     expect(await t.db.select().from(income)).toHaveLength(1);
   });
 

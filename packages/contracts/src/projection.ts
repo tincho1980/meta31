@@ -66,11 +66,13 @@ export const projectionQuery = z.object({
   months: z.coerce.number().int().min(1).max(36).optional(),
 });
 
-/** Result of opening a month (D1): idempotent. */
-export const openMonthResult = z.union([
-  z.object({ status: z.literal('already_open') }),
-  z.object({ status: z.literal('opened'), commitments: z.number(), incomes: z.number(), issues: z.array(projectionIssue) }),
-]);
+/** Result of opening a month (D1): idempotent; opening it again stores only what is new (counts). */
+export const openMonthResult = z.object({
+  status: z.enum(['opened', 'already_open']),
+  commitments: z.number(),
+  incomes: z.number(),
+  issues: z.array(projectionIssue),
+});
 export type OpenMonthResult = z.infer<typeof openMonthResult>;
 
 /** State of a month: whether it is closed (final), what is still open and what moved out (D5). */
