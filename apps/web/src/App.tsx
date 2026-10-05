@@ -1,7 +1,7 @@
 import type { Session } from '@supabase/supabase-js';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
-import { Navigate, Route, Routes } from 'react-router';
+import { Navigate, Route, Routes, useLocation } from 'react-router';
 import { ApiError, getMe } from './api';
 import { localAuth } from './auth';
 import { Layout } from './components/Layout';
@@ -20,6 +20,7 @@ import { Loans } from './pages/Loans';
 import { Load, More } from './pages/Menus';
 import { Month } from './pages/Month';
 import { NewOneOffIncome } from './pages/NewOneOffIncome';
+import { OAuthConsent } from './pages/OAuthConsent';
 import { OneOffExpenses } from './pages/OneOffExpenses';
 import { Projection } from './pages/Projection';
 import { Properties } from './pages/Properties';
@@ -62,7 +63,8 @@ function Centered({ children }: { children: React.ReactNode }) {
 
 function SignIn() {
   const signIn = () =>
-    supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } });
+    // back to where the user was: the consent screen keeps its authorization_id
+    supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href } });
   return (
     <Centered>
       <button type="button" className="primary" onClick={signIn}>
@@ -76,6 +78,7 @@ type Identity = { key: string; email: string };
 
 function Authenticated({ identity, onSignOut: signOut }: { identity: Identity; onSignOut: () => void }) {
   const me = useQuery({ queryKey: ['me', identity.key], queryFn: getMe });
+  const location = useLocation();
 
   if (me.isPending) return <Centered>{t('loading')}</Centered>;
   if (me.isError) {
@@ -89,6 +92,9 @@ function Authenticated({ identity, onSignOut: signOut }: { identity: Identity; o
       </Centered>
     );
   }
+
+  // connecting a Claude (MCP over OAuth): its own screen, without the app's navigation
+  if (location.pathname === '/oauth/consent') return <OAuthConsent />;
 
   return (
     <Layout userName={me.data.name} onSignOut={signOut}>

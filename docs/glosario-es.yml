@@ -377,6 +377,12 @@ ui:
   nav_projection: Proyección
   nav_load: Cargar
   nav_inbox: Bandeja
+  consent_title: "{client} quiere conectarse a Meta31"
+  consent_body: Va a poder ver las tarjetas, los gastos, los préstamos y el mes, y dejarte comprobantes en la Bandeja. Nada cambia hasta que lo confirmes.
+  consent_account: "Con tu cuenta {email}"
+  consent_approve: Autorizar
+  consent_deny: Rechazar
+  consent_invalid: El pedido de autorización no es válido o ya venció. Volvé a conectar desde Claude.
   inbox_count: "{n} comprobantes a revisar"
   inbox_help: Lo que Claude leyó de cada comprobante espera acá. Nada llega al mes hasta que lo confirmás.
   inbox_pending: A revisar

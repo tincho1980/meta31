@@ -1136,3 +1136,20 @@ button.link.danger:hover:not(:disabled) {
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
+
+/* OAuth consent (connecting a Claude) */
+.consent {
+  text-align: center;
+  padding: 0 var(--space-4);
+}
+.consent h1 {
+  color: var(--crema);
+  max-width: 28rem;
+}
+.consent p {
+  color: var(--crema);
+  max-width: 28rem;
+}
+.consent .form-actions {
+  justify-content: center;
+}
