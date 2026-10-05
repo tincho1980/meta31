@@ -110,7 +110,7 @@ Cinco entregas. Cada una deja algo que se usa de verdad; ninguna depende de la s
 
 **Alcance**
 - Servidor MCP remoto en el mismo Worker, con OAuth de Google. **Decisión del 4/10:** Supabase Auth hace de servidor OAuth 2.1 (registro dinámico de clientes, PKCE) con el login de Google; el Worker publica los metadatos del recurso protegido y valida el token con el mismo middleware de la PWA (lista blanca incluida). La PWA suma la pantalla de consentimiento. Sin KV ni servidor OAuth propio.
-- Herramientas del dominio: `load_card_statement`, `record_utility_bill`, `record_loan_installment`, `record_tax`, `record_condo_fee`, `register_payment`, `register_card_payment`, más lectura (tarjetas, servicios, préstamos y propiedades, para que Claude identifique la entidad).
+- Herramientas del dominio: `load_card_statement`, `record_utility_bill`, `record_loan_installment`, `record_tax`, `record_condo_fee`, `register_payment`, `register_card_payment`, más lectura (tarjetas, servicios, préstamos y propiedades, para que Claude identifique la entidad). **Decisión del 5/10:** el resumen de tarjeta también crea las compras en cuotas y suscripciones que aparecen por primera vez en él (siempre pasando por la Bandeja).
 - `source_document`: operación propuesta, detección de duplicados por hash y por clave natural (tarjeta + período), estados de la bandeja.
 - Bandeja de revisión en la PWA: ver la operación propuesta, corregir, confirmar o descartar.
 - Instrucciones para el Claude de cada uno: carpeta de entrada, carpeta de procesados, qué hacer si no reconoce la entidad.

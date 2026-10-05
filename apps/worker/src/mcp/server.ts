@@ -35,6 +35,7 @@ const HINTS: Record<string, string> = {
   installment_number: 'That installment purchase does not have that many installments.',
   split_part: 'That installment was partly paid and the rest moved to another month; the real amount goes on the pending part.',
   not_open: 'There is no card commitment for that month to pay.',
+  duplicate_purchase: 'One of newInstallmentPurchases is already loaded on that card (same installment amount, count and first month): point its line to it with installmentPurchaseId instead.',
 };
 
 const text = (data: unknown) => ({ content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }] });
@@ -71,7 +72,7 @@ const KIND_OF: Record<DocumentOperation, DocumentKind> = {
 
 const DESCRIPTIONS: Record<DocumentOperation, string> = {
   load_card_statement:
-    'Propose loading a real credit card statement: its totals and, ideally, every line of its breakdown (purchases, installments "n of N" pointing to the installment purchase, subscriptions, interest, fees, taxes, payments). period = month of the due date.',
+    'Propose loading a real credit card statement: its totals and, ideally, every line of its breakdown (purchases, installments, subscriptions, interest, fees, taxes, payments). An installment line ("n of N") points to its purchase with installmentPurchaseId + installmentNumber; a subscription line, with subscriptionId (look them up with list_card_items). If an installment purchase or a subscription is NOT loaded yet, add it to newInstallmentPurchases / newSubscriptions with a short ref, and point its lines to it with installmentPurchaseRef / subscriptionRef (an installment line still says its installmentNumber): they are created with the statement, and the first month of the purchase is derived from that number. Give every new item a category (list_categories).',
   record_utility_bill: 'Propose the real amount of a utility bill (electricity, gas, water, phone…) for the month it is due. Only for bills paid outside a card.',
   record_tax: 'Propose the real amount of a tax bill (e.g. ARBA, municipal) for the month it is due.',
   record_condo_fee: 'Propose the real amount of a condo fee (expensas) for the month it is due.',
