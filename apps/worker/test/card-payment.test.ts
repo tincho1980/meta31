@@ -92,4 +92,53 @@ describe('partial card payment: the rest goes to the next statement (rule 4)', (
       ['USD', '20.00'],
     ]);
   });
+
+  const loadNovemberStatement = (previousBalanceLocal: string) =>
+    api.post('/api/card-statements', {
+      creditCardId: f.ids.card,
+      closingDate: '2026-10-26',
+      dueDate: '2026-11-08',
+      previousBalanceLocal,
+      previousBalanceUsd: '0',
+      totalLocal: '700000',
+      totalUsd: '20',
+      minimumPaymentLocal: '70000',
+    });
+  const novemberCard = async () =>
+    ((await (await api.get('/api/months/projection?from=2026-11-01&months=1')).json()) as MonthProjection[])[0]!.commitments
+      .filter((l) => l.origin === 'credit_card')
+      .map((l) => [l.currency, l.amount])
+      .sort();
+
+  it('a whole statement postponed without paying anything is not counted twice either', async () => {
+    const ars = (await cardCommitment('ARS'))!;
+    const moved = (await (await api.post(`/api/commitments/${ars.id}/postpone`, { dueDate: '2026-11-08' })).json()) as CommitmentDetail;
+    expect(moved).toMatchObject({ id: ars.id, period: '2026-11-01' });
+
+    expect((await loadNovemberStatement(ars.estimatedAmount)).status).toBe(201);
+    const [cancelled] = await f.t.db.select().from(schema.commitment).where(eq(schema.commitment.id, ars.id));
+    expect(cancelled).toMatchObject({ status: 'cancelled', cancellationReason: CARRIED_INTO_STATEMENT });
+    expect(await novemberCard()).toEqual([
+      ['ARS', '700000.00'],
+      ['USD', '20.00'],
+    ]);
+  });
+
+  it('a rest postponed beyond the next statement is cancelled too, since that statement already carries it', async () => {
+    const ars = (await cardCommitment('ARS'))!;
+    await payCard({ localAmount: '100000' });
+    const child = (await (await api.post(`/api/commitments/${ars.id}/postpone`, { dueDate: '2026-12-08' })).json()) as CommitmentDetail;
+    expect(child.period).toBe('2026-12-01');
+
+    await loadNovemberStatement(toMoney(ars.estimatedAmount).minus(toMoney('100000')).toFixed(2));
+    const [cancelled] = await f.t.db.select().from(schema.commitment).where(eq(schema.commitment.id, child.id));
+    expect(cancelled).toMatchObject({ status: 'cancelled', cancellationReason: CARRIED_INTO_STATEMENT });
+  });
+
+  it('leaves alone what is still pending in earlier months', async () => {
+    const usd = (await cardCommitment('USD'))!;
+    await loadNovemberStatement('0');
+    const [stillOctober] = await f.t.db.select().from(schema.commitment).where(eq(schema.commitment.id, usd.id));
+    expect(stillOctober).toMatchObject({ status: 'pending', period: '2026-10-01' });
+  });
 });
