@@ -1,7 +1,7 @@
 import type { CardStatement, CardStatementCreate, CardStatementUpdate } from '@meta31/contracts';
 import { cardPaymentCategoryId, type Db, schema } from '@meta31/db';
 import { periodOf, sourceKey, toPeriod } from '@meta31/domain';
-import { and, desc, eq, isNotNull } from 'drizzle-orm';
+import { and, desc, eq, gte, lt } from 'drizzle-orm';
 import { isUniqueViolation, ServiceError } from './errors.js';
 import { assertMonthNotClosed } from './month-close.js';
 
@@ -29,21 +29,22 @@ export const CARRIED_INTO_STATEMENT = 'Incluido en el resumen como saldo anterio
 
 /**
  * The real statement replaces the estimate (RF-16, rule 10). Months not opened yet need nothing:
- * the generator already uses the statement (but a carried balance stored there is cancelled). In an opened month the card's commitments are
+ * the generator already uses the statement (but a balance carried there is cancelled). In an opened month the card's commitments are
  * stored (D1), so the pending ones take the statement totals and due date, and a currency that
  * had no commitment gets one. Commitments already paid (in full or in part) are left alone.
  */
 async function applyToStoredMonth(tx: Tx, row: Row, card: { name: string; localCurrency: 'ARS' | 'UYU' }, userId: string) {
-  // rule 4: a balance carried from the previous statement (the rest of a partial payment,
-  // postponed here) is already inside this statement's total as previous balance
+  // rule 4: whatever of an earlier statement is still pending and was carried to this month or
+  // later (the rest of a partial payment, or a whole statement postponed without paying) is
+  // already inside this statement's total as previous balance
   await tx
     .update(commitment)
     .set({ status: 'cancelled', cancellationReason: CARRIED_INTO_STATEMENT, updatedBy: userId })
     .where(
       and(
         eq(commitment.creditCardId, row.creditCardId),
-        eq(commitment.period, row.period),
-        isNotNull(commitment.parentCommitmentId),
+        lt(commitment.originPeriod, row.period),
+        gte(commitment.period, row.period),
         eq(commitment.status, 'pending'),
       ),
     );
